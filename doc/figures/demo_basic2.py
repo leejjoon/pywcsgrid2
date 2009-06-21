@@ -27,7 +27,7 @@ ax.set_ylim(23, 98)
 ax.grid()
 
 # change grid density
-ax.get_grid_helper().update_wcsgrid_params(label_density=[4,3])
+ax.get_grid_helper().update_wcsgrid_params(label_density=[6,4])
 
 plt.draw()
 plt.show()
