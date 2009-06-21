@@ -4,7 +4,7 @@ from matplotlib.cbook import is_string_like
 from matplotlib.path import Path
 
 import numpy as np
-from wcs_transforms import WcsSky2PixelTransform, WcsPixel2SkyTransform,\
+from pywcsgrid2.wcs_transforms import WcsSky2PixelTransform, WcsPixel2SkyTransform,\
      WcsSky2SkyTransform
 
 from matplotlib import rcParams
@@ -27,11 +27,10 @@ import pywcs
 from mpl_toolkits.axes_grid.parasite_axes import HostAxes, ParasiteAxesAuxTrans
 import mpl_toolkits.axes_grid.grid_finder as grid_finder
 
-GridFinderMplTransform = grid_finder.GridFinderMplTransform
 GridFinderBase = grid_finder.GridFinderBase
 
-from kapteyn_helper import coord_system_guess, sky2sky, is_equal_coord_sys
-from kapteyn_helper import coord_system as _coord_sys_dict
+from pywcsgrid2.kapteyn_helper import coord_system_guess, sky2sky, is_equal_coord_sys
+from pywcsgrid2.kapteyn_helper import coord_system as _coord_sys_dict
 
 
 from mpl_toolkits.axes_grid.angle_helper import ExtremeFinderCycle
@@ -117,8 +116,9 @@ class GridFinderWcs(GridFinderWcsFull):
 
 
 
-
 class GridHelperWcsBase(GridHelperBase):
+#class GridHelperWcsBase(GridHelperCurveLinear):
+
 
     def _update(self, x1, x2, y1, y2):
         "bbox in 0-based image coordinates"
@@ -189,41 +189,101 @@ class GridHelperWcsBase(GridHelperBase):
 
 
 
-class GridHelperWcs(GridHelperWcsBase):
+
+import weakref
+class WcsTransCollection(object):
+    def __init__(self):
+        self._wcs_trans_collection = dict()
+
+    def _get_wcs_hash(self, wcs):
+        return wcs
+
+    def _get_wcs_trans_dict(self, wcs):
+        wcs_hash = self._get_wcs_hash(wcs)
+        if wcs_hash in self._wcs_trans_collection:
+            return self._wcs_trans_collection[wcs_hash]
+        else:
+            wcs_trans_dict = weakref.WeakValueDictionary()
+            wcs_trans_dict[None] = WcsSky2PixelTransform(wcs)
+            self._wcs_trans_collection[wcs_hash] = wcs_trans_dict
+
+        return wcs_trans_dict
+
+    def get_wcs_trans(self, wcs, coord_system):
+        wcs_trans_dict = self._get_wcs_trans_dict(wcs)
+        if coord_system in wcs_trans_dict:
+            return wcs_trans_dict[coord_system]
+        else:
+            wcs_trans = WcsSky2PixelTransform(wcs,
+                                              src_coord=coord_system)
+            wcs_trans_dict[coord_system] = wcs_trans
+            return wcs_trans
+
+wcs_trans_collection = WcsTransCollection()
+
+from mpl_toolkits.axes_grid.grid_helper_curvelinear import GridHelperCurveLinear
+class GridHelperWcs(GridHelperCurveLinear):
+
+    WCS_TRANS_COLLECTION = wcs_trans_collection
+
+    @classmethod
+    def get_wcs_trans(cls, wcs, coord):
+        return cls.WCS_TRANS_COLLECTION.get_wcs_trans(wcs, coord)
 
     #def __init__(self, header):
-    def __init__(self, wcs):
+    def __init__(self, wcs, orig_coord=None):
 
-        super(GridHelperWcs, self).__init__()
-
-        #self._header = header
+        #self.header = header
         #wcs = pywcs.WCS(header)
-        self._wcs = wcs
+        self.wcs = wcs
+
+        if orig_coord is None:
+            coord_guess = coord_system_guess(wcs.wcs.ctype[0],
+                                             wcs.wcs.ctype[1],
+                                             wcs.wcs.equinox)
+            if coord_guess is None:
+                raise ValueError("Unknown coordinate system, %, %s, equinox=%.1f" \
+                                 % (wcs.wcs.ctype[0], wcs.wcs.ctype[1],
+                                wcs.wcs.equinox))
+            else:
+                self._wcsgrid_orig_coord_system = coord_guess
+        else:
+            self._wcsgrid_orig_coord_system = orig_coord
+
         self.wcsgrid = None
         self._old_values = None
-        self._wcsgrid_params = dict(coord_format="GE",
-                                    label_density=(6, 6),
+
+        #self.set_display_coord_system(None)
+        _wcs_trans = self.get_wcs_trans(self.wcs, None)
+        self._wcsgrid_display_coord_system = None
+
+        self._wcsgrid_params = dict(coord_format=("hms", "dms"),
+                                    label_density=(4, 4),
                                     grid1=[], grid2=[])
 
-        coord_guess = coord_system_guess(wcs.wcs.ctype[0],
-                                         wcs.wcs.ctype[1],
-                                         wcs.wcs.equinox)
-        if coord_guess is None:
-            raise ValueError("Unknown coordinate system, %, %s, equinox=%.1f" \
-                             % (wcs.wcs.ctype[0], wcs.wcs.ctype[1],
-                                wcs.wcs.equinox))
-        else:
-            self._wcsgrid_orig_coord_system = coord_guess
-
-        self.set_display_coord_system(None)
+        GridHelperCurveLinear.__init__(self, _wcs_trans,
+                                       extreme_finder=ExtremeFinderCycle(20,20),
+                                       grid_locator1=LocatorHMS(4),
+                                       grid_locator2=LocatorDMS(4),
+                                       tick_formatter1=FormatterHMS(),
+                                       tick_formatter2=FormatterDMS())
 
 
-        self.lon_locator = LocatorHMS(4)
-        self.lat_locator = LocatorDMS(4)
-        self.lon_formatter, self.lat_formatter = FormatterHMS, FormatterDMS
+    def tr(self, lon, lat):
+        ll = np.concatenate((lon[:,np.newaxis], lat[:,np.newaxis]), 1)
+        origin=0
+        xy = self.wcs.wcs.s2p(ll, origin)["pixcrd"]
+        return xy[:,0], xy[:,1]
+
+    def inv_tr(self, x, y):
+        xy = np.concatenate((x[:,np.newaxis], y[:,np.newaxis]),
+                            1)
+        origin=0
+        ll = self.wcs.wcs.p2s(xy, origin)['world']
+        return ll[:,0], ll[:,1]
 
 
-    def update_wcsgrid_params(self, **ka):
+    def update_wcsgrid_params2(self, **ka):
         """
         coord_format="GE",
         label_density=(6, 6),
@@ -238,77 +298,55 @@ class GridHelperWcs(GridHelperWcsBase):
             raise ValueError("keyword name should be one of coord_format, label_densit, grid1, grid2")
 
 
+    def update_wcsgrid_params(self, **kwargs):
+        """
+        coord_format="GE",
+        label_density=(6, 6),
+        grid1=[], grid2=[]):
+        """
+
+        self._wcsgrid_params.update(**kwargs)
+
+        f1, f2 = self._wcsgrid_params["coord_format"]
+        locator_selector = dict(hms=LocatorHMS,
+                                dms=LocatorDMS).__getitem__
+        formatter_selector = dict(hms=FormatterHMS,
+                                  dms=FormatterDMS).__getitem__
+
+        locator1 = locator_selector(f1)
+        locator2 = locator_selector(f2)
+        formatter1 = formatter_selector(f1)
+        formatter2 = formatter_selector(f2)
+
+        lx, ly = self._wcsgrid_params["label_density"]
+        grid_locator1=locator1(lx)
+        grid_locator2=locator2(ly)
+        self.update_grid_finder(grid_locator1=grid_locator1,
+                                grid_locator2=grid_locator2,
+                                tick_formatter1=formatter1(),
+                                tick_formatter2=formatter2(),
+                                )
+
+
+
+#         if len(kwargs) > 0:
+#             raise ValueError("Unknown keyword names : %s" \
+#                              % (",".join(kwargs.keys()),))
+
+
     def get_wcsgrid_params(self):
         return self._wcsgrid_params
-
-    def _update_grid(self, x1, y1, x2, y2,
-                     **wcsgrid_params):
-
-        if is_equal_coord_sys(self._wcsgrid_orig_coord_system,
-                              self._wcsgrid_display_coord_system):
-            tran = None
-        else:
-            tran = sky2sky(self._wcsgrid_orig_coord_system,
-                           self._wcsgrid_display_coord_system)
-
-        grider = GridFinderWcs(self._wcs, tran)
-        self.wcsgrid = grider.get_grid_info(x1, y1, x2, y2)
-
-
-    def get_gridlines(self):
-        grid_lines = []
-        for gl in self.wcsgrid["lat"]["lines"]:
-            grid_lines.extend(gl)
-        for gl in self.wcsgrid["lon"]["lines"]:
-            grid_lines.extend(gl)
-
-        return grid_lines
-
-
-    def get_tick_iterator(self, nth_coord, axis_side, minor=False):
-
-        axisnr = dict(left=0, bottom=1, right=2, top=3)[axis_side]
-        angle = [0, 90, 180, 270][axisnr]
-        #side_select = ["left", "bottom", "right", "top"].__getitem__
-        lon_or_lat = ["lon", "lat"][nth_coord]
-        if not minor: # major ticks
-            def f():
-                for (xy, a), l in zip(self.wcsgrid[lon_or_lat]["tick_locs"][axis_side],
-                                    self.wcsgrid[lon_or_lat]["tick_labels"][axis_side]):
-                    yield xy, a, l
-        else:
-            def f():
-                for (xy, a), l in zip(self.wcsgrid[lon_or_lat]["tick_locs"][axis_side],
-                                    self.wcsgrid[lon_or_lat]["tick_labels"][axis_side]):
-                    yield xy, a, ""
-                #for xy, a, l in self.wcsgrid[lon_or_lat]["ticks"][axis_side]:
-                #    yield xy, a, ""
-
-        return f()
 
 
     def set_display_coord_system(self, coord_system):
         if self._wcsgrid_orig_coord_system is None:
             raise ValueError("_pywcsgrid_orig_coord_system is not set")
 
-        if coord_system is None:
-            coord_system = self._wcsgrid_orig_coord_system
-
         self._wcsgrid_display_coord_system = coord_system
-        self.invalidate()
+        _wcs_trans = self.get_wcs_trans(self.wcs, coord_system)
 
-    def set_display_coord_system2(self, coord_system):
-        if self._wcsgrid_orig_coord_system is None:
-            raise ValueError("_pywcsgrid_orig_coord_system is not set")
+        self.update_grid_finder(aux_trans=_wcs_trans)
 
-        if coord_system is None:
-            coord_system = self._wcsgrid_orig_coord_system
-
-        if is_string_like(coord_system):
-            coord_system = _coord_sys_dict[coord_system.lower()]
-
-        self._wcsgrid_display_coord_system = coord_system
-        self.invalidate()
 
     def get_display_coord_system(self):
         return self._wcsgrid_display_coord_system
@@ -437,16 +475,19 @@ class AxesWcs(HostAxes):
     def __init__(self, *kl, **kw):
 
         if "grid_helper" not in kw:
+            header = kw.pop("header", None)
             wcs = kw.pop("wcs", None)
-            if wcs is None:
-                raise ValueError("wcs")
-            else:
+            if (header is not None) and (wcs is None):
+                self._wcs = pywcs.WCS(header)
+            elif (header is None) and (wcs is not None):
                 self._wcs = wcs
+            else:
+                raise ValueError("wcs")
 
             grid_helper = GridHelperWcs(self._wcs)
             kw["grid_helper"] = grid_helper
         else:
-            self._wcs = kw["grid_helper"]._wcs
+            self._wcs = kw["grid_helper"].wcs
 
         super(AxesWcs, self).__init__(*kl, **kw)
 
@@ -508,6 +549,9 @@ class AxesWcs(HostAxes):
 
     def set_default_label(self):
         coord_system = self.get_grid_helper().get_display_coord_system()
+        if coord_system is None:
+            coord_system = self.get_grid_helper()._wcsgrid_orig_coord_system
+
         if coord_system == "fk5":
             xlabel=r"$\alpha_{2000}$"
             ylabel=r"$\delta_{2000}$"
@@ -545,12 +589,69 @@ SubplotWcs = maxes.subplot_class_factory(AxesWcs)
 
 
 
+def test1():
+    import pyfits, pywcs
+    import matplotlib.pyplot as plt
+    import axes_wcs
+    fig = plt.figure(1)
+    fig.clf()
+    fname = "../doc/figures/data/lmc.fits"
+    f = pyfits.open(fname)
+    d, h = f[0].data, f[0].header
+
+    global wcs
+    wcs = pywcs.WCS(h)
+    global grid_helper
+    grid_helper = GridHelperWcs(wcs)
+    global ax1
+    ax1 = axes_wcs.SubplotWcs(fig, 1, 1, 1, grid_helper=grid_helper)
+
+    fig.add_subplot(ax1)
+
+    ax1.set_aspect(1.)
+    ax1.set_xlim(0, 100)
+    ax1.set_ylim(0, 100)
+
+    ax1.grid(True)
+
+    plt.draw()
+
+
+def test2():
+    import pyfits, pywcs
+    import matplotlib.pyplot as plt
+    import axes_wcs
+
+    fig = plt.figure(1)
+    fig.clf()
+    fname = "../doc/figures/data/lmc.fits"
+    f = pyfits.open(fname)
+    d, h = f[0].data, f[0].header
+
+    ax1 = axes_wcs.SubplotWcs(fig, 1, 1, 1, header=h)
+
+    fig.add_subplot(ax1)
+    ax1.set_aspect(1.)
+
+    ax1.grid(True)
+    ax1.set_xlim(0, 100)
+    ax1.set_ylim(0, 100)
+
+    #ax1.set_display_coord_system("gal")
+    grid_helper_gal = ax1["gal"].get_grid_helper()
+    grid_helper_gal.update_wcsgrid_params(coord_format=("dms","dms"))
+    ax1.axis["b=-35"] = grid_helper_gal.new_floating_axis(1, -35, axes=ax1)
+    ax1.axis["b=-35"].label.set_text("b = -35")
+
+    plt.draw()
+
 
 def test21():
     import pyfits, pywcs
     import matplotlib.pyplot as plt
+    #import pywcsgrid2.axes_wcs as axes_wcs
     import axes_wcs
-    reload(axes_wcs)
+    #reload(axes_wcs)
     fig = plt.figure(1)
     fig.clf()
     #fname = "/Users/jjlee/local/src/astropy/pywcsgrid_all/test/i013b4h0.fit"
@@ -597,8 +698,9 @@ def test21():
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    #test2()
-    test21()
+    #test1()
+    test2()
+    #test21()
     #test3()
     plt.show()
     #select_step(21.2, 33.3, 5)

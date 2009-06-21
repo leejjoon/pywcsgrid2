@@ -21,6 +21,7 @@ ax.grid()
 
 # grid & ticks in Galactic coordinate.
 ax.set_display_coord_system("gal")
+ax.get_grid_helper().update_wcsgrid_params(coord_format=("dms","dms"))
 
 # let xaxis display "b", and yaxis "l"
 ax.swap_tick_coord()
