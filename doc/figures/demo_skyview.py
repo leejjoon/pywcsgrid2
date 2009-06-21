@@ -55,10 +55,6 @@ cont2 = ax1[wcs_radio].contour(d, colors="k")
 
 ax1.set_title("X-ray")
 ax2.set_title("Radio")
-#ax1.set_display_coord_system("gal")
-ax1.axis["b=6"] = axis = ax1["gal"].get_grid_helper().new_floating_axis(1, 6, axes=ax1)
-axis.label.set_text(r"$b=6^{\circ}$")
-axis.major_ticklabels.set_visible(False)
 
 plt.draw()
 plt.show()
