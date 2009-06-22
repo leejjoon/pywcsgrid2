@@ -1,7 +1,6 @@
 
 import matplotlib.axes as maxes
 from matplotlib.cbook import is_string_like
-from matplotlib.path import Path
 
 import numpy as np
 from pywcsgrid2.wcs_transforms import WcsSky2PixelTransform, WcsPixel2SkyTransform,\
@@ -19,8 +18,7 @@ mcoll.QuadMesh.draw = rasterized_draw
 
 
 #from  axislines import AxisLineHelper, GridHelperRectlinear, AxisArtist
-from  mpl_toolkits.axes_grid.axislines import \
-     AxisArtistHelper, GridHelperBase, AxisArtist, GridlinesCollection
+from  mpl_toolkits.axes_grid.axislines import GridlinesCollection
 
 import pywcs
 
@@ -29,16 +27,14 @@ import mpl_toolkits.axes_grid.grid_finder as grid_finder
 
 GridFinderBase = grid_finder.GridFinderBase
 
-from pywcsgrid2.kapteyn_helper import coord_system_guess, sky2sky, is_equal_coord_sys
-from pywcsgrid2.kapteyn_helper import coord_system as _coord_sys_dict
+from pywcsgrid2.kapteyn_helper import coord_system_guess
 
 
 from mpl_toolkits.axes_grid.angle_helper import ExtremeFinderCycle
 from mpl_toolkits.axes_grid.angle_helper import LocatorDMS, LocatorHMS, FormatterDMS, FormatterHMS
 
-from mpl_toolkits.axes_grid.grid_helper_curvelinear import FixedAxisArtistHelper
+from mpl_toolkits.axes_grid.grid_helper_curvelinear import GridHelperCurveLinear
 
-from mpl_toolkits.axes_grid.angle_helper import select_step24, select_step360
 
 
 class GridFinderWcsFull(GridFinderBase):
@@ -116,78 +112,6 @@ class GridFinderWcs(GridFinderWcsFull):
 
 
 
-class GridHelperWcsBase(GridHelperBase):
-#class GridHelperWcsBase(GridHelperCurveLinear):
-
-
-    def _update(self, x1, x2, y1, y2):
-        "bbox in 0-based image coordinates"
-        # update wcsgrid
-
-        if self._force_update is False and \
-               self._old_values == (x1, x2, y1, y2,
-                                    self.get_wcsgrid_params()):
-            return
-
-        if self._wcsgrid_display_coord_system is None:
-            src_system = None
-            tgt_system = None
-        else:
-            if self._wcsgrid_display_coord_system == self._wcsgrid_orig_coord_system:
-                src_system = None
-                tgt_system = None
-            else:
-                src_system = self._wcsgrid_orig_coord_system
-                tgt_system = self._wcsgrid_display_coord_system
-
-
-        self.update_wcsgrid_params(src_system=src_system,
-                                   dest_system=tgt_system)
-
-
-        self._update_grid(x1, y1, x2, y2,
-                          **self._wcsgrid_params)
-
-        self._old_values = (x1, x2, y1, y2, self.get_wcsgrid_params().copy())
-
-        self._force_update = False
-
-
-    def new_fixed_axis(self, loc,
-                       nth_coord=None, passthrough_point=None,
-                       tick_direction="in",
-                       label_direction=None,
-                       offset=None,
-                       axes=None
-                       ):
-
-        _helper = FixedAxisArtistHelper(self, loc,
-                                        nth_coord, nth_coord_ticks=None)
-
-        axisline = AxisArtist(axes, _helper)
-
-        return axisline
-
-
-
-    # To be implemented in the derived class
-
-    def get_wcsgrid_params(self):
-        pass
-
-    def _update_grid(self, x1, y1, x2, y2,
-                     **wcsgrid_params):
-        pass
-
-    def get_gridlines(self):
-        pass
-
-    def get_tick_iterator(self, nth_coord, axis_side, minor=False):
-        pass
-
-
-
-
 
 
 import weakref
@@ -220,8 +144,8 @@ class WcsTransCollection(object):
             return wcs_trans
 
 wcs_trans_collection = WcsTransCollection()
+# parasite axes needs to be modified to use wcs_trans_collection
 
-from mpl_toolkits.axes_grid.grid_helper_curvelinear import GridHelperCurveLinear
 class GridHelperWcs(GridHelperCurveLinear):
 
     WCS_TRANS_COLLECTION = wcs_trans_collection
@@ -230,7 +154,6 @@ class GridHelperWcs(GridHelperCurveLinear):
     def get_wcs_trans(cls, wcs, coord):
         return cls.WCS_TRANS_COLLECTION.get_wcs_trans(wcs, coord)
 
-    #def __init__(self, header):
     def __init__(self, wcs, orig_coord=None):
 
         #self.header = header
@@ -253,7 +176,6 @@ class GridHelperWcs(GridHelperCurveLinear):
         self.wcsgrid = None
         self._old_values = None
 
-        #self.set_display_coord_system(None)
         _wcs_trans = self.get_wcs_trans(self.wcs, None)
         self._wcsgrid_display_coord_system = None
 
@@ -327,11 +249,6 @@ class GridHelperWcs(GridHelperCurveLinear):
                                 tick_formatter2=formatter2(),
                                 )
 
-
-
-#         if len(kwargs) > 0:
-#             raise ValueError("Unknown keyword names : %s" \
-#                              % (",".join(kwargs.keys()),))
 
 
     def get_wcsgrid_params(self):
@@ -453,7 +370,6 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
         O, oe  = get_transformed_image(Z, self.transAux,
                                        extent=sub_range, oversample=oversample)
         Om = np.ma.array(O, mask=np.isnan(O))
-        #return super(ParasiteAxesWcs, self).imshow(Om, extent=oe, **kwargs)
 
         ax = self._parent_axes
         aox = ax.get_autoscalex_on()

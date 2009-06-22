@@ -2,15 +2,7 @@ from matplotlib.transforms import Transform
 from matplotlib.path import Path
 import numpy as np
 
-#from pywcsgrid2.coords.coord_system import coord_system_guess, FK5, FK4, GAL
-#from pywcsgrid2.coords.coord_system import FK5, FK4, GAL
-
 from kapteyn_helper import coord_system_guess, sky2sky
-
-#_coord_sys_dict2 = dict(fk5=FK5,
-#                        fk4=FK4,
-#                        gal=GAL)
-
 
 def coord_conv(src, dest):
     return sky2sky(src, dest)
@@ -35,6 +27,7 @@ class CurvedTransform(Transform):
 
     transform_path_non_affine = transform_path
     transform_path_non_affine.__doc__ = Transform.transform_path_non_affine.__doc__
+
 
 class WcsSky2PixelTransform(CurvedTransform):
     """
