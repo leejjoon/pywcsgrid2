@@ -20,7 +20,8 @@ mcoll.QuadMesh.draw = rasterized_draw
 #from  axislines import AxisLineHelper, GridHelperRectlinear, AxisArtist
 from  mpl_toolkits.axes_grid.axislines import GridlinesCollection
 
-import pywcs
+#import pywcs
+from kapteyn_helper import get_kapteyn_projection
 
 from mpl_toolkits.axes_grid.parasite_axes import HostAxes, ParasiteAxesAuxTrans
 import mpl_toolkits.axes_grid.grid_finder as grid_finder
@@ -34,84 +35,6 @@ from mpl_toolkits.axes_grid.angle_helper import ExtremeFinderCycle
 from mpl_toolkits.axes_grid.angle_helper import LocatorDMS, LocatorHMS, FormatterDMS, FormatterHMS
 
 from mpl_toolkits.axes_grid.grid_helper_curvelinear import GridHelperCurveLinear
-
-
-
-class GridFinderWcsFull(GridFinderBase):
-
-    def __init__(self, wcs, tran,
-                 extreme_finder,
-                 grid_locator1,
-                 grid_locator2,
-                 tick_formatter1,
-                 tick_formatter2):
-        """
-        transform : transfrom from the image coordinate (which will be
-        the transData of the axes to the world coordinate.
-        locator1, locator2 : grid locator for 1st and 2nd axis.
-        """
-        self.wcs = wcs
-        self.lon_mode = ""
-        self.lat_mode = ""
-
-
-        if tran is not None:
-            self.tran = tran
-            self.tran_inv = tran.inverted()
-        else:
-            self.tran = self.tran_inv = None
-
-
-        super(GridFinderWcsFull, self).__init__( \
-                 extreme_finder,
-                 grid_locator1,
-                 grid_locator2,
-                 tick_formatter1,
-                 tick_formatter2)
-
-
-    def get_grid_info(self,
-                      x1, y1, x2, y2):
-
-        return super(GridFinderWcsFull,self).get_grid_info( \
-            self.transform_xy, self.inv_transform_xy,
-            x1, y1, x2, y2)
-
-
-    def transform_xy(self, x, y):
-        lon, lat = self.wcs.wcs_pix2sky(x, y, 0)
-        if self.tran is not None:
-            lon, lat = self.tran(lon, lat)
-        return lon, lat
-
-    def inv_transform_xy(self, lon, lat):
-        if self.tran_inv is not None:
-            lon, lat = self.tran_inv(lon, lat)
-        x, y = self.wcs.wcs_sky2pix(lon, lat, 0)
-        return x, y
-
-
-
-class GridFinderWcs(GridFinderWcsFull):
-
-    def __init__(self, wcs, tran,
-                 grid_mode=None):
-        """
-        transform : transfrom from the image coordinate (which will be
-        the transData of the axes to the world coordinate.
-        locator1, locator2 : grid locator for 1st and 2nd axis.
-        """
-        super(GridFinderWcs, self).__init__(wcs, tran,
-                                            ExtremeFinderCycle(20,20),
-                                            LocatorHMS(4),
-                                            LocatorDMS(4),
-                                            FormatterHMS(),
-                                            FormatterDMS())
-
-
-
-
-
 
 
 import weakref
@@ -158,16 +81,21 @@ class GridHelperWcs(GridHelperCurveLinear):
 
         #self.header = header
         #wcs = pywcs.WCS(header)
-        self.wcs = wcs
+        projection = get_kapteyn_projection(wcs)
+        self.projection = projection
 
         if orig_coord is None:
-            coord_guess = coord_system_guess(wcs.wcs.ctype[0],
-                                             wcs.wcs.ctype[1],
-                                             wcs.wcs.equinox)
+            ctype1, ctype2 = self.projection.ctype
+            equinox = self.projection.equinox
+            coord_guess = coord_system_guess(ctype1, ctype2, equinox)
+
+            #coord_guess = coord_system_guess(wcs.wcs.ctype[0],
+            #                                 wcs.wcs.ctype[1],
+            #                                 wcs.wcs.equinox)
             if coord_guess is None:
                 raise ValueError("Unknown coordinate system, %, %s, equinox=%.1f" \
-                                 % (wcs.wcs.ctype[0], wcs.wcs.ctype[1],
-                                wcs.wcs.equinox))
+                                 % (ctype1, ctype2,
+                                    equinox))
             else:
                 self._wcsgrid_orig_coord_system = coord_guess
         else:
@@ -176,7 +104,7 @@ class GridHelperWcs(GridHelperCurveLinear):
         self.wcsgrid = None
         self._old_values = None
 
-        _wcs_trans = self.get_wcs_trans(self.wcs, None)
+        _wcs_trans = self.get_wcs_trans(self.projection, None)
         self._wcsgrid_display_coord_system = None
 
         self._wcsgrid_params = dict(coord_format=("hms", "dms"),
@@ -192,17 +120,19 @@ class GridHelperWcs(GridHelperCurveLinear):
 
 
     def tr(self, lon, lat):
-        ll = np.concatenate((lon[:,np.newaxis], lat[:,np.newaxis]), 1)
-        origin=0
-        xy = self.wcs.wcs.s2p(ll, origin)["pixcrd"]
-        return xy[:,0], xy[:,1]
+        return self.projection.topixel((lon, lat))
+        #ll = np.concatenate((lon[:,np.newaxis], lat[:,np.newaxis]), 1)
+        #origin=0
+        #xy = self.wcs.wcs.s2p(ll, origin)["pixcrd"]
+        #return xy[:,0], xy[:,1]
 
     def inv_tr(self, x, y):
-        xy = np.concatenate((x[:,np.newaxis], y[:,np.newaxis]),
-                            1)
-        origin=0
-        ll = self.wcs.wcs.p2s(xy, origin)['world']
-        return ll[:,0], ll[:,1]
+        return self.projection.toworld((x, y))
+        #xy = np.concatenate((x[:,np.newaxis], y[:,np.newaxis]),
+        #                    1)
+        #origin=0
+        #ll = self.wcs.wcs.p2s(xy, origin)['world']
+        #return ll[:,0], ll[:,1]
 
 
     def update_wcsgrid_params2(self, **ka):
@@ -260,7 +190,7 @@ class GridHelperWcs(GridHelperCurveLinear):
             raise ValueError("_pywcsgrid_orig_coord_system is not set")
 
         self._wcsgrid_display_coord_system = coord_system
-        _wcs_trans = self.get_wcs_trans(self.wcs, coord_system)
+        _wcs_trans = self.get_wcs_trans(self.projection, coord_system)
 
         self.update_grid_finder(aux_trans=_wcs_trans)
 
@@ -278,7 +208,7 @@ class ParasiteAxesSky(ParasiteAxesAuxTrans):
              parent._wcsgrid_wcsaxes[0].transAux
 
 
-        grid_helper = GridHelperWcs(parent._wcs)
+        grid_helper = GridHelperWcs(parent.projection)
         grid_helper.set_display_coord_system(src_coord)
 
         kwargs["grid_helper"] = grid_helper
@@ -394,16 +324,21 @@ class AxesWcs(HostAxes):
             header = kw.pop("header", None)
             wcs = kw.pop("wcs", None)
             if (header is not None) and (wcs is None):
-                self._wcs = pywcs.WCS(header)
+                #self._init_kapteyn_projection(header)
+                #self._wcs = pywcs.WCS(header)
+                self.projection = get_kapteyn_projection(header)
             elif (header is None) and (wcs is not None):
-                self._wcs = wcs
+                #self._init_kapteyn_projection(wcs)
+                #self._wcs = wcs
+                self.projection = get_kapteyn_projection(wcs)
             else:
                 raise ValueError("wcs")
 
-            grid_helper = GridHelperWcs(self._wcs)
+            #grid_helper = GridHelperWcs(self._wcs)
+            grid_helper = GridHelperWcs(self.projection)
             kw["grid_helper"] = grid_helper
         else:
-            self._wcs = kw["grid_helper"].wcs
+            self.projection = kw["grid_helper"].projection
 
         super(AxesWcs, self).__init__(*kl, **kw)
 
@@ -414,7 +349,8 @@ class AxesWcs(HostAxes):
 
     def _init_parasites(self):
         ax = ParasiteAxesAuxTrans(self,
-                                  WcsSky2PixelTransform(self._wcs),
+                                  #WcsSky2PixelTransform(self._wcs),
+                                  WcsSky2PixelTransform(self.projection),
                                   viewlim_mode="equal")
         self._wcsgrid_wcsaxes = {0:ax}
         self.parasites.append(ax)
@@ -431,10 +367,13 @@ class AxesWcs(HostAxes):
         elif is_string_like(key):
             pass
             #key = _coord_sys_dict[key.lower()]
-        elif isinstance(key, pywcs.WCS):
-            pass
+        #elif isinstance(key, pywcs.WCS):
+        #    pass
         else:
-            raise ValueError("invalide key : %s" % repr(key))
+            try:
+                key = get_kapteyn_projection(key)
+            except:
+                raise ValueError("invalide key : %s" % repr(key))
 
         if key not in self._wcsgrid_wcsaxes:
             if self.get_grid_helper()._wcsgrid_orig_coord_system == key:
@@ -442,10 +381,13 @@ class AxesWcs(HostAxes):
             else:
                 orig_coord = self.get_grid_helper()._wcsgrid_orig_coord_system
 
-                if isinstance(key, pywcs.WCS):
-                    ax = ParasiteAxesWcs(self, key)
-                else:
+                if is_string_like(key):
                     ax = ParasiteAxesSky(self, key)
+                #if isinstance(key, pywcs.WCS):
+                #    ax = ParasiteAxesWcs(self, key)
+                else:
+                    ax = ParasiteAxesWcs(self, key)
+                    #ax = ParasiteAxesSky(self, key)
 
                 self._wcsgrid_wcsaxes[key] = ax
                 self.parasites.append(ax)

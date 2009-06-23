@@ -58,6 +58,32 @@ def coord_system_guess(ctype1_name, ctype2_name, equinox):
         return "gal"
     return None
 
+import kapteyn.wcs
+import pyfits
+
+def get_kapteyn_projection(header):
+    if isinstance(header, kapteyn.wcs.Projection):
+        projection = header
+    elif hasattr(header, "wcs") and hasattr(header.wcs, "to_header"):
+        # pywcs
+        naxis = header.naxis
+        header = header.wcs.to_header()
+        cards = pyfits.CardList()
+        for i in range(0, len(header), 80):
+            card_string = header[i:i+80]
+            card = pyfits.Card()
+            card.fromstring(card_string)
+            cards.append(card)
+        h = pyfits.Header(cards)
+        h.update("NAXIS", naxis)
+        projection = kapteyn.wcs.Projection(h)
+    else:
+        projection = kapteyn.wcs.Projection(header)
+
+    projection = projection.sub(axes=[1,2])
+    return projection
+
+
 
 if __name__ == "__main___":
     fk5_to_fk4 = sky2sky(FK5, FK4)

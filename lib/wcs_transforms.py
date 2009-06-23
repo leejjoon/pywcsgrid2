@@ -2,7 +2,7 @@ from matplotlib.transforms import Transform
 from matplotlib.path import Path
 import numpy as np
 
-from kapteyn_helper import coord_system_guess, sky2sky
+from kapteyn_helper import coord_system_guess, sky2sky, get_kapteyn_projection
 
 def coord_conv(src, dest):
     return sky2sky(src, dest)
@@ -36,23 +36,24 @@ class WcsSky2PixelTransform(CurvedTransform):
     output_dims = 2
     is_separable = False
 
-    def __init__(self, wcs, src_coord=None, resolution=None):
+    def __init__(self, header_or_wcs, src_coord=None, resolution=None):
         """
         Create a new WCS transform.
         """
         CurvedTransform.__init__(self, resolution)
 
-        if wcs.naxis > 2:
-            wcs = wcs.wcssub([1, 2])
+        self.projection = get_kapteyn_projection(header_or_wcs)
 
-        self.wcs = wcs
+        #if wcs.naxis > 2:
+        #    wcs = wcs.wcssub([1, 2])
+        #self.wcs = wcs
 
         if src_coord is not None:
             self.src_coord = src_coord
 
-            coord_guess = coord_system_guess(wcs.wcs.ctype[0],
-                                             wcs.wcs.ctype[1],
-                                             wcs.wcs.equinox)
+            ctype1, ctype2 = self.projection.ctype
+            equinox = self.projection.equinox
+            coord_guess = coord_system_guess(ctype1, ctype2, equinox)
 
             self.dest_coord = coord_guess
             if src_coord == coord_guess:
@@ -67,14 +68,18 @@ class WcsSky2PixelTransform(CurvedTransform):
 
     def transform(self, ll):
 
+        lon, lat = ll[:,0], ll[:,1]
+
         if self.coord_conv_func is not None:
-            lon, lat = ll[:,0], ll[:,1]
             lon, lat = self.coord_conv_func(lon, lat)
 
-            ll = np.concatenate((lon[:,np.newaxis], lat[:,np.newaxis]),
-                                1)
-        origin=0
-        return self.wcs.wcs.s2p(ll, origin)["pixcrd"]
+        x, y = self.projection.topixel((lon, lat))
+        xy = np.concatenate((x[:,np.newaxis], y[:,np.newaxis]), 1)
+
+        return xy
+        #origin=0
+
+        #return self.wcs.wcs.s2p(ll, origin)["pixcrd"]
     #return self.wcs.wcs_sky2pix(ll, =1)
 
 
@@ -85,7 +90,7 @@ class WcsSky2PixelTransform(CurvedTransform):
 
 
     def inverted(self):
-        return WcsPixel2SkyTransform(self.wcs,
+        return WcsPixel2SkyTransform(self.projection, #wcs,
                                      dest_coord=self.src_coord,
                                      resolution=self._resolution)
     inverted.__doc__ = Transform.inverted.__doc__
@@ -99,7 +104,8 @@ class WcsPixel2SkyTransform(CurvedTransform):
     output_dims = 2
     is_separable = False
 
-    def __init__(self, wcs, dest_coord=None, resolution=None):
+
+    def __init__(self, header_or_wcs, dest_coord=None, resolution=None):
         """
         Create a new WCS transform.  Resolution is the number of steps
         to interpolate between each input line segment to approximate its
@@ -107,15 +113,16 @@ class WcsPixel2SkyTransform(CurvedTransform):
         """
         CurvedTransform.__init__(self, resolution)
 
-        if wcs.naxis > 2:
-            wcs = wcs.wcssub([1, 2])
+        #if wcs.naxis > 2:
+        #    wcs = wcs.wcssub([1, 2])
 
-        self.wcs = wcs
+        self.projection = get_kapteyn_projection(header_or_wcs)
+        #self.wcs = wcs
 
         if dest_coord is not None:
-            coord_guess = coord_system_guess(wcs.wcs.ctype[0],
-                                             wcs.wcs.ctype[1],
-                                             wcs.wcs.equinox)
+            ctype1, ctype2 = self.projection.ctype
+            equinox = self.projection.equinox
+            coord_guess = coord_system_guess(ctype1, ctype2, equinox)
 
             self.src_coord = coord_guess
             self.dest_coord = dest_coord
@@ -131,17 +138,17 @@ class WcsPixel2SkyTransform(CurvedTransform):
 
 
     def transform(self, xy):
-        origin=0
-        ll = self.wcs.wcs.p2s(xy, origin)['world']
+
+        x, y = xy[:,0], xy[:,1]
+
+        lon, lat = self.projection.toworld((x, y))
 
         if self.coord_conv_func is not None:
-            lon, lat = ll[:,0], ll[:,1]
             lon, lat = self.coord_conv_func(lon, lat)
-            ll = np.concatenate((lon[:,np.newaxis], lat[:,np.newaxis]),
-                                1)
+
+        ll = np.concatenate((lon[:,np.newaxis], lat[:,np.newaxis]), 1)
 
         return ll
-
 
 
 
@@ -152,7 +159,7 @@ class WcsPixel2SkyTransform(CurvedTransform):
 
 
     def inverted(self):
-        return WcsSky2PixelTransform(self.wcs,
+        return WcsSky2PixelTransform(self.projection, #self.wcs,
                                      src_coord=self.dest_coord,
                                      resolution=self._resolution)
     inverted.__doc__ = Transform.inverted.__doc__
