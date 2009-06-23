@@ -22,20 +22,20 @@ from  mpl_toolkits.axes_grid.axislines import GridlinesCollection
 
 #import pywcs
 from kapteyn_helper import get_kapteyn_projection
+from pywcsgrid2.kapteyn_helper import coord_system_guess
 
 from mpl_toolkits.axes_grid.parasite_axes import HostAxes, ParasiteAxesAuxTrans
 import mpl_toolkits.axes_grid.grid_finder as grid_finder
 
 GridFinderBase = grid_finder.GridFinderBase
 
-from pywcsgrid2.kapteyn_helper import coord_system_guess
 
 
 from mpl_toolkits.axes_grid.angle_helper import ExtremeFinderCycle
 from mpl_toolkits.axes_grid.angle_helper import LocatorDMS, LocatorHMS, FormatterDMS, FormatterHMS
 
-from mpl_toolkits.axes_grid.grid_helper_curvelinear import GridHelperCurveLinear
-
+from mpl_toolkits.axes_grid.grid_helper_curvelinear \
+     import GridHelperCurveLinear, FixedAxisArtistHelper
 
 import weakref
 class WcsTransCollection(object):
@@ -135,21 +135,6 @@ class GridHelperWcs(GridHelperCurveLinear):
         #return ll[:,0], ll[:,1]
 
 
-    def update_wcsgrid_params2(self, **ka):
-        """
-        coord_format="GE",
-        label_density=(6, 6),
-        grid1=[], grid2=[]):
-        """
-
-        for k in ["coord_format", "label_density", "grid1", "grid2", "src_system", "dest_system"]:
-            if k in ka:
-                self._wcsgrid_params[k] = ka.pop(k)
-
-        if len(ka) > 0:
-            raise ValueError("keyword name should be one of coord_format, label_densit, grid1, grid2")
-
-
     def update_wcsgrid_params(self, **kwargs):
         """
         coord_format="GE",
@@ -243,6 +228,22 @@ class ParasiteAxesSky(ParasiteAxesAuxTrans):
             axisline.major_ticklabels.set_visible(False)
             axisline.minor_ticklabels.set_visible(False)
 
+
+    def new_floating_axis(self, nth_coord, value,
+                          tick_direction="in",
+                          label_direction="top",
+                          ):
+        gh = self.get_grid_helper()
+        axis = gh.new_floating_axis(nth_coord, value,
+                                    tick_direction=tick_direction,
+                                    label_direction=label_direction,
+                                    axes=self._parent_axes)
+        return axis
+
+
+    def update_wcsgrid_params(self, **ka):
+        self.get_grid_helper().update_wcsgrid_params(**ka)
+        
 
 
 def get_transformed_image(Z, tr, extent=None, oversample=1.5):
@@ -356,9 +357,6 @@ class AxesWcs(HostAxes):
         self.parasites.append(ax)
 
 
-    def register_wcs(self, key, wcs):
-        pass
-
     def __getitem__(self, key):
 
         # check if key is a valid coord_sys instance
@@ -394,6 +392,11 @@ class AxesWcs(HostAxes):
 
 
         return self._wcsgrid_wcsaxes[key]
+
+
+    def update_wcsgrid_params(self, **ka):
+        self.get_grid_helper().update_wcsgrid_params(**ka)
+        
 
     def set_display_coord_system(self, c):
         self.get_grid_helper().set_display_coord_system(c)
@@ -431,7 +434,9 @@ class AxesWcs(HostAxes):
 
     def swap_tick_coord(self):
         for axis in self.axis.values():
-            axis.get_helper().change_tick_coord()
+            gh = axis.get_helper()
+            if isinstance(gh, FixedAxisArtistHelper):
+                gh.change_tick_coord()
 
         label=self.axis["left"].label.get_text()
         self.axis["left"].label.set_text(self.axis["bottom"].label.get_text())
@@ -441,7 +446,8 @@ class AxesWcs(HostAxes):
         self.axis["right"].label.set_text(self.axis["top"].label.get_text())
         self.axis["top"].label.set_text(label)
 
-
+        self.get_grid_helper().invalidate()
+        
 
 SubplotWcs = maxes.subplot_class_factory(AxesWcs)
 
