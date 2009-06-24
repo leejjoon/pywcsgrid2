@@ -126,7 +126,7 @@ backend). Contouring command will work fine. Contours will be drawn in
 the original wcs coordinate and then will be transformed to the target
 coordinate.
 
-The example below is a more sophiscated example. The two fits images
+The code below is a more sophiscated example. The two fits images
 are plotted using the mpl_toolkits.AxesGrid. Both axes are created
 using the wcs information of the first image. Note that the gridhelper
 object is explicitly created and handed to the axes, i.e., the
