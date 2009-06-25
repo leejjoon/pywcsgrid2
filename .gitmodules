@@ -1,0 +1,3 @@
+[submodule "doc/build/html"]
+	path = doc/build/html
+	url = /users/research/lee/local/git/pywcsgrid2/.git
