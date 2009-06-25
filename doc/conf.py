@@ -31,6 +31,7 @@ sys.path.append(os.path.abspath('./sphinxext'))
 extensions = ['matplotlib.sphinxext.mathmpl',# 'math_symbol_table',
               'sphinx.ext.autodoc', 'matplotlib.sphinxext.only_directives',
               'matplotlib.sphinxext.plot_directive',
+              'github.tools.sphinx'
               #'gen_rst',
               ]
 
