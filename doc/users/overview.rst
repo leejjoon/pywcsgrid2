@@ -2,46 +2,55 @@
 Overview
 ========
 
-The pywcsgrid2 is a collection of helper classes to display
-astronomical fits images in matplotlib. Its main functionality is to
-draw ticks, ticklabels, and grids in an appropriate sky
-coordinates. I
+pywcsgrid2 is a python module to be used with matplotlib for
+displaying astronomical fits images.  While there are other tools for
+a similar purpose, pywcsgrid2 tries to extend the functionality of
+matplotlib, instead of creating a new tool on top of the matplotlib.
+In essence, it provides a custom Axes class (derived from mpl's
+original Axes class) suitable for displaying fits images.  Its main
+functionality is to draw ticks, ticklabels, and grids in an
+appropriate sky coordinates.  You require pyfits and kapteyn package
+installed, in addition to matplotlib (you need to use svn version).
 
 .. contents::
    :depth: 1
    :local:
 
 
-You require pyfits and kapteyn package installed, in addition to matplotlib.
-You read in the fits file using pyfits and create a subplot (or axes) to
-display the image with its header (wcs) information. ::
+Basic Image Display
+===================
+
+You read in the fits file using pyfits and create a subplot (or axes)
+using pywcsgrid2's subplot command  with its header (wcs) information. ::
 
     import pyfits
-    import pywcs
     import matplotlib.pyplot as plt
-    from pywcsgrid2.axes_wcs import AxesWcs
 
     f = pyfits.open("data/lmc.fits")
-    h = f[0].header
+    h, d = f[0].header, f[0].data
 
-    fig = plt.figure(1, [5,5])
-    ax = AxesWcs(fig, [0.2, 0.15, 0.7, 0.8], header=h)
-    fig.add_axes(ax)
+    # image display with mpl's original subplot(axes)
+    plt.subplot(121)
+    plt.imshow(d, origin="lower")
 
-The data coordinate of the AxesWcs axes is the image (pixel) coordinate
-((0-based!) of the fits file. But The ticklabels are displayed in the
-sky coordinates. For a simple image display, you may do ::
 
-    ax.imshow(f[0].data)
-
+    # image display with pywcsgrid2
+    import pywcsgrid2
+    
+    pywcsgrid2.subplot(122, header=h)
+    plt.imshow(d, origin="lower")
 
 .. plot:: figures/demo_basic1.py
 
+*pywcsgrid2.subplot* creates an instance of the *pywcsgrid2.Axes* class, which
+is derived from mpl's Axes but draws ticks in proper sky coordinate.
+Note that the data coordinate of the AxesWcs axes is the image (pixel)
+coordinate ((0-based!) of the fits file. Only the ticklabels are
+displayed in the sky coordinates.  For example, xlim and ylim needs to
+be in image coordinates (0-based). ::
 
-
-Again, the data coordinate of the AxesWcs axes is the image coordinate.
-For example, xlim and ylim needs to be in image coordinates (0-based). ::
-
+    ax = pywcsgrid2.axes([0.1, 0.1, 0.8, 0.8], header=h)
+    
     # viewlimits in image coordinate
     ax.set_xlim(6, 81)
     ax.set_ylim(23, 98)
@@ -58,26 +67,30 @@ to change the wcsgrid parameters associated. For example, to set the
 approximate number of ticks in each axis, ::
 
   # change grid density
-  gh = ax.get_grid_helper()
-  gh.update_wcsgrid_params(label_density=[4,3])
+  ax.update_wcsgrid_params(label_density=[4,3])
 
 .. plot:: figures/demo_basic2.py
 
-Custom tick location is not currently (but wiil be) supported.
+Custom tick location is not currently (but will be) supported.
 
-You can change the displyed sky coordinate (i.e., coordinates for
+Changing Cooditnate System
+==========================
+
+You can change the displayed sky coordinate (i.e., coordinates for
 ticks, ticklabels and grids). For example, to display the Galactic
 coordinate system::
 
     ax.set_display_coord_system("gal")
 
+The coordinate system must be one of "fk4", "fk5", or "gal".
 Sometimes, you will need to swap the axis for better tick labeling
 (i.e., xaxis display latitude and yaxis display longitude). ::
 
     ax.swap_tick_coord()
 
-The AxesWcs class is based on the axes_grid.axislines.Axes. For
-eaxmple, to turn on the top and right tick labels,::
+The pywcsgrid2.Axes class is derived from the
+mpl_toolkits.axes_grid.axislines.Axes. For example, to turn on the top
+and right tick labels,::
 
   ax.axis["top"].major_ticklabels.set_visible(True)
   ax.axis["right"].major_ticklabels.set_visible(True)
@@ -85,12 +98,18 @@ eaxmple, to turn on the top and right tick labels,::
 .. plot:: figures/demo_basic3.py
 
 
-Again, the data coordinate of SubplotWcs(or AxesWcs) is a pixel
-coordinate (0-based) of the fits header (or any equivalent wcs information).
-For plot something in sky coordinate, you may convert your data into pixel coodinates, or you may use parasites axes which does that conversion for you. For
+Plotting in Sky Coordinate
+==========================
+
+Again, the data coordinate of pywcsgrid2.Axes is a pixel coordinate
+(0-based) of the fits header (or any equivalent wcs information).  For
+plot something in sky coordinate, you may convert your data into pixel
+coordinates, or you may use parasites axes (from
+mpl_toolkits.axes_grid) which does that conversion for you. For
 example, ``ax["fk5"]`` gives you an Axes whose data coordinate is in
-fk5 coordinate. Most (if not all) of the valid mpl plot commands will
-work. The unit for the sky coordinates are degrees.::
+fk5 coordinate (available coordinates = "fk4", "fk5", "gal"). Most (if
+not all) of the valid mpl plot commands will work. The unit for the
+sky coordinates are degrees.::
 
   # (alpha, delta) in degree
    ax["fk4"].plot([x/24.*360 for x in [4, 5, 6]],
@@ -103,40 +122,47 @@ work. The unit for the sky coordinates are degrees.::
 .. plot:: figures/demo_basic4.py
 
 
+Fits Images of Different WCS
+============================
+
 Instead of string ("fk4", "fk5", "gal"), you can use other pyfits
 header instance. The returning axes has a data coordinate of the pixel
-(image) cooridnate of the given header. Most of plot commands (other
-than image-related routine) will work as expected.
+(image) coordinate of the given header. 
 
-However, displaying images in other wcs coordinate system needs some
-consideration. You may simply use imshow:
-   f2 = pyfits.open("another.fits")
-   h2, d2 = f2[0].header, f2[0].data
-   ax[h2].imshow(d2)
+Most of plot commands (other than image-related routine) will work as
+expected.  However, displaying images in other wcs coordinate system
+needs some consideration. You may simply use imshow ::
 
-This will regrid the original image into the target wcs (regridin is
+  f2 = pyfits.open("another.fits") 
+  h2, d2 = f2[0].header, f2[0].data
+  ax[h2].imshow(d2)
+
+This will regrid the original image into the target wcs (regriding is
 necessary since matplotlib's imshow only supports rectangular
 image). If you don't want your data to be regridded, a vector drawing
-command pcolormesh is recommedned. But pcolormesh is optimized for agg
+command pcolormesh is recommended. But pcolormesh is only optimized for agg
 backend and become extremely slow with increasing image size in other
-backends. Therefore, it is highly recommended (and this is a default
-behavior) that pcolormesh command is rasterized (rasterization is
+backends. Therefore, it is highly recommended 
+that pcolormesh command is rasterized (rasterization is
 fully supported in pdf and svg backend, and partially available in ps
 backend). Contouring command will work fine. Contours will be drawn in
 the original wcs coordinate and then will be transformed to the target
 coordinate.
 
-The code below is a more sophiscated example. The two fits images
-are plotted using the mpl_toolkits.AxesGrid. Both axes are created
-using the wcs information of the first image. Note that the gridhelper
-object is explicitly created and handed to the axes, i.e., the
-gridhelper is shared between two axes (this is to share grid
-parameters). The second image, which has different wcs
-infromation is drawn using pcolormesh.
+The example below is a more sophisticated one. The two fits images
+with different wcs are plotted using the
+mpl_toolkits.axes_grid.AxesGrid. Both axes are created using the wcs
+information of the first image. Note that the gridhelper object is
+explicitly created and handed to the axes, i.e., the gridhelper is
+shared between two axes (this is to share grid parameters). The second
+image, which has different wcs information is drawn using pcolormesh.
 
 
 .. plot:: figures/demo_skyview.py
    :include-source:
+
+Floating Axis
+=============
 
 It is possible to create a floating axis in any sky coordinate. This
 can be useful for drawing a Galactic object, where you draw a image in
@@ -145,10 +171,14 @@ floating axis is created using the new_floating_axis method. The first
 argument indicate which coordinate, and the second argument is the
 value. For example, if you want to have a floating axis of b=0,
 i.e. the second coordinate (index starts at 0) is 0 in the Galactic
-coordinate:: 
-  ax1.axis["b=0"] = ax["gal"].new_floating_axis(1, 0.)
+coordinate::
 
-Here is an complete example,
+  axis = ax["gal"].new_floating_axis(1, 0.)
+  ax.axis["b=0"] = axis
+
+See mpl_toolkits.axes_grid for more about the floating axis.
+
+Here is a complete example,
 
 .. plot:: figures/demo_floating_axis.py
    :include-source:

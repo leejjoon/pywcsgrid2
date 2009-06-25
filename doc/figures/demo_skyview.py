@@ -3,7 +3,8 @@ import pyfits
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from mpl_toolkits.axes_grid.axes_grid import AxesGrid
-from pywcsgrid2.axes_wcs import GridHelperWcs, AxesWcs
+#from pywcsgrid2.axes_wcs import GridHelperWcs, AxesWcs
+import pywcsgrid2
 
 # read in the first image
 xray_name="pspc_skyview.fits"
@@ -17,14 +18,14 @@ header_radio = f_radio[0].header
 
 
 # grid helper to be used.
-grid_helper = GridHelperWcs(wcs=header_xray)
+grid_helper = pywcsgrid2.GridHelper(wcs=header_xray)
 grid_helper.update_wcsgrid_params(label_density=(2,2))
 
 # AxesGrid to display tow images side-by-side
 fig = plt.figure(1, (6,3.5))
 grid = AxesGrid(fig, (0.15, 0.15, 0.8, 0.75), nrows_ncols=(1, 2),
                 axes_pad=0.1, share_all=True,
-                axes_class=(AxesWcs, dict(grid_helper=grid_helper)))
+                axes_class=(pywcsgrid2.Axes, dict(grid_helper=grid_helper)))
 
 
 ax1 = grid[0]
