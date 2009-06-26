@@ -31,7 +31,7 @@ sys.path.append(os.path.abspath('./sphinxext'))
 extensions = ['matplotlib.sphinxext.mathmpl',# 'math_symbol_table',
               'sphinx.ext.autodoc', 'matplotlib.sphinxext.only_directives',
               'matplotlib.sphinxext.plot_directive',
-              'github.tools.sphinx'
+              'github_sphinx'
               #'gen_rst',
               ]
 
@@ -46,7 +46,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General substitutions.
-project = 'Matplotlib WcsGrid Toolkit'
+project = 'pywcsgrid2'
 copyright = '2009, Jae-Joon Lee'
 
 # The default replacements for |version| and |release|, also used in various
@@ -135,7 +135,7 @@ html_sidebars = {'index': 'indexsidebar.html',
 html_use_opensearch = 'False'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'WcsGridDoc'
+htmlhelp_basename = 'PywcsgridDoc'
 
 
 # Options for LaTeX output

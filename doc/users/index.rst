@@ -1,8 +1,8 @@
 .. _users-guide-index:
 
-################################################
-  The Matplotlib ImageAxes Toolkit User's Guide
-################################################
+##########
+pywcsgrid2
+##########
 
 :Release: |version|
 :Date: |today|
