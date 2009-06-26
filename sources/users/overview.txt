@@ -16,8 +16,6 @@ installed, in addition to matplotlib (you need to use svn version).
    :depth: 1
    :local:
 
-.. image _static/image.png
-
 
 Basic Image Display
 ===================
