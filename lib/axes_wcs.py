@@ -120,14 +120,15 @@ class GridHelperWcs(GridHelperCurveLinear):
 
 
     def tr(self, lon, lat):
-        return self.projection.topixel((lon, lat))
+        x, y = self.projection.topixel((lon, lat))
+        return x-1, y-1
         #ll = np.concatenate((lon[:,np.newaxis], lat[:,np.newaxis]), 1)
         #origin=0
         #xy = self.wcs.wcs.s2p(ll, origin)["pixcrd"]
         #return xy[:,0], xy[:,1]
 
     def inv_tr(self, x, y):
-        return self.projection.toworld((x, y))
+        return self.projection.toworld((x+1, y+1))
         #xy = np.concatenate((x[:,np.newaxis], y[:,np.newaxis]),
         #                    1)
         #origin=0
@@ -243,7 +244,7 @@ class ParasiteAxesSky(ParasiteAxesAuxTrans):
 
     def update_wcsgrid_params(self, **ka):
         self.get_grid_helper().update_wcsgrid_params(**ka)
-        
+
 
 
 def get_transformed_image(Z, tr, extent=None, oversample=1.5):
@@ -396,7 +397,7 @@ class AxesWcs(HostAxes):
 
     def update_wcsgrid_params(self, **ka):
         self.get_grid_helper().update_wcsgrid_params(**ka)
-        
+
 
     def set_display_coord_system(self, c):
         self.get_grid_helper().set_display_coord_system(c)
@@ -447,7 +448,7 @@ class AxesWcs(HostAxes):
         self.axis["top"].label.set_text(label)
 
         self.get_grid_helper().invalidate()
-        
+
 
 SubplotWcs = maxes.subplot_class_factory(AxesWcs)
 

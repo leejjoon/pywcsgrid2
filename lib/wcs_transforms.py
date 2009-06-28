@@ -74,6 +74,7 @@ class WcsSky2PixelTransform(CurvedTransform):
             lon, lat = self.coord_conv_func(lon, lat)
 
         x, y = self.projection.topixel((lon, lat))
+        x, y = x-1, y-1 # => origin=0,0
         xy = np.concatenate((x[:,np.newaxis], y[:,np.newaxis]), 1)
 
         return xy
@@ -141,6 +142,7 @@ class WcsPixel2SkyTransform(CurvedTransform):
 
         x, y = xy[:,0], xy[:,1]
 
+        x, y = x+1, y+1 # => origin=1,1
         lon, lat = self.projection.toworld((x, y))
 
         if self.coord_conv_func is not None:
