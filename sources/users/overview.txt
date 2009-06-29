@@ -159,7 +159,6 @@ image, which has different wcs information is drawn using pcolormesh.
 
 
 .. plot:: figures/demo_skyview.py
-   :include-source:
 
 Floating Axis
 =============
@@ -181,7 +180,6 @@ See mpl_toolkits.axes_grid for more about the floating axis.
 Here is a complete example,
 
 .. plot:: figures/demo_floating_axis.py
-   :include-source:
 
 
 Axes Annotation
@@ -195,8 +193,8 @@ the legend command.::
     # Figure title
     ax.add_inner_title("Figure 1", loc=2)
 
-    # compas
-    ax.add_compas(loc=1)
+    # compass
+    ax.add_compass(loc=1)
 
     # Beam size
     # (major, minor) = 3, 4 in pixel, angle=20
@@ -209,6 +207,5 @@ the legend command.::
 
 
 
-.. plot:: figures/demo_compas.py
-   :include-source:
+.. plot:: figures/demo_compass.py
 

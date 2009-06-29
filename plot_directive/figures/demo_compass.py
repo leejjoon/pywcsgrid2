@@ -25,8 +25,8 @@ if 1:
     # Figure title
     ax.add_inner_title("Figure 1", loc=2)
 
-    # compas
-    ax.add_compas(loc=1)
+    # compass
+    ax.add_compass(loc=1)
 
     # Beam size
     # (major, minor) = 3, 4 in pixel, angle=20

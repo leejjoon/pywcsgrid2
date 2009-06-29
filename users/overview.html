@@ -250,66 +250,6 @@ information of the first image. Note that the gridhelper object is
 explicitly created and handed to the axes, i.e., the gridhelper is
 shared between two axes (this is to share grid parameters). The second
 image, which has different wcs information is drawn using pcolormesh.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pyfits</span>
-
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">matplotlib.cm</span> <span class="kn">as</span> <span class="nn">cm</span>
-<span class="kn">from</span> <span class="nn">mpl_toolkits.axes_grid.axes_grid</span> <span class="kn">import</span> <span class="n">AxesGrid</span>
-<span class="c">#from pywcsgrid2.axes_wcs import GridHelperWcs, AxesWcs</span>
-<span class="kn">import</span> <span class="nn">pywcsgrid2</span>
-
-<span class="c"># read in the first image</span>
-<span class="n">xray_name</span><span class="o">=</span><span class="s">&quot;pspc_skyview.fits&quot;</span>
-<span class="n">f_xray</span> <span class="o">=</span> <span class="n">pyfits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">xray_name</span><span class="p">)</span>
-<span class="n">header_xray</span> <span class="o">=</span> <span class="n">f_xray</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
-
-<span class="c"># the second image</span>
-<span class="n">radio_name</span><span class="o">=</span><span class="s">&quot;radio_21cm.fits&quot;</span>
-<span class="n">f_radio</span> <span class="o">=</span> <span class="n">pyfits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">radio_name</span><span class="p">)</span>
-<span class="n">header_radio</span> <span class="o">=</span> <span class="n">f_radio</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
-
-
-<span class="c"># grid helper to be used.</span>
-<span class="n">grid_helper</span> <span class="o">=</span> <span class="n">pywcsgrid2</span><span class="o">.</span><span class="n">GridHelper</span><span class="p">(</span><span class="n">wcs</span><span class="o">=</span><span class="n">header_xray</span><span class="p">)</span>
-<span class="n">grid_helper</span><span class="o">.</span><span class="n">update_wcsgrid_params</span><span class="p">(</span><span class="n">label_density</span><span class="o">=</span><span class="p">(</span><span class="mf">2</span><span class="p">,</span><span class="mf">2</span><span class="p">))</span>
-
-<span class="c"># AxesGrid to display tow images side-by-side</span>
-<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span> <span class="p">(</span><span class="mf">6</span><span class="p">,</span><span class="mf">3.5</span><span class="p">))</span>
-<span class="n">grid</span> <span class="o">=</span> <span class="n">AxesGrid</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span> <span class="n">nrows_ncols</span><span class="o">=</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span> <span class="mf">2</span><span class="p">),</span>
-                <span class="n">axes_pad</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">share_all</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                <span class="n">axes_class</span><span class="o">=</span><span class="p">(</span><span class="n">pywcsgrid2</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grid_helper</span><span class="o">=</span><span class="n">grid_helper</span><span class="p">)))</span>
-
-
-<span class="n">ax1</span> <span class="o">=</span> <span class="n">grid</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span>
-<span class="c"># use imshow for a simply image display.</span>
-<span class="n">im</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">f_xray</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s">&quot;lower&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">gray_r</span><span class="p">,</span>
-                <span class="n">interpolation</span><span class="o">=</span><span class="s">&quot;nearest&quot;</span><span class="p">)</span>
-<span class="n">im</span><span class="o">.</span><span class="n">set_clim</span><span class="p">(</span><span class="mf">4.e-05</span><span class="p">,</span> <span class="mf">0.00018</span><span class="p">)</span>
-
-
-<span class="n">ax2</span> <span class="o">=</span> <span class="n">grid</span><span class="p">[</span><span class="mf">1</span><span class="p">]</span>
-<span class="n">d</span> <span class="o">=</span> <span class="n">f_radio</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-<span class="c"># The second image have a different wcs. While imshow works (it</span>
-<span class="c"># will interpolate the second image into the image coordinate of the</span>
-<span class="c"># first image), pcolormesh is prefered when the pixel size of the</span>
-<span class="c"># second image is larger than that of the first image.</span>
-<span class="n">im2</span> <span class="o">=</span> <span class="n">ax2</span><span class="p">[</span><span class="n">header_radio</span><span class="p">]</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">gray_r</span><span class="p">)</span>
-
-<span class="c"># draw contour. The data points of the contour lines are created in</span>
-<span class="c"># the image coordinate of the second image and then are transformed to</span>
-<span class="c"># the image coordinate of the first image.</span>
-<span class="n">cont</span> <span class="o">=</span> <span class="n">ax2</span><span class="p">[</span><span class="n">header_radio</span><span class="p">]</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s">&quot;k&quot;</span><span class="p">)</span>
-
-<span class="c"># draw contour of the second image in the first axes.</span>
-<span class="n">cont2</span> <span class="o">=</span> <span class="n">ax1</span><span class="p">[</span><span class="n">header_radio</span><span class="p">]</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s">&quot;k&quot;</span><span class="p">)</span>
-
-<span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&quot;X-ray&quot;</span><span class="p">)</span>
-<span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&quot;Radio&quot;</span><span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
 <p>[<a class="reference" href="../plot_directive/figures/demo_skyview.py">source code</a>, <a class="reference" href="../plot_directive/figures/demo_skyview.hires.png">hires.png</a>, <a class="reference" href="../plot_directive/figures/demo_skyview.pdf">pdf</a>]</p>
 <img alt="../images/demo_skyview.png" src="../images/demo_skyview.png" />
 </div>
@@ -329,47 +269,6 @@ coordinate:</p>
 </div>
 <p>See mpl_toolkits.axes_grid for more about the floating axis.</p>
 <p>Here is a complete example,</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pyfits</span>
-
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">matplotlib.cm</span> <span class="kn">as</span> <span class="nn">cm</span>
-<span class="kn">import</span> <span class="nn">pywcsgrid2</span>
-
-<span class="c"># read in the image</span>
-<span class="n">xray_name</span><span class="o">=</span><span class="s">&quot;pspc_skyview.fits&quot;</span>
-<span class="n">f_xray</span> <span class="o">=</span> <span class="n">pyfits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">xray_name</span><span class="p">)</span>
-
-<span class="c"># grid helper to be used.</span>
-<span class="n">grid_helper</span> <span class="o">=</span> <span class="n">pywcsgrid2</span><span class="o">.</span><span class="n">GridHelper</span><span class="p">(</span><span class="n">wcs</span><span class="o">=</span><span class="n">f_xray</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span><span class="p">)</span>
-<span class="n">grid_helper</span><span class="o">.</span><span class="n">update_wcsgrid_params</span><span class="p">(</span><span class="n">label_density</span><span class="o">=</span><span class="p">(</span><span class="mf">4</span><span class="p">,</span><span class="mf">4</span><span class="p">))</span>
-
-<span class="c"># AxesGrid to display tow images side-by-side</span>
-<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span> <span class="p">(</span><span class="mf">4</span><span class="p">,</span><span class="mf">3.5</span><span class="p">))</span>
-<span class="n">ax1</span> <span class="o">=</span> <span class="n">pywcsgrid2</span><span class="o">.</span><span class="n">Axes</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span> <span class="n">grid_helper</span><span class="o">=</span><span class="n">grid_helper</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">(</span><span class="n">ax1</span><span class="p">)</span>
-
-<span class="c"># use imshow for a simple image display.</span>
-<span class="n">im</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">f_xray</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s">&quot;lower&quot;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span>
-                <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">gray_r</span><span class="p">,</span>
-                <span class="n">interpolation</span><span class="o">=</span><span class="s">&quot;nearest&quot;</span><span class="p">)</span>
-<span class="n">im</span><span class="o">.</span><span class="n">set_clim</span><span class="p">(</span><span class="mf">4.e-05</span><span class="p">,</span> <span class="mf">0.00018</span><span class="p">)</span>
-
-
-<span class="c"># create a new floating axis in Galactic coordinate</span>
-<span class="c">#grid_helper_gal = ax1[&quot;gal&quot;].get_grid_helper()</span>
-<span class="n">ax1</span><span class="o">.</span><span class="n">axis</span><span class="p">[</span><span class="s">&quot;b=5.5&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ax1</span><span class="p">[</span><span class="s">&quot;gal&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">new_floating_axis</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">)</span>
-<span class="n">ax1</span><span class="o">.</span><span class="n">axis</span><span class="p">[</span><span class="s">&quot;b=5.5&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s">r&quot;$b=5.5^{\circ}$&quot;</span><span class="p">)</span>
-<span class="n">ax1</span><span class="o">.</span><span class="n">axis</span><span class="p">[</span><span class="s">&quot;b=5.5&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_bbox</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s">&quot;square,pad=0.1&quot;</span><span class="p">,</span>
-                                    <span class="n">fc</span><span class="o">=</span><span class="s">&quot;w&quot;</span><span class="p">,</span> <span class="n">ec</span><span class="o">=</span><span class="s">&quot;none&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">))</span>
-<span class="c">#ax1.axis[&quot;b=6&quot;].major_ticklabels.set_visible(False)</span>
-
-<span class="n">ax1</span><span class="o">.</span><span class="n">axis</span><span class="p">[</span><span class="s">&quot;l=82.5&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ax1</span><span class="p">[</span><span class="s">&quot;gal&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">new_floating_axis</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span> <span class="mf">82.5</span><span class="p">)</span>
-<span class="n">ax1</span><span class="p">[</span><span class="s">&quot;gal&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update_wcsgrid_params</span><span class="p">(</span><span class="n">coord_format</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;dms&quot;</span><span class="p">,</span><span class="s">&quot;dms&quot;</span><span class="p">))</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
 <p>[<a class="reference" href="../plot_directive/figures/demo_floating_axis.py">source code</a>, <a class="reference" href="../plot_directive/figures/demo_floating_axis.hires.png">hires.png</a>, <a class="reference" href="../plot_directive/figures/demo_floating_axis.pdf">pdf</a>]</p>
 <img alt="../images/demo_floating_axis.png" src="../images/demo_floating_axis.png" />
 </div>
@@ -382,8 +281,8 @@ the legend command.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># Figure title</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">add_inner_title</span><span class="p">(</span><span class="s">&quot;Figure 1&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mf">2</span><span class="p">)</span>
 
-<span class="c"># compas</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">add_compas</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">1</span><span class="p">)</span>
+<span class="c"># compass</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">add_compass</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">1</span><span class="p">)</span>
 
 <span class="c"># Beam size</span>
 <span class="c"># (major, minor) = 3, 4 in pixel, angle=20</span>
@@ -395,51 +294,8 @@ the legend command.:</p>
                 <span class="n">loc</span><span class="o">=</span><span class="mf">8</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pyfits</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">pywcsgrid2</span>
-
-
-
-
-
-<span class="k">if</span> <span class="mf">1</span><span class="p">:</span>
-
-    <span class="n">f</span> <span class="o">=</span> <span class="n">pyfits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;radio_21cm.fits&quot;</span><span class="p">)</span>
-    <span class="n">d</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
-
-    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span> <span class="p">[</span><span class="mf">4.5</span><span class="p">,</span><span class="mf">4.</span><span class="p">])</span>
-
-    <span class="n">ax</span> <span class="o">=</span> <span class="n">pywcsgrid2</span><span class="o">.</span><span class="n">axes</span><span class="p">([</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">],</span> <span class="n">header</span><span class="o">=</span><span class="n">h</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">update_wcsgrid_params</span><span class="p">(</span><span class="n">coord_format</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;dms&quot;</span><span class="p">,</span> <span class="s">&quot;dms&quot;</span><span class="p">))</span>
-
-    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s">&quot;low&quot;</span><span class="p">,</span> <span class="c">#vmin=0, vmax=4000,</span>
-              <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">gray_r</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s">&quot;nearest&quot;</span><span class="p">)</span>
-
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mf">20</span><span class="p">,</span> <span class="mf">52</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">20</span><span class="p">,</span> <span class="mf">52</span><span class="p">)</span>
-
-    <span class="c"># Figure title</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">add_inner_title</span><span class="p">(</span><span class="s">&quot;Figure 1&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mf">2</span><span class="p">)</span>
-
-    <span class="c"># compas</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">add_compas</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">1</span><span class="p">)</span>
-
-    <span class="c"># Beam size</span>
-    <span class="c"># (major, minor) = 3, 4 in pixel, angle=20</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">add_beam_size</span><span class="p">(</span><span class="mf">3</span><span class="p">,</span> <span class="mf">4</span><span class="p">,</span> <span class="mf">20</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mf">3</span><span class="p">)</span>
-
-    <span class="c"># Size</span>
-    <span class="n">cdelt</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="s">&quot;cdelt1&quot;</span><span class="p">])</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">add_size_bar</span><span class="p">(</span><span class="mf">0.5</span><span class="o">/</span><span class="n">cdelt</span><span class="p">,</span> <span class="c"># 30&#39; in in pixel</span>
-                    <span class="s">r&quot;$30^{\prime}$&quot;</span><span class="p">,</span>
-                    <span class="n">loc</span><span class="o">=</span><span class="mf">8</span><span class="p">)</span>
-
-    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>[<a class="reference" href="../plot_directive/figures/demo_compas.py">source code</a>, <a class="reference" href="../plot_directive/figures/demo_compas.hires.png">hires.png</a>, <a class="reference" href="../plot_directive/figures/demo_compas.pdf">pdf</a>]</p>
-<img alt="../images/demo_compas.png" src="../images/demo_compas.png" />
+<p>[<a class="reference" href="../plot_directive/figures/demo_compass.py">source code</a>, <a class="reference" href="../plot_directive/figures/demo_compass.hires.png">hires.png</a>, <a class="reference" href="../plot_directive/figures/demo_compass.pdf">pdf</a>]</p>
+<img alt="../images/demo_compass.png" src="../images/demo_compass.png" />
 </div>
 </div>
 
