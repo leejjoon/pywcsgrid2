@@ -36,7 +36,7 @@ using pywcsgrid2's subplot command  with its header (wcs) information. ::
 
     # image display with pywcsgrid2
     import pywcsgrid2
-    
+
     pywcsgrid2.subplot(122, header=h)
     plt.imshow(d, origin="lower")
 
@@ -50,7 +50,7 @@ displayed in the sky coordinates.  For example, xlim and ylim needs to
 be in image coordinates (0-based). ::
 
     ax = pywcsgrid2.axes([0.1, 0.1, 0.8, 0.8], header=h)
-    
+
     # viewlimits in image coordinate
     ax.set_xlim(6, 81)
     ax.set_ylim(23, 98)
@@ -112,7 +112,7 @@ not all) of the valid mpl plot commands will work. The unit for the
 sky coordinates are degrees.::
 
   # (alpha, delta) in degree
-   ax["fk4"].plot([x/24.*360 for x in [4, 5, 6]],
+  ax["fk4"].plot([x/24.*360 for x in [4, 5, 6]],
                   [-74, -70, -66], "ro-")
 
   # (l, b)  in degree
@@ -127,13 +127,13 @@ Fits Images of Different WCS
 
 Instead of string ("fk4", "fk5", "gal"), you can use other pyfits
 header instance. The returning axes has a data coordinate of the pixel
-(image) coordinate of the given header. 
+(image) coordinate of the given header.
 
 Most of plot commands (other than image-related routine) will work as
 expected.  However, displaying images in other wcs coordinate system
 needs some consideration. You may simply use imshow ::
 
-  f2 = pyfits.open("another.fits") 
+  f2 = pyfits.open("another.fits")
   h2, d2 = f2[0].header, f2[0].data
   ax[h2].imshow(d2)
 
@@ -142,7 +142,7 @@ necessary since matplotlib's imshow only supports rectangular
 image). If you don't want your data to be regridded, a vector drawing
 command pcolormesh is recommended. But pcolormesh is only optimized for agg
 backend and become extremely slow with increasing image size in other
-backends. Therefore, it is highly recommended 
+backends. Therefore, it is highly recommended
 that pcolormesh command is rasterized (rasterization is
 fully supported in pdf and svg backend, and partially available in ps
 backend). Contouring command will work fine. Contours will be drawn in
@@ -181,5 +181,34 @@ See mpl_toolkits.axes_grid for more about the floating axis.
 Here is a complete example,
 
 .. plot:: figures/demo_floating_axis.py
+   :include-source:
+
+
+Axes Annotation
+===============
+
+pywcsgrid2.Axes provides a few helper fucntion to annotate the
+axes. Most of them uses mpl_toolkits.axes_grid.anchored_artists, i.e.,
+the *loc* parameter in most of the commands is the location code as in
+the legend command.::
+
+    # Figure title
+    ax.add_inner_title("Figure 1", loc=2)
+
+    # compas
+    ax.add_compas(loc=1)
+
+    # Beam size
+    # (major, minor) = 3, 4 in pixel, angle=20
+    ax.add_beam_size(3, 4, 20, loc=3)
+
+    # Size
+    ax.add_size_bar(10, # 30' in in pixel
+                    r"$30^{\prime}$",
+                    loc=8)
+
+
+
+.. plot:: figures/demo_compas.py
    :include-source:
 

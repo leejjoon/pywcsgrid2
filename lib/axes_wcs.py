@@ -37,6 +37,12 @@ from mpl_toolkits.axes_grid.angle_helper import LocatorDMS, LocatorHMS, Formatte
 from mpl_toolkits.axes_grid.grid_helper_curvelinear \
      import GridHelperCurveLinear, FixedAxisArtistHelper
 
+from mpl_toolkits.axes_grid.anchored_artists import AnchoredEllipse, \
+     AnchoredText, AnchoredSizeBar
+
+from aux_artists import AnchoredCompas
+
+
 import weakref
 class WcsTransCollection(object):
     def __init__(self):
@@ -448,6 +454,71 @@ class AxesWcs(HostAxes):
         self.axis["top"].label.set_text(label)
 
         self.get_grid_helper().invalidate()
+
+
+    def add_beam_size(self, major_pixel, minor_pixel, angle, loc,
+                      frameon=False, borderpad=.8, patch_props=None,
+                      **kwargs):
+        """
+        patch_props : dictionary of patch properties
+        """
+        # Beam size
+        # (major, minor) = 3, 4 in pixel, angle=20
+        ae = AnchoredEllipse(self.transData, major_pixel, minor_pixel,
+                             angle, loc=loc,
+                             borderpad=borderpad, prop=None,
+                             frameon=frameon, **kwargs)
+        if patch_props is None:
+            ae.ellipse.set(fc="none", ec="k", hatch="/")
+        else:
+            ae.ellipse.set(**patch_props)
+
+        self.add_artist(ae)
+        return ae
+
+
+    def add_inner_title(self, title, loc, **kwargs):
+        """
+        title : string for title
+        loc : location code as in legend
+        """
+        # Figure title
+        at = AnchoredText(title, loc=loc)
+        self.add_artist(at)
+        return at
+
+
+    def add_compas(self, loc, coord="fk5", arrow_length=0.15,
+                   txt1="E", txt2="N",
+                   delta_a1=0, delta_a2=0, **kwargs):
+        """
+        arrow_length : in fraction of axes size
+        loc : location code as in legend
+        coord : one of fk5, fk4, gal
+        txt, txt2 : labels
+        delta_a1, delta_a2 : additional angle to be added to
+            automatically determined directions.
+        """
+        # compas
+        ac = AnchoredCompas(self, self[coord].transAux, loc=loc,
+                            txt1=txt1, txt2=txt2,
+                            delta_a1=delta_a1, delta_a2=delta_a2,
+                            **kwargs)
+        self.add_artist(ac)
+        return ac
+
+
+    def add_size_bar(self, length_pixel, label, loc, sep=5,
+                     borderpad=0.8, frameon=False, **kwargs):
+        asb =  AnchoredSizeBar(self.transData,
+                               length_pixel,
+                               label,
+                               loc=loc,
+                               borderpad=borderpad, sep=sep,
+                               frameon=frameon)
+        self.add_artist(asb)
+
+        return asb
 
 
 SubplotWcs = maxes.subplot_class_factory(AxesWcs)

@@ -2,6 +2,8 @@ from matplotlib.transforms import Transform
 from matplotlib.path import Path
 import numpy as np
 
+# pixel origin need to be corrected!
+
 from kapteyn_helper import coord_system_guess, sky2sky, get_kapteyn_projection
 
 def coord_conv(src, dest):
