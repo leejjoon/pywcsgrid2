@@ -40,7 +40,7 @@ from mpl_toolkits.axes_grid.grid_helper_curvelinear \
 from mpl_toolkits.axes_grid.anchored_artists import AnchoredEllipse, \
      AnchoredText, AnchoredSizeBar
 
-from aux_artists import AnchoredCompas
+from aux_artists import AnchoredCompass
 
 
 import weakref
@@ -144,9 +144,8 @@ class GridHelperWcs(GridHelperCurveLinear):
 
     def update_wcsgrid_params(self, **kwargs):
         """
-        coord_format="GE",
+        coord_format=("hms", "dms"),
         label_density=(6, 6),
-        grid1=[], grid2=[]):
         """
 
         self._wcsgrid_params.update(**kwargs)
@@ -327,22 +326,37 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
 class AxesWcs(HostAxes):
 
     def __init__(self, *kl, **kw):
+        """
+        Creates an axes for displaying FITS images. The axes uses the
+        FITS header information for ticks and grids appropriate for
+        sky coordinate.
 
+        The arguments for this axes is same as mpl's Axes, except that
+        either *header* or *grid_helper* (but not both) keyword
+        arguments must be provided.
+
+        Necessary Keyword arguments:
+
+          *header*: pyfits.Header instance
+            header of the fits file that will be used for the axes
+            a new pywcsgrid2.GridHelper instance is created using the header.
+
+        or:
+
+          *grid_helper*: pywcsgrid2.GridHelper instance
+
+
+        """
         if "grid_helper" not in kw:
             header = kw.pop("header", None)
             wcs = kw.pop("wcs", None)
             if (header is not None) and (wcs is None):
-                #self._init_kapteyn_projection(header)
-                #self._wcs = pywcs.WCS(header)
                 self.projection = get_kapteyn_projection(header)
             elif (header is None) and (wcs is not None):
-                #self._init_kapteyn_projection(wcs)
-                #self._wcs = wcs
                 self.projection = get_kapteyn_projection(wcs)
             else:
                 raise ValueError("wcs")
 
-            #grid_helper = GridHelperWcs(self._wcs)
             grid_helper = GridHelperWcs(self.projection)
             kw["grid_helper"] = grid_helper
         else:
@@ -402,10 +416,37 @@ class AxesWcs(HostAxes):
 
 
     def update_wcsgrid_params(self, **ka):
+        """
+        adjust the controlling option for ticks and grid.
+
+        The option should be given as keyword arguments.
+
+
+        Keyword arguments:
+
+          *coord_format*: a tuple of two strings describing how ticks
+            are located and labeld.  Currently,"hms", "dms" are only
+            available options. The default is ("hms", "dms"), i.e.,
+            (hour, minute, second) for the first coordinate and (degree,
+            minute, second) for the second coordinate. For Galactic
+            coordinate, ("dms", "dms") should be more sensible.
+
+
+          *label_density*: approxmate number of ticks for each coordinates.
+             Currently, this is the only parameter to control the
+             tick locations.
+
+        """
         self.get_grid_helper().update_wcsgrid_params(**ka)
 
 
     def set_display_coord_system(self, c):
+        """
+        set the coordinate system to be displayed for the axes.
+
+        Accept:
+          "fk5"|"fk4"|"gal"
+        """
         self.get_grid_helper().set_display_coord_system(c)
 
         self.axis["bottom"].get_helper().change_tick_coord(0)
@@ -440,6 +481,14 @@ class AxesWcs(HostAxes):
 
 
     def swap_tick_coord(self):
+        """
+        Swap the coordinates that will be displayed for each axis.
+        For example, by default, x axis shows ticklabels for the
+        first coordinate(e.g., RA) and the y axis shows the second
+        coordinate. swap_tick_coord makes the x-axis shows the
+        second coordinate and y-axis the second. This would be only
+        useful when you plot highly curved coordinate system.
+        """
         for axis in self.axis.values():
             gh = axis.get_helper()
             if isinstance(gh, FixedAxisArtistHelper):
@@ -460,7 +509,23 @@ class AxesWcs(HostAxes):
                       frameon=False, borderpad=.8, patch_props=None,
                       **kwargs):
         """
-        patch_props : dictionary of patch properties
+        Add a ellipse patch to the axes with given sizes. This is
+        intended to display beam size (or PSF size) of the observed
+        image.  The ellipse is located according to the *loc*
+        parameter, which should be the location code as in the legend.
+
+        Keyword arguments:
+
+          *major_pixel* : major axis size in pixel (in the image coordinate)
+
+          *minor_pixel* : minor axis size in pixel
+
+          *angle* : angle of rotation for the ellipse
+
+          *patch_props* : a dictionary of properties to be passed for
+             Patch creation, e.g. facecolor, alpha, etc.
+
+        See mpl_toolkits.axes_grid.anchored_artists for orther options.
         """
         # Beam size
         # (major, minor) = 3, 4 in pixel, angle=20
@@ -469,7 +534,7 @@ class AxesWcs(HostAxes):
                              borderpad=borderpad, prop=None,
                              frameon=frameon, **kwargs)
         if patch_props is None:
-            ae.ellipse.set(fc="none", ec="k", hatch="/")
+            ae.ellipse.set(fc="none", ec="k") #, hatch="/")
         else:
             ae.ellipse.set(**patch_props)
 
@@ -479,37 +544,63 @@ class AxesWcs(HostAxes):
 
     def add_inner_title(self, title, loc, **kwargs):
         """
-        title : string for title
-        loc : location code as in legend
+        Add a text at the inside corner of the axes.
+        It simply uses mpl_toolkits.axes_grid.anchored_artists.AnchoredText.
+        See mpl_toolkits.axes_grid.anchored_artists.AnchoredText
+        for more details
         """
         # Figure title
-        at = AnchoredText(title, loc=loc)
+        at = AnchoredText(title, loc=loc, **kwargs)
         self.add_artist(at)
         return at
 
 
-    def add_compas(self, loc, coord="fk5", arrow_length=0.15,
-                   txt1="E", txt2="N",
-                   delta_a1=0, delta_a2=0, **kwargs):
+    def add_compass(self, loc, coord="fk5", arrow_length=0.15,
+                    txt1="E", txt2="N",
+                    delta_a1=0, delta_a2=0, **kwargs):
         """
-        arrow_length : in fraction of axes size
-        loc : location code as in legend
-        coord : one of fk5, fk4, gal
-        txt, txt2 : labels
-        delta_a1, delta_a2 : additional angle to be added to
+        Add two arros with appropriate labels showing the increasing
+        direction of the coordinate. The default label is "E" and "N".
+
+
+        Keyword arguments:
+
+          *arrow_length* : length of the arrows in a fraction of axes size.
+
+          *loc* : the location code as in the legend
+
+          *coord* : the coordinate name. default is "fk5"
+
+          *txt*, *txt2* : labels assocated with the arrows. Defaults are "E" & "N"
+
+          delta_a1, delta_a2 : an optional angles (in degree) to be added to
             automatically determined directions.
         """
-        # compas
-        ac = AnchoredCompas(self, self[coord].transAux, loc=loc,
-                            txt1=txt1, txt2=txt2,
-                            delta_a1=delta_a1, delta_a2=delta_a2,
-                            **kwargs)
+        # compass
+        ac = AnchoredCompass(self, self[coord].transAux, loc=loc,
+                             txt1=txt1, txt2=txt2,
+                             delta_a1=delta_a1, delta_a2=delta_a2,
+                             **kwargs)
         self.add_artist(ac)
         return ac
 
 
     def add_size_bar(self, length_pixel, label, loc, sep=5,
                      borderpad=0.8, frameon=False, **kwargs):
+        """
+        Add a horizontal line with a label underneath. Intended to
+        display the angular size.
+
+        Keyword arguments:
+
+          *length_pixel* : length of the line in pixel in the image coordinate.
+
+          *label* : label
+
+          *loc* : the location code as in the legend
+
+        """
+
         asb =  AnchoredSizeBar(self.transData,
                                length_pixel,
                                label,
@@ -525,123 +616,4 @@ SubplotWcs = maxes.subplot_class_factory(AxesWcs)
 
 
 
-def test1():
-    import pyfits, pywcs
-    import matplotlib.pyplot as plt
-    import axes_wcs
-    fig = plt.figure(1)
-    fig.clf()
-    fname = "../doc/figures/data/lmc.fits"
-    f = pyfits.open(fname)
-    d, h = f[0].data, f[0].header
-
-    global wcs
-    wcs = pywcs.WCS(h)
-    global grid_helper
-    grid_helper = GridHelperWcs(wcs)
-    global ax1
-    ax1 = axes_wcs.SubplotWcs(fig, 1, 1, 1, grid_helper=grid_helper)
-
-    fig.add_subplot(ax1)
-
-    ax1.set_aspect(1.)
-    ax1.set_xlim(0, 100)
-    ax1.set_ylim(0, 100)
-
-    ax1.grid(True)
-
-    plt.draw()
-
-
-def test2():
-    import pyfits, pywcs
-    import matplotlib.pyplot as plt
-    import axes_wcs
-
-    fig = plt.figure(1)
-    fig.clf()
-    fname = "../doc/figures/data/lmc.fits"
-    f = pyfits.open(fname)
-    d, h = f[0].data, f[0].header
-
-    ax1 = axes_wcs.SubplotWcs(fig, 1, 1, 1, header=h)
-
-    fig.add_subplot(ax1)
-    ax1.set_aspect(1.)
-
-    ax1.grid(True)
-    ax1.set_xlim(0, 100)
-    ax1.set_ylim(0, 100)
-
-    #ax1.set_display_coord_system("gal")
-    grid_helper_gal = ax1["gal"].get_grid_helper()
-    grid_helper_gal.update_wcsgrid_params(coord_format=("dms","dms"))
-    ax1.axis["b=-35"] = grid_helper_gal.new_floating_axis(1, -35, axes=ax1)
-    ax1.axis["b=-35"].label.set_text("b = -35")
-
-    plt.draw()
-
-
-def test21():
-    import pyfits, pywcs
-    import matplotlib.pyplot as plt
-    #import pywcsgrid2.axes_wcs as axes_wcs
-    import axes_wcs
-    #reload(axes_wcs)
-    fig = plt.figure(1)
-    fig.clf()
-    #fname = "/Users/jjlee/local/src/astropy/pywcsgrid_all/test/i013b4h0.fit"
-    fname = "../doc/figures/data/lmc.fits"
-    f = pyfits.open(fname)
-    d, h = f[0].data, f[0].header
-    #d.shape = d.shape[-2:] # this particular image has a shape of [1, 500, 500]
-
-    global wcs
-    wcs = pywcs.WCS(h)
-    #ax1 = axes_wcs.SubplotWcs(fig, 1, 1, 1, wcs=wcs)
-    global grid_helper
-    grid_helper = GridHelperWcs(wcs)
-    ax1 = axes_wcs.SubplotWcs(fig, 1, 1, 1, grid_helper=grid_helper)
-
-    fig.add_subplot(ax1)
-
-    ax1.set_aspect(1.)
-    ax1.set_xlim(0, 100)
-    ax1.set_ylim(0, 100)
-
-    ax1.grid(True)
-
-    #ax1.axis["top"].set_visible(False)
-    #ax1.axis["right"].set_visible(False)
-
-    global axx
-    axx = ax1["fk5"].axis["top"]
-    ax1["gal"].axis["top"].set_visible(True)
-    #ax1["gal"].axis["top"].major_ticklabels.set_visible(True)
-    ax1["gal"].axis["right"].set_visible(True)
-    #ax1["gal"].axis["right"].major_ticklabels.set_visible(True)
-    ax1["gal"].gridlines.set_visible(True)
-    ax1["gal"].gridlines.set_color("r")
-
-    #ax1["fk5"]._grid_helper = ax1.get_grid_helper()
-    #new_fixed_axis = ax1["fk5"].get_grid_helper().new_fixed_axis
-    #ax1["fk5"].axis["top2"] = new_fixed_axis(loc="top")
-    #ax1["fk5"].axis["right"].set_visible(True)
-
-    plt.draw()
-
-
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    #test1()
-    test2()
-    #test21()
-    #test3()
-    plt.show()
-    #select_step(21.2, 33.3, 5)
-    #select_step(20+21.2/60., 21+33.3/60., 5)
-    #select_step(20.5+21.2/3600., 20.5+33.3/3600., 5)
-    #select_step(20+21.2/60., 20+53.3/60., 5)
-    #test_grider()
 

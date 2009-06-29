@@ -10,7 +10,7 @@ from matplotlib.offsetbox import AnchoredOffsetbox, AuxTransformBox
 from pywcsgrid2.wcs_helper import estimate_angle
 
 
-class AnchoredCompas(AnchoredOffsetbox):
+class AnchoredCompass(AnchoredOffsetbox):
     def __init__(self, ax, transSky2Pix, loc,
                  arrow_length=0.15,
                  txt1="E", txt2="N",
