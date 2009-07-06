@@ -1,54 +1,15 @@
-from numpy.distutils.core import setup
-from numpy.distutils.extension import Extension
-
-
-import sys
-from os.path import join
-
-try:
-    import numpy
-except ImportError:
-    print "numpy must be installed to build pywcsgrid."
-    print "ABORTING."
-    sys.exit(1)
-
-try:
-    numpy_include = numpy.get_include()
-except AttributeError:
-    numpy_include = numpy.get_numpy_include()
-
-
-
-from numpy.distutils.misc_util import Configuration
-
-
-
-import os.path
-
-
-
-TPMDIR = './coords/tpm'
-
-def get_tpm_sources(TPMDIR):
-    import glob
-    tpm_sources = glob.glob(os.path.join(TPMDIR, "*.c"))
-    return tpm_sources
-
-
-WCSLIBDIR="./wcslib-4.3.3/"
-WCSLIBVER="4.3"
-
-WCSLIBNAME = "wcs-%s"%WCSLIBVER
+from distutils.core import setup
 
 
 def main():
 
     setup(name = "pywcsgrid2",
-          version = "0.1b1",
-          description = "",
+          version = "0.1a",
+          description = "pywcsgrid2 is a python module to be used with matplotlib for displaying astronomical fits images",
           author = "Jae-Joon Lee",
-          maintainer_email = "lee.j.joon@gmail.com",
-          license = "BSD",
+          author_email = "lee.j.joon@gmail.com",
+          url="http://leejjoon.github.com/pywcsgrid2/",
+          license = "MIT",
           platforms = ["Linux","Mac OS X"],
           packages = ['pywcsgrid2'],
           package_dir={'pywcsgrid2':'lib',
