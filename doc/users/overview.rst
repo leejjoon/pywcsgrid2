@@ -67,7 +67,7 @@ to change the wcsgrid parameters associated. For example, to set the
 approximate number of ticks in each axis, ::
 
   # change grid density
-  ax.update_wcsgrid_params(label_density=[4,3])
+  ax.update_wcsgrid_params(label_density=[6,4])
 
 .. plot:: figures/demo_basic2.py
 

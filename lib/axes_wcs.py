@@ -145,7 +145,7 @@ class GridHelperWcs(GridHelperCurveLinear):
     def update_wcsgrid_params(self, **kwargs):
         """
         coord_format=("hms", "dms"),
-        label_density=(6, 6),
+        label_density=(4, 4),
         """
 
         self._wcsgrid_params.update(**kwargs)
@@ -429,12 +429,13 @@ class AxesWcs(HostAxes):
             available options. The default is ("hms", "dms"), i.e.,
             (hour, minute, second) for the first coordinate and (degree,
             minute, second) for the second coordinate. For Galactic
-            coordinate, ("dms", "dms") should be more sensible.
+            coordinate, ("dms", "dms") should be more sensible. The default
+            is ("hms", "dms").
 
 
           *label_density*: approxmate number of ticks for each coordinates.
              Currently, this is the only parameter to control the
-             tick locations.
+             tick locations. The default is (4, 4).
 
         """
         self.get_grid_helper().update_wcsgrid_params(**ka)

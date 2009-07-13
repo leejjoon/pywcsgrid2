@@ -1,5 +1,5 @@
 
-:mod:`puwcsgrid2.Axes`
+:mod:`pywcsgrid2.Axes`
 =======================================
 
 .. autoclass:: pywcsgrid2.Axes
