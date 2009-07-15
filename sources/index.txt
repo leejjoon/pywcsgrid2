@@ -8,6 +8,7 @@ images.  Its main functionality is to draw ticks, ticklabels, and
 grids in an appropriate sky coordinates.  
 
 .. image:: _static/image.png
+   :width: 500
 
 
 Documentation
