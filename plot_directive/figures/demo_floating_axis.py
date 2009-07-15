@@ -8,13 +8,9 @@ import pywcsgrid2
 xray_name="pspc_skyview.fits"
 f_xray = pyfits.open(xray_name)
 
-# grid helper to be used.
-grid_helper = pywcsgrid2.GridHelper(wcs=f_xray[0].header)
-grid_helper.update_wcsgrid_params(label_density=(4,4))
-
-# AxesGrid to display tow images side-by-side
 fig = plt.figure(1, (4,3.5))
-ax1 = pywcsgrid2.Axes(fig, (0.2, 0.2, 0.75, 0.75), grid_helper=grid_helper)
+ax1 = pywcsgrid2.Axes(fig, (0.2, 0.2, 0.75, 0.75),
+                      header=f_xray[0].header)
 fig.add_axes(ax1)
 
 # use imshow for a simple image display.
