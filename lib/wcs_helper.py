@@ -1,8 +1,12 @@
+import numpy as np
+from matplotlib.cbook import is_string_like
+
 from kapteyn_celestial import skymatrix, longlat2xyz, dotrans, xyz2longlat
 import kapteyn_celestial
 
-import numpy as np
-from matplotlib.cbook import is_string_like
+import kapteyn.wcs
+import pyfits
+
 
 FK4 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk4, 'B1950.0')
 FK5 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk5, 'J2000.0')
@@ -62,8 +66,79 @@ def coord_system_guess(ctype1_name, ctype2_name, equinox):
         return "gal"
     return None
 
-import kapteyn.wcs
-import pyfits
+class ProjectionBase(object):
+    """
+    A thin wrapper for kapteyn.projection or pywcs
+    """
+    def _get_ctypes(self):
+        pass
+
+    def _get_equinox(self):
+        pass
+
+    def topixel(self):
+        pass
+
+    def toworld(self):
+        pass
+
+    def sub(self, axes):
+        pass
+
+
+class ProjectionKapteyn(ProjectionBase):
+    """
+    A thin wrapper for kapteyn.projection or pywcs
+    """
+    def __init__(self, header):
+        self._proj = kapteyn.wcs.Projection(header)
+
+    def _get_ctypes(self):
+        return self._proj.ctype
+
+    ctypes = property(_get_ctypes)
+
+    def _get_equinox(self):
+        return self._proj.equinox
+
+    equinox = property(_get_equinox)
+
+    def topixel(self, xy):
+        return self._proj.topixel(xy)
+
+    def toworld(self, xy):
+        return self._proj.toworld(xy)
+
+    def sub(self, axes):
+        return self._proj.sub(axes=axes)
+
+
+class ProjectionPywcs(ProjectionBase):
+    """
+    A thin wrapper for pywcs
+    """
+    def __init__(self, header):
+        pass
+
+    def _get_ctypes(self):
+        pass
+
+    ctypes = property(_get_ctypes)
+
+    def _get_equinox(self):
+        pass
+
+    equinox = property(_get_equinox)
+
+    def topixel(self, xy):
+        pass
+
+    def toworld(self, xy):
+        pass
+
+    def sub(self, axes):
+        pass
+
 
 def get_kapteyn_projection(header):
     if isinstance(header, kapteyn.wcs.Projection):
@@ -82,7 +157,8 @@ def get_kapteyn_projection(header):
         h.update("NAXIS", naxis)
         projection = kapteyn.wcs.Projection(h)
     else:
-        projection = kapteyn.wcs.Projection(header)
+        #projection = kapteyn.wcs.Projection(header)
+        projection = ProjectionKapteyn(header)
 
     projection = projection.sub(axes=[1,2])
     return projection
