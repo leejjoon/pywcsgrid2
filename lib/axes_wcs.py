@@ -21,8 +21,8 @@ mcoll.QuadMesh.draw = rasterized_draw
 from  mpl_toolkits.axes_grid.axislines import GridlinesCollection
 
 #import pywcs
-from kapteyn_helper import get_kapteyn_projection
-from pywcsgrid2.kapteyn_helper import coord_system_guess
+from wcs_helper import get_kapteyn_projection, coord_system_guess
+#from pywcsgrid2.wcs_helper import coord_system_guess
 
 from mpl_toolkits.axes_grid.parasite_axes import HostAxes, ParasiteAxesAuxTrans
 import mpl_toolkits.axes_grid.grid_finder as grid_finder

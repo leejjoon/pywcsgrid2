@@ -1,52 +1,91 @@
-#import pyfits
-#import kapteyn.wcs
+from kapteyn_celestial import skymatrix, longlat2xyz, dotrans, xyz2longlat
+import kapteyn_celestial
+
 import numpy as np
+from matplotlib.cbook import is_string_like
 
-# class wcs(object):
-#     def __init__(self, header):
-#         if isinstance(header, pyfits.Header):
-#             self.projection = kapteyn.wcs.Projection(header)
-#         elif isinstance(header, kapteyn.wcs.Projection):
-#             self.projection = header
-#         elif hasattr(header, "wcs") and hasattr(header.wcs, "to_header"):
-#             # pywcs
-#             header = header.wcs.to_header()
-#             self.projection = kapteyn.wcs.Projection(header)
-#         else:
-#             raise ValueError("Unknown input type : %s", type(header))
+FK4 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk4, 'B1950.0')
+FK5 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk5, 'J2000.0')
+GAL = kapteyn_celestial.galactic
 
-# def meshgrid_pcolor(wcs, img_shape):
-#     ny, nx = img_shape
+coord_system = dict(fk4=FK4,
+                    fk5=FK5,
+                    gal=GAL)
 
-#     gx = np.arange(-0.5, nx+1., 1.)
-#     gy = np.arange(-0.5, ny+1., 1.)
+def is_equal_coord_sys(src, dest):
+    return (src.lower() == dest.lower())
 
-#     mx, my = meshgrid(gx, gy)
+class sky2sky(object):
+    def __init__(self, src, dest):
 
-#     wx, wy = wcs.pixel2world(mx.flat, my.flat)
-#     return wx.reshape([nx+1, ny+1]), wy.reshape([nx+1, ny+1])
+        if is_string_like(src):
+            src = coord_system[src.lower()]
 
+        if is_string_like(dest):
+            dest = coord_system[dest.lower()]
 
-# def meshgrid_contour(wcs, img_shape):
-#     ny, nx = img_shape
+        self.src = src
+        self.dest = dest
+        self._skymatrix = skymatrix(src, dest)
+        #self.tran = wcs.Transformation(src, dest)
 
-#     gx = np.arange(0., nx+.5, 1.)
-#     gy = np.arange(0., ny+.5, 1.)
+    def inverted(self):
+        return sky2sky(self.dest, self.src)
 
-#     mx, my = meshgrid(gx, gy)
+    def _dotran(self, lonlat):
+        xyz = longlat2xyz(lonlat)
+        xyz2 = dotrans(self._skymatrix, xyz)
+        lonlats2 = xyz2longlat(xyz2)
+        return lonlats2
 
-#     wx, wy = wcs.pixel2world(mx.flat, my.flat)
-#     return wx.reshape([nx, ny]), wy.reshape([nx, ny])
-
-
-# def coord_system_guess(ctype1_name, ctype2_name, equinox):
-#     return None
-
-# class coord_sys(object):
-#     pass
-
+    def __call__(self, lon, lat):
+        lon, lat = np.asarray(lon), np.asarray(lat)
+        lonlat = np.concatenate([lon[:,np.newaxis],
+                                 lat[:,np.newaxis]],1)
+        ll_dest = np.asarray(self._dotran(lonlat))
+        return ll_dest[:,0], ll_dest[:,1]
 
 
+def coord_system_guess(ctype1_name, ctype2_name, equinox):
+    if ctype1_name.upper().startswith("RA") and \
+       ctype2_name.upper().startswith("DEC"):
+        if equinox == 2000.0:
+            return "fk5"
+        elif equinox == 1950.0:
+            return "fk4"
+        elif equinox is None:
+            return "fk5"
+        else:
+            return None
+    if ctype1_name.upper().startswith("GLON") and \
+       ctype2_name.upper().startswith("GLAT"):
+        return "gal"
+    return None
+
+import kapteyn.wcs
+import pyfits
+
+def get_kapteyn_projection(header):
+    if isinstance(header, kapteyn.wcs.Projection):
+        projection = header
+    elif hasattr(header, "wcs") and hasattr(header.wcs, "to_header"):
+        # pywcs
+        naxis = header.naxis
+        header = header.wcs.to_header()
+        cards = pyfits.CardList()
+        for i in range(0, len(header), 80):
+            card_string = header[i:i+80]
+            card = pyfits.Card()
+            card.fromstring(card_string)
+            cards.append(card)
+        h = pyfits.Header(cards)
+        h.update("NAXIS", naxis)
+        projection = kapteyn.wcs.Projection(h)
+    else:
+        projection = kapteyn.wcs.Projection(header)
+
+    projection = projection.sub(axes=[1,2])
+    return projection
 
 
 def estimate_cdelt(transSky2Pix, x0, y0):
@@ -92,4 +131,16 @@ def estimate_angle(transSky2Pix, x0, y0):
     a2 = np.arctan2(y2-y0, x2-x0)/np.pi*180.
 
     return a1, a2
+
+
+
+
+if __name__ == "__main__":
+    fk5_to_fk4 = sky2sky(FK5, FK4)
+    print fk5_to_fk4([47.37], [6.32])
+    print fk5_to_fk4([47.37, 47.37], [6.32, 6.32])
+    print sky2sky("fk5", "FK4")([47.37, 47.37], [6.32, 6.32])
+
+
+
 
