@@ -5,6 +5,8 @@ from kapteyn_celestial import skymatrix, longlat2xyz, dotrans, xyz2longlat
 import kapteyn_celestial
 
 import kapteyn.wcs
+import pywcs
+
 import pyfits
 
 
@@ -66,6 +68,7 @@ def coord_system_guess(ctype1_name, ctype2_name, equinox):
         return "gal"
     return None
 
+
 class ProjectionBase(object):
     """
     A thin wrapper for kapteyn.projection or pywcs
@@ -77,9 +80,11 @@ class ProjectionBase(object):
         pass
 
     def topixel(self):
+        """ 1, 1 base """
         pass
 
     def toworld(self):
+        """ 1, 1 base """
         pass
 
     def sub(self, axes):
@@ -91,7 +96,10 @@ class ProjectionKapteyn(ProjectionBase):
     A thin wrapper for kapteyn.projection or pywcs
     """
     def __init__(self, header):
-        self._proj = kapteyn.wcs.Projection(header)
+        if isinstance(header, pyfits.Header):
+            self._proj = kapteyn.wcs.Projection(header)
+        else:
+            self._proj = header
 
     def _get_ctypes(self):
         return self._proj.ctype
@@ -104,61 +112,70 @@ class ProjectionKapteyn(ProjectionBase):
     equinox = property(_get_equinox)
 
     def topixel(self, xy):
+        """ 1, 1 base """
         return self._proj.topixel(xy)
 
     def toworld(self, xy):
+        """ 1, 1 base """
         return self._proj.toworld(xy)
 
     def sub(self, axes):
-        return self._proj.sub(axes=axes)
+        proj = self._proj.sub(axes=axes)
+        return ProjectionKapteyn(proj)
 
+#import pyfits
+import pywcs
+f=pyfits.open("../examples/radio_21cm.fits")
+wcs=pywcs.WCS(header=f[0].header)
 
 class ProjectionPywcs(ProjectionBase):
     """
     A thin wrapper for pywcs
     """
     def __init__(self, header):
-        pass
+        if isinstance(header, pyfits.Header):
+            self._pywcs = pywcs.WCS(header=header)
+        else:
+            self._pywcs = header
 
     def _get_ctypes(self):
-        pass
+        return tuple(self._pywcs.wcs.ctype)
 
     ctypes = property(_get_ctypes)
 
     def _get_equinox(self):
-        pass
+        return self._pywcs.wcs.equinox
 
     equinox = property(_get_equinox)
 
     def topixel(self, xy):
-        pass
+        """ 1, 1 base """
+        xy2 = self._pywcs.wcs_sky2pix(np.asarray(xy).T, 1)
+        return xy2[:,0], xy2[:,1]
 
     def toworld(self, xy):
-        pass
+        """ 1, 1 base """
+        xy2 = self._pywcs.wcs_pix2sky(np.asarray(xy).T, 1)
+        return xy2[:,0], xy2[:,1]
 
     def sub(self, axes):
-        pass
+        wcs = self._pywcs.sub(axes=axes)
+        return ProjectionPywcs(wcs)
+
 
 
 def get_kapteyn_projection(header):
     if isinstance(header, kapteyn.wcs.Projection):
+        projection = ProjectionKapteyn(header)
+    elif isinstance(header, pywcs.WCS):
+        projection = ProjectionPywcs(header)
+    elif isinstance(header, ProjectionBase):
         projection = header
-    elif hasattr(header, "wcs") and hasattr(header.wcs, "to_header"):
-        # pywcs
-        naxis = header.naxis
-        header = header.wcs.to_header()
-        cards = pyfits.CardList()
-        for i in range(0, len(header), 80):
-            card_string = header[i:i+80]
-            card = pyfits.Card()
-            card.fromstring(card_string)
-            cards.append(card)
-        h = pyfits.Header(cards)
-        h.update("NAXIS", naxis)
-        projection = kapteyn.wcs.Projection(h)
     else:
         #projection = kapteyn.wcs.Projection(header)
-        projection = ProjectionKapteyn(header)
+        #projection = ProjectionKapteyn(header)
+        projection = ProjectionPywcs(header)
+        print "pywcs"
 
     projection = projection.sub(axes=[1,2])
     return projection
