@@ -4,11 +4,34 @@ from matplotlib.cbook import is_string_like
 from kapteyn_celestial import skymatrix, longlat2xyz, dotrans, xyz2longlat
 import kapteyn_celestial
 
-import kapteyn.wcs
-import pywcs
-
 import pyfits
 
+_wcs_module_import_log = []
+
+_pywcs_installed = False
+try:
+    import pywcs
+except ImportError:
+    _wcs_module_import_log.append("Failed to import the pywcs")
+else:
+    if hasattr(pywcs.WCS, "sub"):
+        _pywcs_installed = True
+    else:
+        _wcs_module_import_log.append("pywcs imported but does not have 'sub' attribute. More recent version of pywcs is required.")
+
+_kapteyn_installed = False
+try:
+    import kapteyn.wcs
+except ImportError:
+    _wcs_module_import_log.append("Failed to import the kpateyn.wcs")
+else:
+    _kapteyn_installed = True
+
+if not _kapteyn_installed and not _pywcs_installed:
+    err = ["Either pywcs or Kapteyn python packages are required."]
+    err.extend(_wcs_module_import_log)
+
+    raise ImportError("\n".join(err))
 
 FK4 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk4, 'B1950.0')
 FK5 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk5, 'J2000.0')
@@ -124,9 +147,9 @@ class ProjectionKapteyn(ProjectionBase):
         return ProjectionKapteyn(proj)
 
 #import pyfits
-import pywcs
-f=pyfits.open("../examples/radio_21cm.fits")
-wcs=pywcs.WCS(header=f[0].header)
+#import pywcs
+#f=pyfits.open("../examples/radio_21cm.fits")
+#wcs=pywcs.WCS(header=f[0].header)
 
 class ProjectionPywcs(ProjectionBase):
     """
@@ -163,19 +186,20 @@ class ProjectionPywcs(ProjectionBase):
         return ProjectionPywcs(wcs)
 
 
+if _pywcs_installed:
+    ProjectionDefault = ProjectionPywcs
+else:
+    ProjectionDefault = ProjectionKapteyn
 
 def get_kapteyn_projection(header):
-    if isinstance(header, kapteyn.wcs.Projection):
+    if _kapteyn_installed and isinstance(header, kapteyn.wcs.Projection):
         projection = ProjectionKapteyn(header)
-    elif isinstance(header, pywcs.WCS):
+    elif _pywcs_installed and isinstance(header, pywcs.WCS):
         projection = ProjectionPywcs(header)
     elif isinstance(header, ProjectionBase):
         projection = header
     else:
-        #projection = kapteyn.wcs.Projection(header)
-        #projection = ProjectionKapteyn(header)
-        projection = ProjectionPywcs(header)
-        print "pywcs"
+        projection = ProjectionDefault(header)
 
     projection = projection.sub(axes=[1,2])
     return projection
