@@ -53,7 +53,7 @@ class WcsSky2PixelTransform(CurvedTransform):
         if src_coord is not None:
             self.src_coord = src_coord
 
-            ctype1, ctype2 = self.projection.ctype
+            ctype1, ctype2 = self.projection.ctypes
             equinox = self.projection.equinox
             coord_guess = coord_system_guess(ctype1, ctype2, equinox)
 
@@ -123,7 +123,7 @@ class WcsPixel2SkyTransform(CurvedTransform):
         #self.wcs = wcs
 
         if dest_coord is not None:
-            ctype1, ctype2 = self.projection.ctype
+            ctype1, ctype2 = self.projection.ctypes
             equinox = self.projection.equinox
             coord_guess = coord_system_guess(ctype1, ctype2, equinox)
 
