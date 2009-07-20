@@ -94,7 +94,7 @@ def coord_system_guess(ctype1_name, ctype2_name, equinox):
 
 class ProjectionBase(object):
     """
-    A thin wrapper for kapteyn.projection or pywcs
+    A wrapper for kapteyn.projection or pywcs
     """
     def _get_ctypes(self):
         pass
@@ -116,7 +116,7 @@ class ProjectionBase(object):
 
 class ProjectionKapteyn(ProjectionBase):
     """
-    A thin wrapper for kapteyn.projection or pywcs
+    A wrapper for kapteyn.projection 
     """
     def __init__(self, header):
         if isinstance(header, pyfits.Header):
@@ -146,14 +146,10 @@ class ProjectionKapteyn(ProjectionBase):
         proj = self._proj.sub(axes=axes)
         return ProjectionKapteyn(proj)
 
-#import pyfits
-#import pywcs
-#f=pyfits.open("../examples/radio_21cm.fits")
-#wcs=pywcs.WCS(header=f[0].header)
 
 class ProjectionPywcs(ProjectionBase):
     """
-    A thin wrapper for pywcs
+    A wrapper for pywcs
     """
     def __init__(self, header):
         if isinstance(header, pyfits.Header):
