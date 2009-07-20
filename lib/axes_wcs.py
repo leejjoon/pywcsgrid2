@@ -91,7 +91,7 @@ class GridHelperWcs(GridHelperCurveLinear):
         self.projection = projection
 
         if orig_coord is None:
-            ctype1, ctype2 = self.projection.ctypes
+            ctype1, ctype2 = self.projection.ctypes[:2]
             equinox = self.projection.equinox
             coord_guess = coord_system_guess(ctype1, ctype2, equinox)
 
