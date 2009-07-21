@@ -99,7 +99,7 @@ class GridHelperWcs(GridHelperCurveLinear):
             #                                 wcs.wcs.ctype[1],
             #                                 wcs.wcs.equinox)
             if coord_guess is None:
-                raise ValueError("Unknown coordinate system, %, %s, equinox=%.1f" \
+                raise ValueError("Unknown coordinate system, %s, %s, equinox=%.1f" \
                                  % (ctype1, ctype2,
                                     equinox))
             else:
