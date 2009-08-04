@@ -57,6 +57,7 @@
 <li><a class="reference" href="">Installing</a><ul>
 <li><a class="reference" href="#dependencies">Dependencies</a><ul>
 <li><a class="reference" href="#matplotlib">matplotlib</a></li>
+<li><a class="reference" href="#pywcs">pywcs</a></li>
 <li><a class="reference" href="#kapteyn-package">Kapteyn Package</a></li>
 </ul>
 </li>
@@ -103,13 +104,24 @@
 <p><strong>Requirements</strong></p>
 <p>pywcsgrid2 is a python module that extends functionality of
 matplotlib, i.e., you need python with matplotlib installed. Note that
-you need svn version of matplotlib which includes AxesGrid
-toolkit. Furthermore, you need the Kapteyn package installed.</p>
+you need at least 0.99.0 (or from svn) version of matplotlib which
+includes AxesGrid toolkit. The pyfits package is required to read fits files.
+Furthermore, you need either Kapteyn package or pywcs (from svn) installed.</p>
 <div class="section" id="matplotlib">
 <h3>matplotlib<a class="headerlink" href="#matplotlib" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><a class="reference" href="http://matplotlib.sourceforge.net/">Homepage</a></li>
 <li><a class="reference" href="http://matplotlib.sourceforge.net/faq/installing_faq.html#install-svn">install from svn</a></li>
+<li><a class="reference" href="http://www.nabble.com/matplotlib-0.99.0-rc1-%3A-call-for-testing-tt24760373.html">0.99.0rc1</a> : Check the mailing list or the home page for more recent version.</li>
+</ul>
+</div>
+<div class="section" id="pywcs">
+<h3>pywcs<a class="headerlink" href="#pywcs" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>used for coordinate conversions</li>
+<li><a class="reference" href="https://www.stsci.edu/trac/ssb/astrolib">Homepage</a></li>
+<li>The current release does not work (v1.5.1-4.3.3, released July 9,
+2009). You need to install from svn.</li>
 </ul>
 </div>
 <div class="section" id="kapteyn-package">
@@ -149,7 +161,7 @@ toolkit. Furthermore, you need the Kapteyn package installed.</p>
     </div>
     <div class="footer">
       &copy; Copyright 2009, Jae-Joon Lee.
-      Last updated on Jul 14, 2009.
+      Last updated on Aug 03, 2009.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
     </div>
   </body>

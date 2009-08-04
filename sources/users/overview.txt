@@ -9,8 +9,10 @@ matplotlib, instead of creating a new tool on top of the matplotlib.
 In essence, it provides a custom Axes class (derived from mpl's
 original Axes class) suitable for displaying fits images.  Its main
 functionality is to draw ticks, ticklabels, and grids in an
-appropriate sky coordinates.  You require pyfits and kapteyn package
-installed, in addition to matplotlib (you need to use svn version).
+appropriate sky coordinates.  A recent version of the matplotlib (>
+0.99.0) is required which includes axes_grid toolkit.  In addition to
+pyfits, you need either pywcs (from svn) or kapteyn package installed.
+See :ref:`installing` for more detailes.
 
 .. contents::
    :depth: 1
@@ -180,6 +182,19 @@ See mpl_toolkits.axes_grid for more about the floating axis.
 Here is a complete example,
 
 .. plot:: figures/demo_floating_axis.py
+
+
+Inset Axes
+==========
+
+pywcsgrid2 itself does not provide any particular functionality to
+support inset axes. However, inset axes is supported by the axes_grid
+toolkit, which can be seemingless utilized with pywcsgrid2.  See
+`axes_grid toolkit documentation
+<http://matplotlib.sourceforge.net/mpl_toolkits/axes_grid/users/overview.html#insetlocator>`__
+for more details.
+
+.. plot:: figures/demo_inset.py
 
 
 Axes Annotation
