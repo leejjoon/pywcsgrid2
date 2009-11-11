@@ -75,16 +75,17 @@ class WcsTransCollection(object):
 wcs_trans_collection = WcsTransCollection()
 # parasite axes needs to be modified to use wcs_trans_collection
 
-class GridHelperWcs(GridHelperCurveLinear):
+class GridHelperWcsBase(object):
 
+    # derived class class must define "_GRIDHELPER_CLASS"
+    
     WCS_TRANS_COLLECTION = wcs_trans_collection
 
     @classmethod
     def get_wcs_trans(cls, wcs, coord):
         return cls.WCS_TRANS_COLLECTION.get_wcs_trans(wcs, coord)
 
-    def __init__(self, wcs, orig_coord=None):
-
+    def _init_projection(self, wcs, orig_coord):
         #self.header = header
         #wcs = pywcs.WCS(header)
         projection = get_kapteyn_projection(wcs)
@@ -110,19 +111,41 @@ class GridHelperWcs(GridHelperCurveLinear):
         self.wcsgrid = None
         self._old_values = None
 
-        _wcs_trans = self.get_wcs_trans(self.projection, None)
+        self._wcs_trans = self.get_wcs_trans(self.projection, None)
         self._wcsgrid_display_coord_system = None
 
         self._wcsgrid_params = dict(coord_format=("hms", "dms"),
                                     label_density=(4, 4),
                                     grid1=[], grid2=[])
 
-        GridHelperCurveLinear.__init__(self, _wcs_trans,
-                                       extreme_finder=ExtremeFinderCycle(20,20),
-                                       grid_locator1=LocatorHMS(4),
-                                       grid_locator2=LocatorDMS(4),
-                                       tick_formatter1=FormatterHMS(),
-                                       tick_formatter2=FormatterDMS())
+        
+    def __init__(self, wcs, orig_coord=None,
+                 extreme_finder=None,
+                 grid_locator1=None,
+                 grid_locator2=None,
+                 tick_formatter1=None,
+                 tick_formatter2=None,
+                 ):
+
+        if extreme_finder is None:
+            extreme_finder=ExtremeFinderCycle(20,20)
+        if grid_locator1 is None:
+            grid_locator1=LocatorHMS(4)
+        if grid_locator2 is None:
+            grid_locator2=LocatorDMS(4)
+        if tick_formatter1 is None:
+            tick_formatter1=FormatterHMS()
+        if tick_formatter2 is None:
+            tick_formatter2=FormatterDMS()
+
+        self._init_projection(wcs, orig_coord)
+        
+        self._GRIDHELPER_CLASS.__init__(self, self._wcs_trans,
+                                        extreme_finder=extreme_finder,
+                                        grid_locator1=grid_locator1,
+                                        grid_locator2=grid_locator2,
+                                        tick_formatter1=tick_formatter1,
+                                        tick_formatter2=tick_formatter2)
 
 
     def tr(self, lon, lat):
@@ -188,6 +211,45 @@ class GridHelperWcs(GridHelperCurveLinear):
 
     def get_display_coord_system(self):
         return self._wcsgrid_display_coord_system
+
+
+
+class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
+    _GRIDHELPER_CLASS=GridHelperCurveLinear
+
+
+import mpl_toolkits.axes_grid.floating_axes as floating_axes
+class GridHelperWcsFloating(GridHelperWcsBase, floating_axes.GridHelperCurveLinear):
+    _GRIDHELPER_CLASS=floating_axes.GridHelperCurveLinear
+    
+    def __init__(self, wcs, extremes,
+                 orig_coord=None,
+                 grid_locator1=None,
+                 grid_locator2=None,
+                 tick_formatter1=None,
+                 tick_formatter2=None,
+                 ):
+
+            
+        if grid_locator1 is None:
+            grid_locator1=LocatorHMS(4)
+        if grid_locator2 is None:
+            grid_locator2=LocatorDMS(4)
+        if tick_formatter1 is None:
+            tick_formatter1=FormatterHMS()
+        if tick_formatter2 is None:
+            tick_formatter2=FormatterDMS()
+
+        self._init_projection(wcs, orig_coord)
+        
+        self._GRIDHELPER_CLASS.__init__(self, self._wcs_trans,
+                                        extremes,
+                                        grid_locator1=grid_locator1,
+                                        grid_locator2=grid_locator2,
+                                        tick_formatter1=tick_formatter1,
+                                        tick_formatter2=tick_formatter2)
+
+
 
 
 
@@ -263,7 +325,7 @@ def get_transformed_image(Z, tr, extent=None, oversample=1.5):
     else:
         x1, x2, y1, y2 = extent
 
-    transformed_edge = tr.transform([(x1, y1), (x1, y2), (x2, y1), (x2, y2)])
+    transformed_edge = tr.transform(np.array([(x1, y1), (x1, y2), (x2, y1), (x2, y2)]))
     X1 = transformed_edge[:,0].min()
     X2 = transformed_edge[:,0].max()
     Y1 = transformed_edge[:,1].min()
@@ -475,10 +537,14 @@ class AxesWcs(HostAxes):
             xlabel=r""
             ylabel=r""
 
-        self.axis["left"].label.set_text(ylabel)
-        self.axis["right"].label.set_text(ylabel)
-        self.axis["bottom"].label.set_text(xlabel)
-        self.axis["top"].label.set_text(xlabel)
+        #self.axis["left"].label.set_text(ylabel)
+        #self.axis["right"].label.set_text(ylabel)
+        #self.axis["bottom"].label.set_text(xlabel)
+        #self.axis["top"].label.set_text(xlabel)
+        self.set_xlabel(xlabel)
+        self.set_ylabel(ylabel)
+        #self.axis["bottom"].label.set_text(xlabel)
+        #self.axis["top"].label.set_text(xlabel)
 
 
     def swap_tick_coord(self):
