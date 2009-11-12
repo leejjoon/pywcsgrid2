@@ -6,6 +6,8 @@ import numpy as np
 from pywcsgrid2.wcs_transforms import WcsSky2PixelTransform, WcsPixel2SkyTransform,\
      WcsSky2SkyTransform
 
+from matplotlib.transforms import Affine2D
+
 from matplotlib import rcParams
 
 import matplotlib.collections as mcoll
@@ -75,6 +77,21 @@ class WcsTransCollection(object):
 wcs_trans_collection = WcsTransCollection()
 # parasite axes needs to be modified to use wcs_trans_collection
 
+class FormatterDMSDelta(object):
+    def __call__(self, direction, factor, values):
+        if len(values) == 0:
+            return []
+        if factor == 1:
+            return ["$%d^{\circ}$" % (v,) for v in values]
+        elif factor == 60:
+            return ["$%d^{\prime}$" % (v,) for v in values]
+        elif factor == 3600:
+            return ["$%d^{\prime\prime}$" % (v,) for v in values]
+        else: # factor > 3600.
+            return ["$%s$" % (str(v),) for v in values]
+
+
+
 class GridHelperWcs(GridHelperCurveLinear):
 
     WCS_TRANS_COLLECTION = wcs_trans_collection
@@ -117,6 +134,11 @@ class GridHelperWcs(GridHelperCurveLinear):
                                     label_density=(4, 4),
                                     grid1=[], grid2=[])
 
+        #self._center_pixel = None
+        self._center_world = None
+        self._delta_trans = Affine2D()
+        self._wcs_trans = None
+
         GridHelperCurveLinear.__init__(self, _wcs_trans,
                                        extreme_finder=ExtremeFinderCycle(20,20),
                                        grid_locator1=LocatorHMS(4),
@@ -124,22 +146,89 @@ class GridHelperWcs(GridHelperCurveLinear):
                                        tick_formatter1=FormatterHMS(),
                                        tick_formatter2=FormatterDMS())
 
+#     def set_ticklabel_mode(self, m):
+#         if m is None or m in ["center"]:
+#             self._mode = m
+#             #if self._center_pixel is None:
+#             #    self.set_center_pixel(0, 0)
+#             print "Center"
+#         else:
+#             raise ValueError("Unknown mode : " + str(m))
 
-    def tr(self, lon, lat):
-        x, y = self.projection.topixel((lon, lat))
-        return x-1, y-1
-        #ll = np.concatenate((lon[:,np.newaxis], lat[:,np.newaxis]), 1)
-        #origin=0
-        #xy = self.wcs.wcs.s2p(ll, origin)["pixcrd"]
-        #return xy[:,0], xy[:,1]
+    def get_mode(self):
+        return self._mode
 
-    def inv_tr(self, x, y):
-        return self.projection.toworld((x+1, y+1))
-        #xy = np.concatenate((x[:,np.newaxis], y[:,np.newaxis]),
-        #                    1)
-        #origin=0
-        #ll = self.wcs.wcs.p2s(xy, origin)['world']
-        #return ll[:,0], ll[:,1]
+#     def set_center_world(self, lon, lat):
+#         x, y = self.projection.topixel(([lon], [lat]))
+#         self._center_pixel = x[0]-1, y[0]-1
+#         self._center_world = lon, lat
+
+#     def tr(self, lon, lat):
+#         if self.get_mode() == "center":
+#             lon0, lat0 = self._center_world
+#             lon, lat = lon + lon0, lat + lat0
+#             x, y = self.projection.topixel((lon, lat))
+#             x0, y0 = self._center_pixel
+#             return (x-1)-x0, (y-1)-y0
+#         else:
+#             return x-1, y-1
+#         #ll = np.concatenate((lon[:,np.newaxis], lat[:,np.newaxis]), 1)
+#         #origin=0
+#         #xy = self.wcs.wcs.s2p(ll, origin)["pixcrd"]
+#         #return xy[:,0], xy[:,1]
+
+#     def inv_tr(self, x, y):
+#         if self.get_mode() == "center":
+#             x0, y0 = self._center_pixel
+#             x, y = x+x0, y+y0
+#             lon, lat = self.projection.toworld((x+1, y+1))
+#             lon0, lat0 = self._center_world
+#             lon, lat = lon - lon0, lat - lat0
+#             return lon, lat
+#         else:
+#             return self.projection.toworld((x+1, y+1))
+#         #xy = np.concatenate((x[:,np.newaxis], y[:,np.newaxis]),
+#         #                    1)
+#         #origin=0
+#         #ll = self.wcs.wcs.p2s(xy, origin)['world']
+#         #return ll[:,0], ll[:,1]
+
+
+    def _set_center_pixel(self, x, y):
+        #self._center_pixel = x, y
+        lon, lat = self.projection.toworld(([x+1], [y+1]))
+        self._set_center_world(lon[0], lat[0])
+
+    def _set_center_world(self, lon, lat):
+        self._center_world = lon, lat
+        cos_lat = np.cos(lat/180.*np.pi)
+        self._delta_trans.clear().scale(-1./cos_lat,1.).translate(lon, lat)
+
+    def set_ticklabel_mode(self, mode, **kwargs):
+        if mode not in ["normal", "delta"]:
+            raise ValueError("unknown mode : %s" % (mode))
+
+        if mode == "delta":
+            lon_lat = kwargs.pop("center_world", None)
+            xy = kwargs.pop("center_pixel", None)
+            if lon_lat and xy:
+                raise ValueError("only one of center_world of center_pixel need to be set")
+            if lon_lat:
+                lon, lat = lon_lat
+                self._set_center_world(lon, lat)
+            elif xy:
+                x, y = xy
+                self._set_center_pixel(x, y)
+            self.update_wcsgrid_params(coord_format=("delta", "delta"))
+        else:
+            self._delta_trans.clear()
+            self.update_wcsgrid_params(coord_format=("hms", "dms"))
+
+        if self._wcs_trans is not None:
+            self.update_grid_finder(aux_trans=self._delta_trans+self._wcs_trans)
+        else:
+            _wcs_trans = self.get_wcs_trans(self.projection, None)
+            self.update_grid_finder(aux_trans=self._delta_trans+_wcs_trans)
 
 
     def update_wcsgrid_params(self, **kwargs):
@@ -152,9 +241,11 @@ class GridHelperWcs(GridHelperCurveLinear):
 
         f1, f2 = self._wcsgrid_params["coord_format"]
         locator_selector = dict(hms=LocatorHMS,
-                                dms=LocatorDMS).__getitem__
+                                dms=LocatorDMS,
+                                delta=LocatorDMS).__getitem__
         formatter_selector = dict(hms=FormatterHMS,
-                                  dms=FormatterDMS).__getitem__
+                                  dms=FormatterDMS,
+                                  delta=FormatterDMSDelta).__getitem__
 
         locator1 = locator_selector(f1)
         locator2 = locator_selector(f2)
@@ -181,9 +272,9 @@ class GridHelperWcs(GridHelperCurveLinear):
             raise ValueError("_pywcsgrid_orig_coord_system is not set")
 
         self._wcsgrid_display_coord_system = coord_system
-        _wcs_trans = self.get_wcs_trans(self.projection, coord_system)
+        self._wcs_trans = self.get_wcs_trans(self.projection, coord_system)
 
-        self.update_grid_finder(aux_trans=_wcs_trans)
+        self.update_grid_finder(aux_trans=self._delta_trans+self._wcs_trans)
 
 
     def get_display_coord_system(self):
