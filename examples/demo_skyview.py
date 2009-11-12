@@ -25,6 +25,7 @@ grid_helper.update_wcsgrid_params(label_density=(2,2))
 fig = plt.figure(1, (6,3.5))
 grid = AxesGrid(fig, (0.15, 0.15, 0.8, 0.75), nrows_ncols=(1, 2),
                 axes_pad=0.1, share_all=True,
+                cbar_mode="each", cbar_location="top", cbar_pad=0,
                 axes_class=(pywcsgrid2.Axes, dict(grid_helper=grid_helper)))
 
 
@@ -34,6 +35,15 @@ im = ax1.imshow(f_xray[0].data, origin="lower", vmin=0., cmap=cm.gray_r,
                 interpolation="nearest")
 im.set_clim(4.e-05, 0.00018)
 
+ticklocs = [6, 9, 12, 15]
+
+cax1 = grid.cbar_axes[0]
+cbar1=cax1.colorbar(im, ticks=[t*1.e-5 for t in ticklocs])
+cax1.toggle_label(True)
+
+cax1.set_xticklabels(["$%d$" % t for t in ticklocs])
+cax1.xaxis.get_major_formatter().set_offset_string(r"$\times 10^{-5}$")
+
 
 ax2 = grid[1]
 d = f_radio[0].data
@@ -42,6 +52,8 @@ d = f_radio[0].data
 # first image), pcolormesh is prefered when the pixel size of the
 # second image is larger than that of the first image.
 im2 = ax2[header_radio].pcolormesh(d, cmap=cm.gray_r)
+grid.cbar_axes[1].colorbar(im2)
+grid.cbar_axes[1].toggle_label(True)
 
 # draw contour. The data points of the contour lines are created in
 # the image coordinate of the second image and then are transformed to
@@ -51,8 +63,8 @@ cont = ax2[header_radio].contour(d, colors="k")
 # draw contour of the second image in the first axes.
 cont2 = ax1[header_radio].contour(d, colors="k")
 
-ax1.set_title("X-ray")
-ax2.set_title("Radio")
+ax1.add_inner_title("X-ray", loc=2)
+ax2.add_inner_title("Radio", loc=2)
 
 plt.draw()
 plt.show()

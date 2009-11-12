@@ -1,2 +1,3 @@
 recursive-include examples *.py *.fits
-
+include LICENSE.txt
+include LICENSE_kapteyn.txt
