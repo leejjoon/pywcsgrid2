@@ -387,13 +387,14 @@ class ParasiteAxesSky(ParasiteAxesAuxTrans):
 
 
     def new_floating_axis(self, nth_coord, value,
-                          tick_direction="in",
-                          label_direction="top",
+                          #tick_directiona="in",
+                          axis_direction="bottom",
                           ):
         gh = self.get_grid_helper()
         axis = gh.new_floating_axis(nth_coord, value,
-                                    tick_direction=tick_direction,
-                                    label_direction=label_direction,
+                                    #tick_direction=tick_direction,
+                                    #label_direction=label_direction,
+                                    axis_direction=axis_direction,
                                     axes=self._parent_axes)
         return axis
 
