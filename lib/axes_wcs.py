@@ -223,7 +223,7 @@ class GridHelperWcsBase(object):
     def _set_center_world(self, lon, lat):
         self._center_world = lon, lat
         cos_lat = np.cos(lat/180.*np.pi)
-        self._delta_trans.clear().scale(-1./cos_lat,1.).translate(lon, lat)
+        self._delta_trans.clear().scale(1./cos_lat,1.).translate(lon, lat)
 
     def set_ticklabel_mode(self, mode, **kwargs):
         if mode not in ["normal", "delta"]:
@@ -243,6 +243,7 @@ class GridHelperWcsBase(object):
             self.update_wcsgrid_params(coord_format=("delta", "delta"))
         else:
             self._delta_trans.clear()
+            self._center_world = None
             self.update_wcsgrid_params(coord_format=("hms", "dms"))
 
         if self._wcs_trans is not None:
@@ -250,7 +251,6 @@ class GridHelperWcsBase(object):
         else:
             _wcs_trans = self.get_wcs_trans(self.projection, None)
             self.update_grid_finder(aux_trans=self._delta_trans+_wcs_trans)
-
 
     def update_wcsgrid_params(self, **kwargs):
         """
@@ -626,6 +626,12 @@ class AxesWcs(HostAxes):
         else:
             xlabel=r""
             ylabel=r""
+
+                    
+
+        if xlabel and self.get_grid_helper()._center_world is not None:
+            xlabel = r"$\Delta$"+xlabel
+            ylabel = r"$\Delta$"+ylabel
 
         #self.axis["left"].label.set_text(ylabel)
         #self.axis["right"].label.set_text(ylabel)
