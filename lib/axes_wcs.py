@@ -87,6 +87,8 @@ class FormatterDMSDelta(object):
             return ["$%d^{\prime}$" % (v,) for v in values]
         elif factor == 3600:
             return ["$%d^{\prime\prime}$" % (v,) for v in values]
+        elif factor > 3600.:
+            return ["$%s$" % (str(v),) for v in values]
         else: # factor > 3600.
             return ["$%s$" % (str(v),) for v in values]
 
