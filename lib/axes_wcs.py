@@ -136,36 +136,11 @@ class GridHelperWcsBase(object):
                                     grid1=[], grid2=[])
 
 
-    def __init__(self, wcs, orig_coord=None,
-                 extreme_finder=None,
-                 grid_locator1=None,
-                 grid_locator2=None,
-                 tick_formatter1=None,
-                 tick_formatter2=None,
-                 ):
-
-        if extreme_finder is None:
-            extreme_finder=ExtremeFinderCycle(20,20)
-        if grid_locator1 is None:
-            grid_locator1=LocatorHMS(4)
-        if grid_locator2 is None:
-            grid_locator2=LocatorDMS(4)
-        if tick_formatter1 is None:
-            tick_formatter1=FormatterHMS()
-        if tick_formatter2 is None:
-            tick_formatter2=FormatterDMS()
-
+    def __init__(self, wcs, orig_coord=None):
         self._init_projection(wcs, orig_coord)
 
         self._center_world = None
         self._delta_trans = Affine2D()
-
-        self._GRIDHELPER_CLASS.__init__(self, self._wcs_trans,
-                                        extreme_finder=extreme_finder,
-                                        grid_locator1=grid_locator1,
-                                        grid_locator2=grid_locator2,
-                                        tick_formatter1=tick_formatter1,
-                                        tick_formatter2=tick_formatter2)
 
 #     def set_ticklabel_mode(self, m):
 #         if m is None or m in ["center"]:
@@ -306,11 +281,37 @@ class GridHelperWcsBase(object):
 class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
     _GRIDHELPER_CLASS=GridHelperCurveLinear
 
+    def __init__(self, wcs, orig_coord=None,
+                 extreme_finder=None,
+                 grid_locator1=None,
+                 grid_locator2=None,
+                 tick_formatter1=None,
+                 tick_formatter2=None,
+                 ):
+
+        GridHelperWcsBase.__init__(self, wcs, orig_coord)
+
+        if extreme_finder is None:
+            extreme_finder=ExtremeFinderCycle(20,20)
+        if grid_locator1 is None:
+            grid_locator1=LocatorHMS(4)
+        if grid_locator2 is None:
+            grid_locator2=LocatorDMS(4)
+        if tick_formatter1 is None:
+            tick_formatter1=FormatterHMS()
+        if tick_formatter2 is None:
+            tick_formatter2=FormatterDMS()
+
+        GridHelperCurveLinear.__init__(self, self._wcs_trans,
+                                       extreme_finder=extreme_finder,
+                                       grid_locator1=grid_locator1,
+                                       grid_locator2=grid_locator2,
+                                       tick_formatter1=tick_formatter1,
+                                       tick_formatter2=tick_formatter2)
+
 
 import mpl_toolkits.axes_grid.floating_axes as floating_axes
 class GridHelperWcsFloating(GridHelperWcsBase, floating_axes.GridHelperCurveLinear):
-    _GRIDHELPER_CLASS=floating_axes.GridHelperCurveLinear
-
     def __init__(self, wcs, extremes,
                  orig_coord=None,
                  grid_locator1=None,
@@ -318,6 +319,8 @@ class GridHelperWcsFloating(GridHelperWcsBase, floating_axes.GridHelperCurveLine
                  tick_formatter1=None,
                  tick_formatter2=None,
                  ):
+
+        GridHelperWcsBase.__init__(self, wcs, orig_coord)
 
 
         if grid_locator1 is None:
@@ -329,14 +332,13 @@ class GridHelperWcsFloating(GridHelperWcsBase, floating_axes.GridHelperCurveLine
         if tick_formatter2 is None:
             tick_formatter2=FormatterDMS()
 
-        self._init_projection(wcs, orig_coord)
-
-        self._GRIDHELPER_CLASS.__init__(self, self._wcs_trans,
-                                        extremes,
-                                        grid_locator1=grid_locator1,
-                                        grid_locator2=grid_locator2,
-                                        tick_formatter1=tick_formatter1,
-                                        tick_formatter2=tick_formatter2)
+        klass = floating_axes.GridHelperCurveLinear
+        klass.__init__(self, self._wcs_trans,
+                       extremes,
+                       grid_locator1=grid_locator1,
+                       grid_locator2=grid_locator2,
+                       tick_formatter1=tick_formatter1,
+                       tick_formatter2=tick_formatter2)
 
 
 
