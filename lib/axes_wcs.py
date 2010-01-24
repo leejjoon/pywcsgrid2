@@ -20,26 +20,26 @@ mcoll.QuadMesh.draw = rasterized_draw
 
 
 #from  axislines import AxisLineHelper, GridHelperRectlinear, AxisArtist
-from  mpl_toolkits.axes_grid.axislines import GridlinesCollection
+from  pywcsgrid2.axes_grid.axislines import GridlinesCollection
 
 #import pywcs
 from wcs_helper import get_kapteyn_projection, coord_system_guess
 #from pywcsgrid2.wcs_helper import coord_system_guess
 
-from mpl_toolkits.axes_grid.parasite_axes import HostAxes, ParasiteAxesAuxTrans
-import mpl_toolkits.axes_grid.grid_finder as grid_finder
+from pywcsgrid2.axes_grid.parasite_axes import HostAxes, ParasiteAxesAuxTrans
+import pywcsgrid2.axes_grid.grid_finder as grid_finder
 
 GridFinderBase = grid_finder.GridFinderBase
 
 
 
-from mpl_toolkits.axes_grid.angle_helper import ExtremeFinderCycle
-from mpl_toolkits.axes_grid.angle_helper import LocatorDMS, LocatorHMS, FormatterDMS, FormatterHMS
+from pywcsgrid2.axes_grid.angle_helper import ExtremeFinderCycle
+from pywcsgrid2.axes_grid.angle_helper import LocatorDMS, LocatorHMS, FormatterDMS, FormatterHMS
 
-from mpl_toolkits.axes_grid.grid_helper_curvelinear \
+from pywcsgrid2.axes_grid.grid_helper_curvelinear \
      import GridHelperCurveLinear, FixedAxisArtistHelper
 
-from mpl_toolkits.axes_grid.anchored_artists import AnchoredEllipse, \
+from pywcsgrid2.axes_grid.anchored_artists import AnchoredEllipse, \
      AnchoredText, AnchoredSizeBar
 
 from aux_artists import AnchoredCompass
@@ -312,7 +312,7 @@ class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
                                        tick_formatter2=tick_formatter2)
 
 
-import mpl_toolkits.axes_grid.floating_axes as floating_axes
+import pywcsgrid2.axes_grid.floating_axes as floating_axes
 class GridHelperWcsFloating(GridHelperWcsBase, floating_axes.GridHelperCurveLinear):
     def __init__(self, wcs, extremes,
                  orig_coord=None,
