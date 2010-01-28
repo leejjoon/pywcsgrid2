@@ -141,7 +141,7 @@ class WcsPixel2SkyTransform(CurvedTransform):
 
 
     def transform(self, xy):
-
+        xy = np.asarray(xy)
         x, y = xy[:,0], xy[:,1]
 
         x, y = x+1, y+1 # => origin=1,1

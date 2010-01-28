@@ -477,6 +477,15 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
 
         return im
 
+    def imshow_affine(self, *kl, **kwargs):
+
+        #from matplotlib.axes import Axes
+        im = ParasiteAxesAuxTrans.imshow(self, *kl, **kwargs)
+        x1, x2, y1, y2 = im.get_extent()
+        im._image_skew_coordinate = (x2, y1)
+
+        return im
+
 
 
 class AxesWcs(HostAxes):
@@ -631,7 +640,7 @@ class AxesWcs(HostAxes):
             xlabel=r""
             ylabel=r""
 
-                    
+
 
         if xlabel and self.get_grid_helper()._center_world is not None:
             xlabel = r"$\Delta$"+xlabel
