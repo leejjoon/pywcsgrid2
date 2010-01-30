@@ -11,8 +11,9 @@ def main():
           url="http://leejjoon.github.com/pywcsgrid2/",
           license = "MIT",
           platforms = ["Linux","Mac OS X"],
-          packages = ['pywcsgrid2'],
+          packages = ['pywcsgrid2','pywcsgrid2.axes_grid'],
           package_dir={'pywcsgrid2':'lib',
+                       'pywcsgrid2.axes_grid':'axes_grid',
                        },
 
           )
