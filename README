@@ -3,11 +3,13 @@ pywcsgrid2
 
 pywcsgrid2 is a python module to be used with matplotlib for
 displaying astronomical fits images. It provides a custom Axes class
-(derived from mpl¡¯s original Axes class) suitable for displaying fits
+(derived from mpl's original Axes class) suitable for displaying fits
 images. Its main functionality is to draw ticks, ticklabels, and grids
 in an appropriate sky coordinates.
 
 Homepage : http://leejjoon.github.com/pywcsgrid2/
+
+Gallery : http://leejjoon.github.com/matplotlib_astronomy_gallery/
 
 LICENSE
 -------
