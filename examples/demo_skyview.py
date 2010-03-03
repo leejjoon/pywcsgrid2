@@ -51,7 +51,11 @@ d = f_radio[0].data
 # will interpolate the second image into the image coordinate of the
 # first image), pcolormesh is prefered when the pixel size of the
 # second image is larger than that of the first image.
-im2 = ax2[header_radio].pcolormesh(d, cmap=cm.gray_r)
+#im2 = ax2[header_radio].pcolormesh(d, cmap=cm.gray_r)
+im2 = ax2[header_radio].imshow_affine(d, 
+                                      cmap=cm.gray_r, origin="lower")
+#x1, x2, y1, y2 = im2.get_extent()
+#im2._image_skew_coordinate = None
 grid.cbar_axes[1].colorbar(im2)
 grid.cbar_axes[1].toggle_label(True)
 

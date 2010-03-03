@@ -479,7 +479,8 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
 
     def imshow_affine(self, *kl, **kwargs):
 
-        #from matplotlib.axes import Axes
+        if kwargs.pop("interpolation", "nearest") != "nearest":
+            raise ValueError("interpolation parameter must not be set or should be 'nearest'")
         im = ParasiteAxesAuxTrans.imshow(self, *kl, **kwargs)
         x1, x2, y1, y2 = im.get_extent()
         im._image_skew_coordinate = (x2, y1)
