@@ -19,33 +19,33 @@ mcoll.QuadMesh.draw_orig = mcoll.QuadMesh.draw
 mcoll.QuadMesh.draw = rasterized_draw
 
 
-#from  axislines import AxisLineHelper, GridHelperRectlinear, AxisArtist
-from  mpl_toolkits.axes_grid.axislines import GridlinesCollection
-
 #import pywcs
 from wcs_helper import get_kapteyn_projection, coord_system_guess
 #from pywcsgrid2.wcs_helper import coord_system_guess
 
-from mpl_toolkits.axes_grid.parasite_axes import HostAxes, ParasiteAxesAuxTrans
-import mpl_toolkits.axes_grid.grid_finder as grid_finder
+from  mpl_toolkits.axisartist import GridlinesCollection
+import mpl_toolkits.axisartist.grid_finder as grid_finder
 
 GridFinderBase = grid_finder.GridFinderBase
 
 
 
-from mpl_toolkits.axes_grid.angle_helper import ExtremeFinderCycle
-from mpl_toolkits.axes_grid.angle_helper import LocatorDMS, LocatorHMS, FormatterDMS, FormatterHMS
+from mpl_toolkits.axisartist.angle_helper import ExtremeFinderCycle
+from mpl_toolkits.axisartist.angle_helper import LocatorDMS, LocatorHMS, FormatterDMS, FormatterHMS
 
-from mpl_toolkits.axes_grid.grid_helper_curvelinear \
+from mpl_toolkits.axisartist.grid_helper_curvelinear \
      import GridHelperCurveLinear, FixedAxisArtistHelper
 
-from mpl_toolkits.axes_grid.anchored_artists import AnchoredEllipse, \
+from mpl_toolkits.axes_grid1.anchored_artists import AnchoredEllipse, \
      AnchoredText, AnchoredSizeBar
 
 from aux_artists import AnchoredCompass
 
+from mpl_toolkits.axisartist import HostAxes, ParasiteAxesAuxTrans
+import mpl_toolkits.axisartist.floating_axes as floating_axes
 
 import weakref
+
 class WcsTransCollection(object):
     def __init__(self):
         self._wcs_trans_collection = dict()
@@ -312,7 +312,6 @@ class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
                                        tick_formatter2=tick_formatter2)
 
 
-import mpl_toolkits.axes_grid.floating_axes as floating_axes
 class GridHelperWcsFloating(GridHelperWcsBase, floating_axes.GridHelperCurveLinear):
     def __init__(self, wcs, extremes,
                  orig_coord=None,
