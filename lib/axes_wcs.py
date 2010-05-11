@@ -202,6 +202,7 @@ class GridHelperWcsBase(object):
         cos_lat = np.cos(lat/180.*np.pi)
         self._delta_trans.clear().scale(1./cos_lat,1.).translate(lon, lat)
 
+
     def set_ticklabel_mode(self, mode, **kwargs):
         if mode not in ["normal", "delta"]:
             raise ValueError("unknown mode : %s" % (mode))
@@ -217,6 +218,9 @@ class GridHelperWcsBase(object):
             elif xy:
                 x, y = xy
                 self._set_center_pixel(x, y)
+            else:
+                raise RuntimeError("center_world of center_pixel argument is required")
+            
             self.update_wcsgrid_params(coord_format=("delta", "delta"))
         else:
             self._delta_trans.clear()
@@ -656,6 +660,68 @@ class AxesWcs(HostAxes):
         #self.axis["top"].label.set_text(xlabel)
 
 
+    def set_label_type(self, labtyp1, labtyp2, offset_center=None):
+        """
+        Up to 2 values.  The spatial label type of the x and y axes.
+        Minimum match is active.  Select from:
+ 
+         "delta"     the label is in offsets (arcsec, arcmin, etc)
+
+         "hms"       the label is in H M S.S (e.g. for RA)
+         "dms"       the label is in D M S.S (e.g. for DEC)
+
+         offset_center : offset center in pixel coordinate
+        """
+
+        # Borrowed from Miriad's cgdisp.
+
+        # To be implemented
+        """
+         "arcsec"    the label is in arcsecond offsets
+         "arcmin"    the label is in arcminute offsets
+         "arcmas"    the label is in milli-arcsec offsets
+         "absdeg"    the label is in degrees
+         "reldeg"    the label is in degree offsets
+                     The above assume the pixel increment is in radians.
+         "abspix"    the label is in pixels
+         "relpix"    the label is in pixel offsets
+         "abskms"    the label is in km/s
+         "relkms"    the label is in km/s offsets
+         "absghz"    the label is in GHz
+         "relghz"    the label is in GHz offsets
+         "absnat"    the label is in natural coordinates as defined by
+                     the header.
+         "relnat"    the label is in offset natural coordinates
+         "none"      no label and no numbers or ticks on the axis
+         """
+
+        offset_types = ["delta", "arcsec", "arcmin", "arcmas", "reldeg", "relpix"]
+
+        if labtyp1 in offset_types:
+            labtyp1_is_offset = True
+        else:
+            labtyp1_is_offset = False
+
+        if labtyp2 in offset_types:
+            labtyp2_is_offset = True
+        else:
+            labtyp2_is_offset = False
+
+        gh = self.get_grid_helper()
+        if labtyp1_is_offset and labtyp2_is_offset:
+            if offset_center is not None:
+                gh.set_ticklabel_mode("delta", center_pixel=offset_center)
+            else:
+                raise RuntimeError("offset_center is required for given label types")
+        elif (not labtyp1_is_offset) and (not labtyp2_is_offset):
+            gh.set_ticklabel_mode("normal")
+        else:
+            raise RuntimeError("given label types are incompatible")
+         
+        self.set_default_label()
+
+
+
     def swap_tick_coord(self):
         """
         Swap the coordinates that will be displayed for each axis.
@@ -701,7 +767,7 @@ class AxesWcs(HostAxes):
           *patch_props* : a dictionary of properties to be passed for
              Patch creation, e.g. facecolor, alpha, etc.
 
-        See mpl_toolkits.axes_grid.anchored_artists for orther options.
+        See mpl_toolkits.axes_grid1.anchored_artists for orther options.
         """
         # Beam size
         # (major, minor) = 3, 4 in pixel, angle=20
@@ -721,8 +787,8 @@ class AxesWcs(HostAxes):
     def add_inner_title(self, title, loc, **kwargs):
         """
         Add a text at the inside corner of the axes.
-        It simply uses mpl_toolkits.axes_grid.anchored_artists.AnchoredText.
-        See mpl_toolkits.axes_grid.anchored_artists.AnchoredText
+        It simply uses mpl_toolkits.axes_grid1.anchored_artists.AnchoredText.
+        See mpl_toolkits.axes_grid1.anchored_artists.AnchoredText
         for more details
         """
         # Figure title
