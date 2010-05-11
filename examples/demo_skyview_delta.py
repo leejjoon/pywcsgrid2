@@ -2,7 +2,7 @@ import pyfits
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from mpl_toolkits.axes_grid.axes_grid import AxesGrid
+from mpl_toolkits.axes_grid1.axes_grid import AxesGrid
 #from pywcsgrid2.axes_wcs import GridHelperWcs, AxesWcs
 import pywcsgrid2
 
@@ -30,8 +30,8 @@ grid = AxesGrid(fig, (0.15, 0.15, 0.8, 0.75), nrows_ncols=(1, 2),
 
 ax1 = grid[0]
 
-from mpl_toolkits.axes_grid.angle_helper import LocatorDMS
-from pywcsgrid2.axes_wcs import FormatterDMSDelta
+#from mpl_toolkits.axes_grid1.angle_helper import LocatorDMS
+#from pywcsgrid2.axes_wcs import FormatterDMSDelta
 
 ax1.get_grid_helper().set_ticklabel_mode("delta", center_pixel=(50, 50))
 

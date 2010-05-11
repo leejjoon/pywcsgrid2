@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import pyfits
-from mpl_toolkits.axes_grid.axes_grid import AxesGrid
+from mpl_toolkits.axes_grid1.axes_grid import AxesGrid
 from pywcsgrid2.axes_wcs import AxesWcs, GridHelperWcs
-from mpl_toolkits.axes_grid.inset_locator import zoomed_inset_axes, mark_inset
-from mpl_toolkits.axes_grid.axislines import Axes
+from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
+import mpl_toolkits.axisartist as axisartist
 
 if 1:
 
@@ -32,7 +32,7 @@ if 1:
     cb_axes.axis["right"].major_ticklabels.set_visible(True)
 
     axins = zoomed_inset_axes(main_axes, zoom=3, loc=1,
-                              axes_class=Axes)
+                              axes_class=axisartist.Axes)
 
     for a in axins.axis.values():
         a.toggle(all=False, ticks=True)

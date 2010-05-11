@@ -2,7 +2,7 @@ import pyfits
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from mpl_toolkits.axes_grid.axes_grid import AxesGrid
+from mpl_toolkits.axes_grid1.axes_grid import AxesGrid
 #from pywcsgrid2.axes_wcs import GridHelperWcs, AxesWcs
 import pywcsgrid2
 
