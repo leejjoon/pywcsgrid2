@@ -492,6 +492,32 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
 
 
 
+def _parse_label_type(labtyp):
+    labtyp_parsed = labtyp.split(",")
+    labtyp_name = labtyp_parsed[0].strip()
+    labtyp_kwargs = {}
+    for p in labtyp_parsed[1:]:
+        kv = p.strip().split("=")
+        if len(kv) == 1:
+            labtyp_kwargs[kv]=True
+        else:
+            labtyp_kwargs[kv[0]]=kv[1]
+
+    return labtyp_name, labtyp_kwargs
+
+
+def _labtyp_updater_nbins(grid_helper, axis_num, v):
+    grid_finder = grid_helper.grid_finder
+    locator = [grid_finder.grid_locator1, grid_finder.grid_locator2][axis_num]
+    locator.den = int(v)
+
+_labtyp_updater_map = {}
+_labtyp_updater_default = dict(nbins=_labtyp_updater_nbins)
+
+def _labtyp_update(gh, axis_num, labtyp_name, k, v):
+    _labtyp_updater = _labtyp_updater_map.get(labtyp_name, _labtyp_updater_default)
+    _labtyp_updater[k](gh, axis_num, v)
+        
 class AxesWcs(HostAxes):
 
     def __init__(self, *kl, **kw):
@@ -697,6 +723,9 @@ class AxesWcs(HostAxes):
 
         offset_types = ["delta", "arcsec", "arcmin", "arcmas", "reldeg", "relpix"]
 
+        labtyp1, labtyp1_kwargs = _parse_label_type(labtyp1) 
+        labtyp2, labtyp2_kwargs = _parse_label_type(labtyp2) 
+       
         if labtyp1 in offset_types:
             labtyp1_is_offset = True
         else:
@@ -720,7 +749,11 @@ class AxesWcs(HostAxes):
          
         self.set_default_label()
 
+        for k,v in labtyp1_kwargs.iteritems():
+            _labtyp_update(gh, 0, labtyp1, k, v)
 
+        for k,v in labtyp1_kwargs.iteritems():
+            _labtyp_update(gh, 1, labtyp2, k, v)
 
     def swap_tick_coord(self):
         """

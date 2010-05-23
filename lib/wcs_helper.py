@@ -153,6 +153,121 @@ class ProjectionKapteyn(ProjectionBase):
         return ProjectionKapteyn(proj)
 
 
+class ProjectionPywcsNd(ProjectionBase):
+    """
+    A wrapper for pywcs
+    """
+    def __init__(self, header):
+        if isinstance(header, pyfits.Header):
+            self._pywcs = pywcs.WCS(header=header)
+        else:
+            self._pywcs = header
+
+    def _get_ctypes(self):
+        return tuple(self._pywcs.wcs.ctype)
+
+    ctypes = property(_get_ctypes)
+
+    def _get_equinox(self):
+        return self._pywcs.wcs.equinox
+
+    equinox = property(_get_equinox)
+
+    def _get_naxis(self):
+        return self._pywcs.wcs.naxis
+
+    naxis = property(_get_naxis)
+
+
+    def topixel(self, xy):
+        """ 1, 1 base """
+        xy2 = self._pywcs.wcs_sky2pix(np.asarray(xy).T, 1)
+        return xy2.T
+
+    def toworld(self, xy):
+        """ 1, 1 base """
+        xy2 = self._pywcs.wcs_pix2sky(np.asarray(xy).T, 1)
+        return xy2.T
+
+    def sub(self, axes):
+        wcs = self._pywcs.sub(axes=axes)
+        return ProjectionPywcs(wcs)
+
+
+class ProjectionPywcsSub(ProjectionPywcsNd):
+    """
+    A wrapper for pywcs
+    """
+    def __init__(self, proj, sub_dict):
+        self.proj = proj
+        self._sub_dict = sub_dict
+        self._sub_axis = sub_dict.keys()
+        for n in self._sub_axis:
+            assert n < self.naxis
+        self._nsub = len(self._sub_axis)
+        
+    def _get_ctypes(self):
+        return self.proj.ctype
+
+    ctypes = property(_get_ctypes)
+
+    def _get_equinox(self):
+        return self.proj.equinox
+
+    equinox = property(_get_equinox)
+
+    def _get_naxis(self):
+        return self.proj.naxis - self._nsub
+
+    naxis = property(_get_naxis)
+
+    def topixel(self, xy):
+        """ 1, 1 base """
+        template = len(xy[0])
+        iter_xy = iter(xy)
+
+        xyz = []
+        for i in self.naxis:
+            if i in self._sub_axis:
+                s = np.empty_like(template)
+                s.fill(self._sub_dict[i])
+                # FIXME : we need to use proper world coordinate.
+            else:
+                s = iter_xy.next()
+            xyz.append(s)
+            
+        xyz2 = self._pywcs.wcs_sky2pix(np.asarray(xyz).T, 1)
+
+        xyz2r = [d for (i, d) in enumerate(xyz2.T) if i not in self._sub_axis]
+
+        return xyz2r
+
+
+    def toworld(self, xy):
+        """ 1, 1 base """
+        template = len(xy[0])
+        iter_xy = iter(xy)
+
+        xyz = []
+        for i in self.naxis:
+            if i in self._sub_axis:
+                s = np.empty_like(template)
+                s.fill(self._sub_dict[i])
+            else:
+                s = iter_xy.next()
+            xyz.append(s)
+            
+        xyz2 = self._pywcs.wcs_pix2sky(np.asarray(xyz).T, 1)
+
+        xyz2r = [d for (i, d) in enumerate(xyz2.T) if i not in self._sub_axis]
+
+        return xyz2r
+
+    def sub(self, axes):
+        wcs = self._pywcs.sub(axes=axes)
+        return ProjectionPywcs(wcs)
+
+
 class ProjectionPywcs(ProjectionBase):
     """
     A wrapper for pywcs
@@ -176,12 +291,14 @@ class ProjectionPywcs(ProjectionBase):
     def topixel(self, xy):
         """ 1, 1 base """
         xy2 = self._pywcs.wcs_sky2pix(np.asarray(xy).T, 1)
-        return xy2[:,0], xy2[:,1]
+        #xy2.T
+        return xy2.T[:2] #xy2[:,0], xy2[:,1]
 
     def toworld(self, xy):
         """ 1, 1 base """
         xy2 = self._pywcs.wcs_pix2sky(np.asarray(xy).T, 1)
-        return xy2[:,0], xy2[:,1]
+        return xy2.T[:2] #xy2[:,0], xy2[:,1]
+    #return xy2[:,0], xy2[:,1]
 
     def sub(self, axes):
         wcs = self._pywcs.sub(axes=axes)
