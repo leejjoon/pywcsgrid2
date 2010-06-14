@@ -46,10 +46,6 @@ class WcsSky2PixelTransform(CurvedTransform):
 
         self.projection = get_kapteyn_projection(header_or_wcs)
 
-        #if wcs.naxis > 2:
-        #    wcs = wcs.wcssub([1, 2])
-        #self.wcs = wcs
-
         if src_coord is not None:
             self.src_coord = src_coord
 

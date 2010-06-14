@@ -104,11 +104,21 @@ class GridHelperWcsBase(object):
     def get_wcs_trans(cls, wcs, coord):
         return cls.WCS_TRANS_COLLECTION.get_wcs_trans(wcs, coord)
 
-    def _init_projection(self, wcs, orig_coord):
+    def _init_wcsgrid_params(self):
+        self._wcsgrid_params = dict(coord_format=("hms", "dms"),
+                                    label_density=(4, 4),
+                                    grid1=[], grid2=[])
+
+    def _init_projection(self, wcs, orig_coord, axis_nums=None):
         #self.header = header
         #wcs = pywcs.WCS(header)
         projection = get_kapteyn_projection(wcs)
-        self.projection = projection
+
+        if axis_nums is None:
+            axis_nums = [0,1]
+        self.projection = projection.substitue(axis_nums, [0]*projection.naxis)
+        
+        #self.projection = projection
 
         if orig_coord is None:
             ctype1, ctype2 = self.projection.ctypes[:2]
@@ -118,12 +128,14 @@ class GridHelperWcsBase(object):
             #coord_guess = coord_system_guess(wcs.wcs.ctype[0],
             #                                 wcs.wcs.ctype[1],
             #                                 wcs.wcs.equinox)
+
+            self._wcsgrid_orig_coord_system = coord_guess
             if coord_guess is None:
-                raise ValueError("Unknown coordinate system, %s, %s, equinox=%.1f" \
-                                 % (ctype1, ctype2,
-                                    equinox))
-            else:
-                self._wcsgrid_orig_coord_system = coord_guess
+            
+                print "Unknown coordinate system, %s, %s, equinox=%.1f" \
+                                 % (ctype1, ctype2, equinox)
+            #else:
+            #    self._wcsgrid_orig_coord_system = coord_guess
         else:
             self._wcsgrid_orig_coord_system = orig_coord
 
@@ -133,13 +145,11 @@ class GridHelperWcsBase(object):
         self._wcs_trans = self.get_wcs_trans(self.projection, None)
         self._wcsgrid_display_coord_system = None
 
-        self._wcsgrid_params = dict(coord_format=("hms", "dms"),
-                                    label_density=(4, 4),
-                                    grid1=[], grid2=[])
+        self._init_wcsgrid_params()
 
 
-    def __init__(self, wcs, orig_coord=None):
-        self._init_projection(wcs, orig_coord)
+    def __init__(self, wcs, orig_coord=None, axis_nums=None):
+        self._init_projection(wcs, orig_coord, axis_nums)
 
         self._center_world = None
         self._delta_trans = Affine2D()
@@ -283,6 +293,32 @@ class GridHelperWcsBase(object):
         return self._wcsgrid_display_coord_system
 
 
+    def _get_default_locator_formatter(self, ctype_name):
+        ctype_name = ctype_name.upper()
+        if ctype_name.startswith("RA"):
+            return LocatorHMS(4), FormatterHMS()
+        elif ctype_name.startswith("DEC"):
+            return LocatorDMS(4), FormatterDMS()
+        elif ctype_name.startswith("GLON") or ctype_name.startswith("GLAT"):
+            return LocatorDMS(4), FormatterDMS()
+        else:
+            return None, None
+
+
+    def _get_default_extreme_finder_par(self, ctype_name):
+        ctype_name = ctype_name.upper()
+        if ctype_name.startswith("RA") or ctype_name.startswith("GLON"):
+            cycle=360.0
+            minmax=None
+        elif ctype_name.startswith("DEC") or ctype_name.startswith("GLAT"):
+            cycle=None
+            minmax=None
+        else:
+            cycle=None
+            minmax=None
+
+        return cycle, minmax
+
 
 class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
     _GRIDHELPER_CLASS=GridHelperCurveLinear
@@ -293,20 +329,46 @@ class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
                  grid_locator2=None,
                  tick_formatter1=None,
                  tick_formatter2=None,
+                 axis_nums=None,
                  ):
 
-        GridHelperWcsBase.__init__(self, wcs, orig_coord)
+        GridHelperWcsBase.__init__(self, wcs, orig_coord, axis_nums)
+
+        # if extreme_finder is None:
+        #     extreme_finder=ExtremeFinderCycle(20,20)
+        # if grid_locator1 is None:
+        #     grid_locator1=LocatorHMS(4)
+        # if grid_locator2 is None:
+        #     grid_locator2=LocatorDMS(4)
+        # if tick_formatter1 is None:
+        #     tick_formatter1=FormatterHMS()
+        # if tick_formatter2 is None:
+        #     tick_formatter2=FormatterDMS()
+
+        #ctype1 = proj.ctypes[axis1]
+        #ctype2 = proj.ctypes[axis2]
+        ctype1, ctype2 = self.projection.ctypes[:2]
 
         if extreme_finder is None:
-            extreme_finder=ExtremeFinderCycle(20,20)
+            lon_cycle, lon_minmax = self._get_default_extreme_finder_par(ctype1)
+            lat_cycle, lat_minmax = self._get_default_extreme_finder_par(ctype2)
+        
+            extreme_finder= ExtremeFinderCycle(20, 20,
+                                               lon_cycle=lon_cycle, lat_cycle=lat_cycle,
+                                               lon_minmax=lon_minmax, lat_minmax=lat_minmax)
+
+        _grid_locator1, _tick_formatter1 = self._get_default_locator_formatter(ctype1)
         if grid_locator1 is None:
-            grid_locator1=LocatorHMS(4)
-        if grid_locator2 is None:
-            grid_locator2=LocatorDMS(4)
+            grid_locator1 = _grid_locator1
         if tick_formatter1 is None:
-            tick_formatter1=FormatterHMS()
+            tick_formatter1 = _tick_formatter1
+
+        _grid_locator2, _tick_formatter2 = self._get_default_locator_formatter(ctype2)
+        if grid_locator2 is None:
+            grid_locator2 = _grid_locator2
         if tick_formatter2 is None:
-            tick_formatter2=FormatterDMS()
+            tick_formatter2 = _tick_formatter2
+
 
         GridHelperCurveLinear.__init__(self, self._wcs_trans,
                                        extreme_finder=extreme_finder,
@@ -314,6 +376,11 @@ class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
                                        grid_locator2=grid_locator2,
                                        tick_formatter1=tick_formatter1,
                                        tick_formatter2=tick_formatter2)
+
+    def _init_wcsgrid_params(self):
+        self._wcsgrid_params = dict(coord_format=("hms", "dms"),
+                                    label_density=(4, 4),
+                                    grid1=[], grid2=[])
 
 
 class GridHelperWcsFloating(GridHelperWcsBase, floating_axes.GridHelperCurveLinear):
@@ -546,12 +613,13 @@ class AxesWcs(HostAxes):
             header = kw.pop("header", None)
             wcs = kw.pop("wcs", None)
             if (header is not None) and (wcs is None):
-                self.projection = get_kapteyn_projection(header)
+                projection = get_kapteyn_projection(header)
             elif (header is None) and (wcs is not None):
-                self.projection = get_kapteyn_projection(wcs)
+                projection = get_kapteyn_projection(wcs)
             else:
                 raise ValueError("wcs")
 
+            self.projection = projection.sub([1,2])
             grid_helper = GridHelperWcs(self.projection)
             kw["grid_helper"] = grid_helper
         else:
@@ -585,9 +653,11 @@ class AxesWcs(HostAxes):
         #    pass
         else:
             try:
-                key = get_kapteyn_projection(key)
+                proj = get_kapteyn_projection(key)
             except:
                 raise ValueError("invalide key : %s" % repr(key))
+
+            key = proj.sub([1,2])
 
         if key not in self._wcsgrid_wcsaxes:
             if self.get_grid_helper()._wcsgrid_orig_coord_system == key:

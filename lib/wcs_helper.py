@@ -102,11 +102,15 @@ class ProjectionBase(object):
     """
     A wrapper for kapteyn.projection or pywcs
     """
-    def _get_ctypes(self):
-        pass
+    # def _get_ctypes(self):
+    #     pass
 
-    def _get_equinox(self):
-        pass
+    # def _get_equinox(self):
+    #     pass
+
+    # def _get_naxis(self):
+    #     pass
+
 
     def topixel(self):
         """ 1, 1 base """
@@ -153,7 +157,17 @@ class ProjectionKapteyn(ProjectionBase):
         return ProjectionKapteyn(proj)
 
 
-class ProjectionPywcsNd(ProjectionBase):
+class _ProjectionSubInterface:
+    def substitue(self, axis_nums_to_keep, ref_pixel):
+        proj_sub = ProjectionPywcsSub(self, axis_nums_to_keep, ref_pixel)
+        return proj_sub
+
+    def sub(self, axes):
+        axis_nums_to_keep = [i-1 for i in axes]
+        print "substitue", axis_nums_to_keep, [0] * self.naxis
+        return self.substitue(axis_nums_to_keep, [0] * self.naxis)
+    
+class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     """
     A wrapper for pywcs
     """
@@ -189,25 +203,41 @@ class ProjectionPywcsNd(ProjectionBase):
         xy2 = self._pywcs.wcs_pix2sky(np.asarray(xy).T, 1)
         return xy2.T
 
-    def sub(self, axes):
-        wcs = self._pywcs.sub(axes=axes)
-        return ProjectionPywcs(wcs)
+    #def sub(self, axes):
+    #    wcs = self._pywcs.sub(axes=axes)
+    #    return ProjectionPywcs(wcs)
 
 
-class ProjectionPywcsSub(ProjectionPywcsNd):
+
+class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
     """
     A wrapper for pywcs
     """
-    def __init__(self, proj, sub_dict):
+    def __init__(self, proj, axis_nums_to_keep, ref_pixel):
+        """
+        ProjectionPywcsSub(proj, [0, 1], (0, 0, 0))
+        """
         self.proj = proj
-        self._sub_dict = sub_dict
-        self._sub_axis = sub_dict.keys()
-        for n in self._sub_axis:
-            assert n < self.naxis
-        self._nsub = len(self._sub_axis)
+        
+        self._nsub = len(axis_nums_to_keep)
+        self._axis_nums_to_keep = axis_nums_to_keep[:]
+
+        self._ref_pixel = ref_pixel
+
+        _ref_pixel0 = np.array(ref_pixel).reshape((len(ref_pixel),1))
+        _ref_world0 = np.asarray(proj.toworld(_ref_pixel0))
+        self._ref_world = _ref_world0.reshape((len(ref_pixel),))
+                                                  
+                                                  
+        
+        # for n in range(proj.naxis):
+        #     if n in self._sub_axis:
+        #         self._sub_axis.remove(n)
+        #     else:
+        #         self._sub_dict[n] = ref_pixel[n]
         
     def _get_ctypes(self):
-        return self.proj.ctype
+        return [self.proj.ctypes[i] for i in self._axis_nums_to_keep]
 
     ctypes = property(_get_ctypes)
 
@@ -217,55 +247,65 @@ class ProjectionPywcsSub(ProjectionPywcsNd):
     equinox = property(_get_equinox)
 
     def _get_naxis(self):
-        return self.proj.naxis - self._nsub
+        #return self.proj.naxis - self._nsub
+        return self._nsub
 
     naxis = property(_get_naxis)
 
     def topixel(self, xy):
         """ 1, 1 base """
-        template = len(xy[0])
+        template = xy[0]
         iter_xy = iter(xy)
 
-        xyz = []
-        for i in self.naxis:
-            if i in self._sub_axis:
+        xyz = [None]*self.proj.naxis
+        for i in self._axis_nums_to_keep:
+            xyz[i] = iter_xy.next()
+        for i in range(self.proj.naxis):
+            if i not in self._axis_nums_to_keep:
                 s = np.empty_like(template)
-                s.fill(self._sub_dict[i])
-                # FIXME : we need to use proper world coordinate.
-            else:
-                s = iter_xy.next()
-            xyz.append(s)
+                s.fill(self._ref_world[i])
+                xyz[i] = s
             
-        xyz2 = self._pywcs.wcs_sky2pix(np.asarray(xyz).T, 1)
+        #xyz2 = self._pywcs.wcs_sky2pix(np.asarray(xyz).T, 1)
+        xyz2 = self.proj.topixel(np.array(xyz))
 
-        xyz2r = [d for (i, d) in enumerate(xyz2.T) if i not in self._sub_axis]
+        #xyz2r = [d for (i, d) in enumerate(xyz2) if i in self._axis_nums_to_keep]
+        xyz2r = [xyz2[i] for i in self._axis_nums_to_keep]
 
         return xyz2r
 
 
     def toworld(self, xy):
         """ 1, 1 base """
-        template = len(xy[0])
+        template = xy[0]
         iter_xy = iter(xy)
 
-        xyz = []
-        for i in self.naxis:
-            if i in self._sub_axis:
-                s = np.empty_like(template)
-                s.fill(self._sub_dict[i])
-            else:
-                s = iter_xy.next()
-            xyz.append(s)
-            
-        xyz2 = self._pywcs.wcs_pix2sky(np.asarray(xyz).T, 1)
 
-        xyz2r = [d for (i, d) in enumerate(xyz2.T) if i not in self._sub_axis]
+        xyz = [None]*self.proj.naxis
+        for i in self._axis_nums_to_keep:
+            xyz[i] = iter_xy.next()
+        for i in range(self.proj.naxis):
+            if i not in self._axis_nums_to_keep:
+                s = np.empty_like(template)
+                s.fill(self._ref_pixel[i])
+                xyz[i] = s
+
+        # xyz = []
+        # for i in range(self.proj.naxis):
+        #     if i in self._axis_nums_to_keep:
+        #         s = iter_xy.next()
+        #     else:
+        #         s = np.empty_like(template)
+        #         s.fill(self._ref_pixel[i])
+        #     xyz.append(s)
+        xyz2 = self.proj.toworld(np.asarray(xyz))
+        #xyz2 = self._pywcs.wcs_pix2sky(np.asarray(xyz).T, 1)
+
+        #xyz2r = [d for (i, d) in enumerate(xyz2) if i in self._axis_nums_to_keep]
+        xyz2r = [xyz2[i] for i in self._axis_nums_to_keep]
 
         return xyz2r
 
-    def sub(self, axes):
-        wcs = self._pywcs.sub(axes=axes)
-        return ProjectionPywcs(wcs)
 
 
 class ProjectionPywcs(ProjectionBase):
@@ -306,21 +346,22 @@ class ProjectionPywcs(ProjectionBase):
 
 
 if _pywcs_installed:
-    ProjectionDefault = ProjectionPywcs
+    ProjectionDefault = ProjectionPywcsNd
 else:
     ProjectionDefault = ProjectionKapteyn
 
 def get_kapteyn_projection(header):
     if _kapteyn_installed and isinstance(header, kapteyn.wcs.Projection):
-        projection = ProjectionKapteyn(header)
+        projection = ProjectionKapteynNd(header)
     elif _pywcs_installed and isinstance(header, pywcs.WCS):
-        projection = ProjectionPywcs(header)
+        projection = ProjectionPywcsNd(header)
     elif isinstance(header, ProjectionBase):
         projection = header
     else:
         projection = ProjectionDefault(header)
 
-    projection = projection.sub(axes=[1,2])
+
+    #projection = projection.sub(axes=[1,2])
     return projection
 
 
