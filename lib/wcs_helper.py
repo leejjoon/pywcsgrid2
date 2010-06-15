@@ -159,13 +159,20 @@ class ProjectionKapteyn(ProjectionBase):
 
 class _ProjectionSubInterface:
     def substitue(self, axis_nums_to_keep, ref_pixel):
+        for i in axis_nums_to_keep:
+            if i >= self.naxis:
+                raise ValueError("Incorrect axis number")
+            
+        if axis_nums_to_keep == range(self.naxis):
+            return self
+
         proj_sub = ProjectionPywcsSub(self, axis_nums_to_keep, ref_pixel)
         return proj_sub
 
     def sub(self, axes):
         axis_nums_to_keep = [i-1 for i in axes]
-        print "substitue", axis_nums_to_keep, [0] * self.naxis
         return self.substitue(axis_nums_to_keep, [0] * self.naxis)
+
     
 class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     """
