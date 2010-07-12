@@ -7,7 +7,7 @@ import numpy as np
 from pywcsgrid2.wcs_transforms import WcsSky2PixelTransform, WcsPixel2SkyTransform,\
      WcsSky2SkyTransform
 
-from matplotlib.transforms import Affine2DBase
+from matplotlib.transforms import Affine2D
 
 from matplotlib import rcParams
 
@@ -100,7 +100,7 @@ class FormatterDMSDelta(object):
         values = self._get_pretty_fromat(direction, factor, values)
         if len(values) == 0:
             return []
-        if factor == 1:
+        if factor == 1 or factor is None:
             return ["%s$^{\circ}$" % (v,) for v in values]
         elif factor == 60:
             return ["%s$^{\prime}$" % (v,) for v in values]
@@ -113,7 +113,7 @@ class FormatterDMSDelta(object):
 
 
 #class SimpleScaleTranslateAffine2D(Affine2D):
-class SimpleScaleTranslateAffine2D(Affine2DBase):
+class SimpleScaleTranslateAffine2D(Affine2D):
     """
     A mutable 2D affine transformation.
     """
@@ -128,7 +128,7 @@ class SimpleScaleTranslateAffine2D(Affine2DBase):
 
         If *matrix* is None, initialize with the identity transform.
         """
-        Affine2DBase.__init__(self)
+        Affine2D.__init__(self)
         matrix = np.identity(3)
         self._mtx = matrix
         self._invalid = 0
@@ -185,7 +185,7 @@ class SimpleScaleTranslateAffine2D(Affine2DBase):
         Set this transformation from the frozen copy of another
         :class:`Affine2DBase` object.
         """
-        assert isinstance(other, Affine2DBase)
+        assert isinstance(other, Affine2D)
         self._mtx = other.get_matrix()
         self.invalidate()
 
@@ -259,7 +259,9 @@ class SimpleScaleTranslateAffine2D(Affine2DBase):
 
 
 
-    
+import re
+_pattern_longitude = re.compile(r"^(RA|GLON)")
+_pattern_latitude = re.compile(r"^(DEC|GLAT)")
 
 class GridHelperWcsBase(object):
 
@@ -273,8 +275,7 @@ class GridHelperWcsBase(object):
 
     def _init_wcsgrid_params(self):
         self._wcsgrid_params = dict(coord_format=("hms", "dms"),
-                                    label_density=(4, 4),
-                                    grid1=[], grid2=[])
+                                    label_density=(4, 4))
 
     def _init_projection(self, wcs, orig_coord, axis_nums=None):
         #self.header = header
@@ -375,7 +376,10 @@ class GridHelperWcsBase(object):
     def _set_center_pixel_deprecated(self, x, y):
         #self._center_pixel = x, y
         lon, lat = self.projection.toworld(([x+1], [y+1]))
-        self._set_center_world(lon[0], lat[0])
+        cos_lat = np.cos(lat[0]/180.*np.pi)
+        self._set_center_world(lon[0], lat[0],
+                               lon_scale=1./cos_lat,
+                               lat_scale=1.)
 
     def _set_center_world(self, lon, lat, lon_scale, lat_scale):
         self._center_world_and_scale = lon, lat, lon_scale, lat_scale
@@ -394,10 +398,13 @@ class GridHelperWcsBase(object):
                 raise ValueError("only one of center_world of center_pixel need to be set")
             if lon_lat:
                 lon, lat = lon_lat
-                self._set_center_world(lon, lat)
+                cos_lat = np.cos(lat/180.*np.pi)
+                self._set_center_world(lon, lat,
+                                       lon_scale=1./cos_lat,
+                                       lat_scale=1.)
             elif xy:
                 x, y = xy
-                self._set_center_pixel(x, y)
+                self._set_center_pixel_deprecated(x, y)
             else:
                 raise RuntimeError("center_world of center_pixel argument is required")
             
@@ -557,8 +564,8 @@ class GridHelperWcsBase(object):
                 locator.set_factor(3600.)
                
             formatter = FormatterDMSDelta()
+
         else:
-            offset, scale = 0, 1
             if labtyp == "absdeg":
                 locator = MaxNLocator(nbins)
                 formatter = FormatterDMSDelta()
@@ -570,30 +577,108 @@ class GridHelperWcsBase(object):
                 locator = LocatorDMS(nbins)
                 formatter = FormatterDMS()
             else:
-                self.update_delta_trans(ty=0, sy=1)
+                #self.update_delta_trans(ty=0, sy=1)
                 locator = MaxNLocator(nbins)
                 formatter = FormatterPrettyPrint()
+
+            offset, scale = 0, 1
 
         return offset, scale, locator, formatter
     
 
+    def _check_scale_for_longitude(self, naxis, labtyp, labtyp_kwargs):
+        if labtyp in ["delta", "arcdeg", "arcmin", "arcsec"]:
+            ctype = self.projection.ctypes[naxis]
+            if _pattern_longitude.match(ctype) and "scale" not in labtyp_kwargs:
+                lat = labtyp_kwargs.pop("latitude", None)
+                if lat is None:
+                    raise RuntimeError("For ctype of longitude, either scale or the latitude parameter needs to be set")
+                else:
+                    scale = 1./np.cos(lat/180.*np.pi)
+                    labtyp_kwargs["scale"] = scale
+        
+
     def set_ticklabel1_type(self, labtyp, **labtyp_kwargs):
-        offset, scale, locator, formatter = self._set_ticklabel_type(labtyp, **labtyp_kwargs)
+
+        self._check_scale_for_longitude(0, labtyp, labtyp_kwargs)
+
+        offset, scale, locator, formatter = \
+                self._set_ticklabel_type(labtyp, **labtyp_kwargs)
         self.update_delta_trans(sx=scale, tx=offset)
+
         self.update_grid_finder(aux_trans=self._delta_trans+self._wcs_trans,
                                 grid_locator1=locator,
                                 tick_formatter1=formatter
                                 )
 
     def set_ticklabel2_type(self, labtyp, **labtyp_kwargs):
-        offset, scale, locator, formatter = self._set_ticklabel_type(labtyp, **labtyp_kwargs)
+
+        self._check_scale_for_longitude(1, labtyp, labtyp_kwargs)
+
+        offset, scale, locator, formatter = \
+                self._set_ticklabel_type(labtyp, **labtyp_kwargs)
         self.update_delta_trans(sy=scale, ty=offset)
+
         self.update_grid_finder(aux_trans=self._delta_trans+self._wcs_trans,
                                 grid_locator2=locator,
                                 tick_formatter2=formatter
                                 )
 
 
+    def _get_center_world_and_default_scale_factor(self, center_pixel):
+        x, y = center_pixel
+        center_world = self.projection.toworld(([x+1], [y+1]))
+        clon, clat = center_world[0][0], center_world[1][0]
+
+        ctype1, ctype2 = self.projection.ctypes[:2]
+
+        if _pattern_latitude.match(ctype2):
+            scale2 = 1
+            if _pattern_longitude.match(ctype1):
+                scale1 = 1./np.cos(clat/180.*np.pi)
+            else:
+                scale1 = None
+        if _pattern_latitude.match(ctype1):
+            scale1 = 1
+            if _pattern_longitude.match(ctype2):
+                scale2 = 1./np.cos(clon/180.*np.pi)
+            else:
+                scale2 = None
+
+        return clon, clat, scale1, scale2
+    
+        
+
+    def set_ticklabel_type(self, labtyp1, labtyp2,
+                           center_pixel=None,
+                           labtyp_kwargs1=None, labtyp_kwargs2=None):
+
+        if center_pixel is  None:
+            tx, ty, sx, sy = None, None, None, None
+        else:
+            tx, ty, sx, sy = self._get_center_world_and_default_scale_factor(center_pixel)
+
+        if labtyp_kwargs1 is None:
+            labtyp_kwargs1 = dict(offset=tx, scale=sx)
+        else:
+            if "scale" not in labtyp_kwargs1:
+                labtyp_kwargs1["scale"] = sx
+            if "offset" not in labtyp_kwargs1:
+                labtyp_kwargs1["offset"] = tx
+
+        if labtyp_kwargs2 is None:
+            labtyp_kwargs2 = dict(offset=ty, scale=sy)
+        else:
+            if "scale" not in labtyp_kwargs2:
+                labtyp_kwargs2["scale"] = sy
+            if "offset" not in labtyp_kwargs2:
+                labtyp_kwargs1["offset"] = ty
+
+        self.set_ticklabel1_type(labtyp1, **labtyp_kwargs1)
+        self.set_ticklabel2_type(labtyp2, **labtyp_kwargs2)
+
+            
+        
 class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
     _GRIDHELPER_CLASS=GridHelperCurveLinear
 
@@ -646,10 +731,9 @@ class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
                                        tick_formatter1=grid_helper_params["tick_formatter1"],
                                        tick_formatter2=grid_helper_params["tick_formatter2"])
 
-    def _init_wcsgrid_params(self):
-        self._wcsgrid_params = dict(coord_format=("hms", "dms"),
-                                    label_density=(4, 4),
-                                    grid1=[], grid2=[])
+    #def _init_wcsgrid_params(self):
+    #    self._wcsgrid_params = dict(coord_format=("hms", "dms"),
+    #                                label_density=(4, 4))
 
 
 class GridHelperWcsFloating(GridHelperWcsBase, floating_axes.GridHelperCurveLinear):
@@ -1025,11 +1109,6 @@ class AxesWcs(HostAxes):
         #self.axis["top"].label.set_text(xlabel)
 
 
-    def set_label_type(self, labtyp1, labtyp2,
-                       offset_center=None,
-                       ):
-        warnings.warn("set_label_type is deprecated. Use set_ticklabel_type")
-
     def set_ticklabel1_type(self, labtyp, **labtyp_kwargs):
         """
         Up to 2 values.  The spatial label type of the x and y axes.
@@ -1098,8 +1177,8 @@ class AxesWcs(HostAxes):
 
     def set_ticklabel_type(self, labtyp1, labtyp2,
                            offset_center=None,
-                           labtyp1_kwargs=None,
-                           labtyp2_kwargs=None,
+                           #labtyp1_kwargs=None,
+                           #labtyp2_kwargs=None,
                            ):
         """
         Up to 2 values.  The spatial label type of the x and y axes.
@@ -1137,8 +1216,8 @@ class AxesWcs(HostAxes):
 
         offset_types = ["delta", "arcsec", "arcmin", "arcmas", "reldeg", "relpix"]
 
-        labtyp1, labtyp1_kwargs_ = _parse_label_type(labtyp1) 
-        labtyp2, labtyp2_kwargs_ = _parse_label_type(labtyp2) 
+        labtyp1, labtyp1_kwargs = _parse_label_type(labtyp1) 
+        labtyp2, labtyp2_kwargs = _parse_label_type(labtyp2) 
        
         if labtyp1 in offset_types:
             labtyp1_is_offset = True
@@ -1168,6 +1247,23 @@ class AxesWcs(HostAxes):
 
         for k,v in labtyp1_kwargs.iteritems():
             _labtyp_update(gh, 1, labtyp2, k, v)
+
+
+
+
+
+
+
+    def set_label_type(self, labtyp1, labtyp2,
+                                      offset_center=None):
+        self.set_ticklabel_type_deprecated(labtyp1, labtyp2,
+                                           offset_center=offset_center,
+                                           )
+        warnings.warn("set_label_type is deprecated. Use set_ticklabel_type")
+
+    # def set_label_type(self, labtyp1, labtyp2,
+    #                    offset_center=None,
+    #                    ):
 
     def swap_tick_coord(self):
         """
