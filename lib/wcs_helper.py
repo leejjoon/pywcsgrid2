@@ -80,6 +80,61 @@ class sky2sky(object):
         ll_dest = np.asarray(self._dotran(lonlat))
         return ll_dest[:,0], ll_dest[:,1]
 
+import re
+_pattern_ra = re.compile(r"^RA")
+_pattern_dec = re.compile(r"^DEC")
+_pattern_glon = re.compile(r"^GLON")
+_pattern_glat = re.compile(r"^GLAT")
+_pattern_vel = re.compile(r"^VEL")
+
+def _coord_system_guess(ctype_name):
+    if ctype_name.upper().startswith("RA") or \
+       ctype_name.upper().startswith("DEC"):
+        ctype = "fk"
+    elif ctype_name.upper().startswith("GLON") or \
+       ctype_name.upper().startswith("GLAT"):
+        ctype =  "gal"
+    elif ctype_name.upper().startswith("VEL"):
+        ctype =  "vel"
+    else:
+        ctype =  "unknown"
+    return ctype
+
+# def coord_system_guess2(ctype1_name, ctype2_name, equinox):
+
+#     ctype1 = _coord_system_guess(ctype1_name)
+#     ctype2 = _coord_system_guess(ctype2_name)
+
+#     if ctype1 == ctype2:
+#         ctype = ctype1
+#         if equinox == 2000.0:
+#             ctype = "fk5"
+#         elif equinox == 1950.0:
+#             ctype = "fk4"
+#         elif equinox is None:
+#             ctype = "fk5"
+#         else:
+#             ctype = "fk_unknown"
+
+#     if ctype1 == "fk" and ctype2 == "fk":
+#         ctype = "fk"
+#     elif ctype1 == "gal" and ctype2 == "gal":
+#         ctype = "gal"
+#     elif ctype1 == "vel" and ctype2 == "vel":
+#         ctype = "gal"
+#     elif "vel" in [ctype1, ctype2]
+
+
+#         if equinox == 2000.0:
+#             ctype = "fk5"
+#         elif equinox == 1950.0:
+#             ctype = "fk4"
+#         elif equinox is None:
+#             ctype = "fk5"
+#         else:
+#             ctype = "fk_unknown"
+
+#     return None
 
 def coord_system_guess(ctype1_name, ctype2_name, equinox):
     if ctype1_name.upper().startswith("RA") and \
@@ -95,6 +150,9 @@ def coord_system_guess(ctype1_name, ctype2_name, equinox):
     if ctype1_name.upper().startswith("GLON") and \
        ctype2_name.upper().startswith("GLAT"):
         return "gal"
+
+
+
     return None
 
 
@@ -126,7 +184,7 @@ class ProjectionBase(object):
 
 class ProjectionKapteyn(ProjectionBase):
     """
-    A wrapper for kapteyn.projection 
+    A wrapper for kapteyn.projection
     """
     def __init__(self, header):
         if isinstance(header, pyfits.Header):
@@ -162,7 +220,7 @@ class _ProjectionSubInterface:
         for i in axis_nums_to_keep:
             if i >= self.naxis:
                 raise ValueError("Incorrect axis number")
-            
+
         if axis_nums_to_keep == range(self.naxis):
             return self
 
@@ -173,7 +231,7 @@ class _ProjectionSubInterface:
         axis_nums_to_keep = [i-1 for i in axes]
         return self.substitue(axis_nums_to_keep, [0] * self.naxis)
 
-    
+
 class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     """
     A wrapper for pywcs
@@ -225,7 +283,7 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
         ProjectionPywcsSub(proj, [0, 1], (0, 0, 0))
         """
         self.proj = proj
-        
+
         self._nsub = len(axis_nums_to_keep)
         self._axis_nums_to_keep = axis_nums_to_keep[:]
 
@@ -234,15 +292,15 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
         _ref_pixel0 = np.array(ref_pixel).reshape((len(ref_pixel),1))
         _ref_world0 = np.asarray(proj.toworld(_ref_pixel0))
         self._ref_world = _ref_world0.reshape((len(ref_pixel),))
-                                                  
-                                                  
-        
+
+
+
         # for n in range(proj.naxis):
         #     if n in self._sub_axis:
         #         self._sub_axis.remove(n)
         #     else:
         #         self._sub_dict[n] = ref_pixel[n]
-        
+
     def _get_ctypes(self):
         return [self.proj.ctypes[i] for i in self._axis_nums_to_keep]
 
@@ -272,7 +330,7 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
                 s = np.empty_like(template)
                 s.fill(self._ref_world[i])
                 xyz[i] = s
-            
+
         #xyz2 = self._pywcs.wcs_sky2pix(np.asarray(xyz).T, 1)
         xyz2 = self.proj.topixel(np.array(xyz))
 

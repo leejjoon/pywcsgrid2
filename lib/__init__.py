@@ -1,7 +1,10 @@
 
 from axes_wcs import SubplotWcs as Subplot
 from axes_wcs import AxesWcs as Axes
-from axes_wcs import GridHelperWcs as GridHelper
+#from axes_wcs import GridHelperWcs as GridHelper
+from axes_wcs import GridHelperWcsSky, GridHelperWcsSimple
+
+GridHelperSky, GridHelperSimple = GridHelperWcsSky, GridHelperWcsSimple
 
 import matplotlib.pyplot as plt
 
@@ -15,7 +18,7 @@ def _check_kwargs(kwargs):
 def axes(*args, **kwargs):
 
     _check_kwargs(kwargs)
-    
+
     nargs = len(args)
     if len(args)==0: return subplot(111, **kwargs)
     if nargs>1:
@@ -31,7 +34,7 @@ def axes(*args, **kwargs):
     plt.draw_if_interactive()
     return a
 
-    
+
 def subplot(*args, **kwargs):
     """
     """

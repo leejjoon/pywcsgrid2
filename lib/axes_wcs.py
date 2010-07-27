@@ -277,7 +277,7 @@ class GridHelperWcsBase(object):
         self._wcsgrid_params = dict(coord_format=("hms", "dms"),
                                     label_density=(4, 4))
 
-    def _init_projection(self, wcs, orig_coord, axis_nums=None):
+    def _init_projection(self, wcs, axis_nums=None):
         #self.header = header
         #wcs = pywcs.WCS(header)
         projection = get_kapteyn_projection(wcs)
@@ -285,45 +285,24 @@ class GridHelperWcsBase(object):
         if axis_nums is None:
             axis_nums = [0,1]
         self.projection = projection.substitue(axis_nums, [0]*projection.naxis)
-        
+
         #self.projection = projection
-
-        if orig_coord is None:
-            ctype1, ctype2 = self.projection.ctypes[:2]
-            equinox = self.projection.equinox
-            coord_guess = coord_system_guess(ctype1, ctype2, equinox)
-
-            #coord_guess = coord_system_guess(wcs.wcs.ctype[0],
-            #                                 wcs.wcs.ctype[1],
-            #                                 wcs.wcs.equinox)
-
-            self._wcsgrid_orig_coord_system = coord_guess
-            if coord_guess is None:
-            
-                print "Unknown coordinate system, %s, %s, equinox=%.1f" \
-                                 % (ctype1, ctype2, equinox)
-            #else:
-            #    self._wcsgrid_orig_coord_system = coord_guess
-        else:
-            self._wcsgrid_orig_coord_system = orig_coord
 
         self.wcsgrid = None
         self._old_values = None
 
-        self._wcs_trans = self.get_wcs_trans(self.projection, None)
-        self._wcsgrid_display_coord_system = None
-
         self._init_wcsgrid_params()
+        self._wcs_trans = self.get_wcs_trans(self.projection, None)
+        self._wcsgrid_orig_coord_system = None
 
-
-    def __init__(self, wcs, orig_coord=None, axis_nums=None):
-        self._init_projection(wcs, orig_coord, axis_nums)
+    def __init__(self, wcs, axis_nums=None):
+        self._init_projection(wcs, axis_nums)
 
         self._center_world = None
         #self._delta_adef = 1, 1, 0, 0
         #self._delta_trans = SimpleScaleTranslateAffine2D()
         self._delta_trans = SimpleScaleTranslateAffine2D()
-        
+
     def update_delta_trans(self, tx=None, ty=None, sx=None, sy=None):
         if tx is not None:
             self._delta_trans.set_tx(tx)
@@ -381,13 +360,13 @@ class GridHelperWcsBase(object):
                                lon_scale=1./cos_lat,
                                lat_scale=1.)
 
-    def _set_center_world(self, lon, lat, lon_scale, lat_scale):
+    def _set_center_world_deprecated(self, lon, lat, lon_scale, lat_scale):
         self._center_world_and_scale = lon, lat, lon_scale, lat_scale
         #cos_lat = np.cos(lat/180.*np.pi)
         self._delta_trans.clear().scale(lon_scale, lat_scale).translate(lon, lat)
 
 
-    def set_ticklabel_mode(self, mode, **kwargs):
+    def set_ticklabel_mode_deprecated(self, mode, **kwargs):
         if mode not in ["normal", "delta"]:
             raise ValueError("unknown mode : %s" % (mode))
 
@@ -407,7 +386,7 @@ class GridHelperWcsBase(object):
                 self._set_center_pixel_deprecated(x, y)
             else:
                 raise RuntimeError("center_world of center_pixel argument is required")
-            
+
             self.update_wcsgrid_params(coord_format=("delta", "delta"))
         else:
             self._delta_trans.clear()
@@ -456,33 +435,6 @@ class GridHelperWcsBase(object):
         return self._wcsgrid_params
 
 
-    def set_display_coord_system(self, coord_system):
-        if self._wcsgrid_orig_coord_system is None:
-            raise ValueError("_pywcsgrid_orig_coord_system is not set")
-
-        self._wcsgrid_display_coord_system = coord_system
-        self._wcs_trans = self.get_wcs_trans(self.projection, coord_system)
-
-        if coord_system in ["fk5", "fk4"]:
-            ctype1, ctype2 = "RA", "DEC"
-        elif coord_system == "gal":
-            ctype1, ctype2 = "GLON", "GLAT"
-        else:
-            ctype1, ctype2 = None, None
-
-        grid_helper_params = self._get_default_grid_helper_params(ctype1, ctype2)
-        
-        self.update_grid_finder(aux_trans=self._delta_trans+self._wcs_trans,
-                                grid_locator1=grid_helper_params["grid_locator1"],
-                                grid_locator2=grid_helper_params["grid_locator2"],
-                                tick_formatter1=grid_helper_params["tick_formatter1"],
-                                tick_formatter2=grid_helper_params["tick_formatter2"]
-                                )
-
-
-    def get_display_coord_system(self):
-        return self._wcsgrid_display_coord_system
-
 
     def _get_default_locator_formatter(self, ctype_name):
         ctype_name = ctype_name.upper()
@@ -520,7 +472,7 @@ class GridHelperWcsBase(object):
         if extreme_finder is None:
             lon_cycle, lon_minmax = self._get_default_extreme_finder_par(ctype1)
             lat_cycle, lat_minmax = self._get_default_extreme_finder_par(ctype2)
-        
+
             extreme_finder= ExtremeFinderCycle(20, 20,
                                                lon_cycle=lon_cycle, lat_cycle=lat_cycle,
                                                lon_minmax=lon_minmax, lat_minmax=lat_minmax)
@@ -543,30 +495,39 @@ class GridHelperWcsBase(object):
                     tick_formatter1=tick_formatter1,
                     tick_formatter2=tick_formatter2)
 
-        
+
     def _set_ticklabel_type(self, labtyp, **labtyp_kwargs):
-        from mpl_toolkits.axisartist.grid_finder import MaxNLocator, FormatterPrettyPrint
+        from mpl_toolkits.axisartist.grid_finder import MaxNLocator, FormatterPrettyPrint, FixedLocator
 
         nbins = labtyp_kwargs.pop("nbins", 4)
+        locs = labtyp_kwargs.pop("locs", None)
+
         if labtyp in ["delta", "arcdeg", "arcmin", "arcsec"]:
             offset = labtyp_kwargs.pop("offset")
             scale = labtyp_kwargs.pop("scale", 1)
 
-            if labtyp == "delta":
+            if labtyp in ["delta"]:
                 locator = LocatorDMS(nbins)
-            elif labtyp == "arcdeg":
-                locator = MaxNLocator(nbins)
-            elif labtyp == "arcmin":
-                locator = MaxNLocator(nbins)
+            elif labtyp in ["arcdeg", "arcmin", "arcsec"]:
+                if locs is not None:
+                    locator = FixedLocator(locs)
+                else:
+                    locator = MaxNLocator(nbins)
+
+            if labtyp == "arcmin":
                 locator.set_factor(60.)
             elif labtyp == "arcsec":
-                locator = MaxNLocator(nbins)
                 locator.set_factor(3600.)
-               
+
             formatter = FormatterDMSDelta()
 
         else:
-            if labtyp == "absdeg":
+            if labtyp == "absval":
+                locator = MaxNLocator(nbins)
+                scale = labtyp_kwargs.pop("scale", 1)
+                locator.set_factor(scale)
+                formatter = FormatterPrettyPrint()
+            elif labtyp == "absdeg":
                 locator = MaxNLocator(nbins)
                 formatter = FormatterDMSDelta()
                 #formatter = FormatterHMS()
@@ -576,15 +537,17 @@ class GridHelperWcsBase(object):
             elif labtyp == "dms":
                 locator = LocatorDMS(nbins)
                 formatter = FormatterDMS()
+#             else:
+#                 #self.update_delta_trans(ty=0, sy=1)
+#                 locator = MaxNLocator(nbins)
+#                 formatter = FormatterPrettyPrint()
             else:
-                #self.update_delta_trans(ty=0, sy=1)
-                locator = MaxNLocator(nbins)
-                formatter = FormatterPrettyPrint()
+                raise ValueError("Unknown labeltype : %s" % (labtyp))
 
             offset, scale = 0, 1
 
         return offset, scale, locator, formatter
-    
+
 
     def _check_scale_for_longitude(self, naxis, labtyp, labtyp_kwargs):
         if labtyp in ["delta", "arcdeg", "arcmin", "arcsec"]:
@@ -596,10 +559,34 @@ class GridHelperWcsBase(object):
                 else:
                     scale = 1./np.cos(lat/180.*np.pi)
                     labtyp_kwargs["scale"] = scale
-        
+
 
     def set_ticklabel1_type(self, labtyp, **labtyp_kwargs):
+        """
+        labtyp is one of
 
+
+         "hms":
+         "dms":
+         "absdeg":
+
+         "delta":
+         "arcdeg":
+         "arcmin":
+         "arcsec":
+
+
+        optional keyword argument
+
+        world1 = (world0 - offset) * scale
+
+        offset (in the wcs unit, e,g,, degree)
+        scale : scale factor that the world unit will be scaled
+
+        For ctype of longitude, you can specify latitude (in degree)
+        instead of the scale.
+
+        """
         self._check_scale_for_longitude(0, labtyp, labtyp_kwargs)
 
         offset, scale, locator, formatter = \
@@ -646,8 +633,8 @@ class GridHelperWcsBase(object):
                 scale2 = None
 
         return clon, clat, scale1, scale2
-    
-        
+
+
 
     def set_ticklabel_type(self, labtyp1, labtyp2,
                            center_pixel=None,
@@ -677,9 +664,107 @@ class GridHelperWcsBase(object):
         self.set_ticklabel1_type(labtyp1, **labtyp_kwargs1)
         self.set_ticklabel2_type(labtyp2, **labtyp_kwargs2)
 
-            
-        
-class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
+
+class GridHelperWcsSkyBase(GridHelperWcsBase):
+    _GRIDHELPER_CLASS=GridHelperCurveLinear
+
+    def _init_projection(self, wcs, orig_coord, axis_nums=None):
+
+        GridHelperWcsBase._init_projection(self, wcs, axis_nums=None)
+
+        if orig_coord is None:
+            ctype1, ctype2 = self.projection.ctypes[:2]
+            equinox = self.projection.equinox
+            coord_guess = coord_system_guess(ctype1, ctype2, equinox)
+
+            #coord_guess = coord_system_guess(wcs.wcs.ctype[0],
+            #                                 wcs.wcs.ctype[1],
+            #                                 wcs.wcs.equinox)
+
+            self._wcsgrid_orig_coord_system = coord_guess
+            if coord_guess is None:
+
+                print "Unknown coordinate system, %s, %s, equinox=%.1f" \
+                                 % (ctype1, ctype2, equinox)
+            #else:
+            #    self._wcsgrid_orig_coord_system = coord_guess
+        else:
+            self._wcsgrid_orig_coord_system = orig_coord
+
+
+        self._wcsgrid_display_coord_system = None
+
+
+    def __init__(self, wcs, orig_coord=None, axis_nums=None):
+        self._init_projection(wcs, orig_coord, axis_nums)
+
+        self._center_world = None
+        #self._delta_adef = 1, 1, 0, 0
+        #self._delta_trans = SimpleScaleTranslateAffine2D()
+        self._delta_trans = SimpleScaleTranslateAffine2D()
+
+
+    def set_display_coord_system(self, coord_system):
+        if self._wcsgrid_orig_coord_system is None:
+            raise ValueError("_pywcsgrid_orig_coord_system is not set")
+
+        self._wcsgrid_display_coord_system = coord_system
+        self._wcs_trans = self.get_wcs_trans(self.projection, coord_system)
+
+        if coord_system in ["fk5", "fk4"]:
+            ctype1, ctype2 = "RA", "DEC"
+        elif coord_system == "gal":
+            ctype1, ctype2 = "GLON", "GLAT"
+        else:
+            ctype1, ctype2 = None, None
+
+        grid_helper_params = self._get_default_grid_helper_params(ctype1, ctype2)
+
+        self.update_grid_finder(aux_trans=self._delta_trans+self._wcs_trans,
+                                grid_locator1=grid_helper_params["grid_locator1"],
+                                grid_locator2=grid_helper_params["grid_locator2"],
+                                tick_formatter1=grid_helper_params["tick_formatter1"],
+                                tick_formatter2=grid_helper_params["tick_formatter2"]
+                                )
+
+
+    def get_display_coord_system(self):
+        return self._wcsgrid_display_coord_system
+
+
+class GridHelperWcsSimple(GridHelperWcsBase, GridHelperCurveLinear):
+    _GRIDHELPER_CLASS=GridHelperCurveLinear
+
+    def __init__(self, wcs,
+                 extreme_finder=None,
+                 grid_locator1=None,
+                 grid_locator2=None,
+                 tick_formatter1=None,
+                 tick_formatter2=None,
+                 axis_nums=None,
+                 ):
+
+        GridHelperWcsBase.__init__(self, wcs, axis_nums)
+
+        ctype1, ctype2 = self.projection.ctypes[:2]
+
+        grid_helper_params = self._get_default_grid_helper_params(ctype1, ctype2,
+                                                                  extreme_finder=extreme_finder,
+                                                                  grid_locator1=grid_locator1,
+                                                                  grid_locator2=grid_locator2,
+                                                                  tick_formatter1=tick_formatter1,
+                                                                  tick_formatter2=tick_formatter2)
+
+        GridHelperCurveLinear.__init__(self, self._wcs_trans,
+                                       extreme_finder=grid_helper_params["extreme_finder"],
+                                       grid_locator1=grid_helper_params["grid_locator1"],
+                                       grid_locator2=grid_helper_params["grid_locator2"],
+                                       tick_formatter1=grid_helper_params["tick_formatter1"],
+                                       tick_formatter2=grid_helper_params["tick_formatter2"])
+
+
+
+class GridHelperWcsSky(GridHelperWcsSkyBase, GridHelperCurveLinear):
     _GRIDHELPER_CLASS=GridHelperCurveLinear
 
     def __init__(self, wcs, orig_coord=None,
@@ -691,7 +776,7 @@ class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
                  axis_nums=None,
                  ):
 
-        GridHelperWcsBase.__init__(self, wcs, orig_coord, axis_nums)
+        GridHelperWcsSkyBase.__init__(self, wcs, orig_coord, axis_nums)
 
         # if extreme_finder is None:
         #     extreme_finder=ExtremeFinderCycle(20,20)
@@ -723,7 +808,7 @@ class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
                                                                   grid_locator2=grid_locator2,
                                                                   tick_formatter1=tick_formatter1,
                                                                   tick_formatter2=tick_formatter2)
-                                                                  
+
         GridHelperCurveLinear.__init__(self, self._wcs_trans,
                                        extreme_finder=grid_helper_params["extreme_finder"],
                                        grid_locator1=grid_helper_params["grid_locator1"],
@@ -734,6 +819,9 @@ class GridHelperWcs(GridHelperWcsBase, GridHelperCurveLinear):
     #def _init_wcsgrid_params(self):
     #    self._wcsgrid_params = dict(coord_format=("hms", "dms"),
     #                                label_density=(4, 4))
+
+
+GridHelperWcs = GridHelperWcsSky
 
 
 class GridHelperWcsFloating(GridHelperWcsBase, floating_axes.GridHelperCurveLinear):
@@ -777,7 +865,7 @@ class ParasiteAxesSky(ParasiteAxesAuxTrans):
              parent._wcsgrid_wcsaxes[0].transAux
 
 
-        grid_helper = GridHelperWcs(parent.projection)
+        grid_helper = GridHelperWcsSky(parent.projection)
         grid_helper.set_display_coord_system(src_coord)
 
         kwargs["grid_helper"] = grid_helper
@@ -912,32 +1000,32 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
 
 
 
-def _parse_label_type(labtyp):
-    labtyp_parsed = labtyp.split(",")
-    labtyp_name = labtyp_parsed[0].strip()
-    labtyp_kwargs = {}
-    for p in labtyp_parsed[1:]:
-        kv = p.strip().split("=")
-        if len(kv) == 1:
-            labtyp_kwargs[kv]=True
-        else:
-            labtyp_kwargs[kv[0]]=kv[1]
+# def _parse_label_type(labtyp):
+#     labtyp_parsed = labtyp.split(",")
+#     labtyp_name = labtyp_parsed[0].strip()
+#     labtyp_kwargs = {}
+#     for p in labtyp_parsed[1:]:
+#         kv = p.strip().split("=")
+#         if len(kv) == 1:
+#             labtyp_kwargs[kv]=True
+#         else:
+#             labtyp_kwargs[kv[0]]=kv[1]
 
-    return labtyp_name, labtyp_kwargs
+#     return labtyp_name, labtyp_kwargs
 
 
-def _labtyp_updater_nbins(grid_helper, axis_num, v):
-    grid_finder = grid_helper.grid_finder
-    locator = [grid_finder.grid_locator1, grid_finder.grid_locator2][axis_num]
-    locator.den = int(v)
+# def _labtyp_updater_nbins(grid_helper, axis_num, v):
+#     grid_finder = grid_helper.grid_finder
+#     locator = [grid_finder.grid_locator1, grid_finder.grid_locator2][axis_num]
+#     locator.den = int(v)
 
-_labtyp_updater_map = {}
-_labtyp_updater_default = dict(nbins=_labtyp_updater_nbins)
+# _labtyp_updater_map = {}
+# _labtyp_updater_default = dict(nbins=_labtyp_updater_nbins)
 
-def _labtyp_update(gh, axis_num, labtyp_name, k, v):
-    _labtyp_updater = _labtyp_updater_map.get(labtyp_name, _labtyp_updater_default)
-    _labtyp_updater[k](gh, axis_num, v)
-        
+# def _labtyp_update(gh, axis_num, labtyp_name, k, v):
+#     _labtyp_updater = _labtyp_updater_map.get(labtyp_name, _labtyp_updater_default)
+#     _labtyp_updater[k](gh, axis_num, v)
+
 class AxesWcs(HostAxes):
 
     def __init__(self, *kl, **kw):
@@ -973,7 +1061,14 @@ class AxesWcs(HostAxes):
                 raise ValueError("wcs")
 
             self.projection = projection.sub([1,2])
-            grid_helper = GridHelperWcs(self.projection)
+            ctype1, ctype2 = self.projection.ctypes[:2]
+            equinox = self.projection.equinox
+            default_system = coord_system_guess(ctype1, ctype2, equinox)
+
+            if default_system:
+                grid_helper = GridHelperWcsSky(self.projection)
+            else:
+                grid_helper = GridHelperWcsSimple(self.projection)
             kw["grid_helper"] = grid_helper
         else:
             self.projection = kw["grid_helper"].projection
@@ -1075,45 +1170,92 @@ class AxesWcs(HostAxes):
 
         self.set_default_label()
 
-    def set_default_label(self):
+    def _get_default_label1(self, ctype_name, equinox):
+        if ctype_name.startswith("GLON"):
+            label=r"$l$"
+        elif ctype_name.startswith("GLAT"):
+            label=r"$b$"
+        elif ctype_name.startswith("RA"):
+            if equinox == 2000:
+                label=r"$\alpha_{2000}$"
+            elif equinox == 1950:
+                label=r"$\alpha_{1950}$"
+            else:
+                label=r"$\alpha_{%6.1f}$" % (equinox)
+        elif ctype_name.startswith("DEC"):
+            if equinox == 2000:
+                label=r"$\delta_{2000}$"
+            elif equinox == 1950:
+                label=r"$\delta_{1950}$"
+            else:
+                label=r"$\delta_{%6.1f}$" % (equinox)
+        else:
+            label = ""
+
+        return label
+
+
+    def _set_default_label(self):
         coord_system = self.get_grid_helper().get_display_coord_system()
         if coord_system is None:
             coord_system = self.get_grid_helper()._wcsgrid_orig_coord_system
 
         if coord_system == "fk5":
-            xlabel=r"$\alpha_{2000}$"
-            ylabel=r"$\delta_{2000}$"
+            label1=r"$\alpha_{2000}$"
+            label2=r"$\delta_{2000}$"
         elif coord_system == "fk4":
-            xlabel=r"$\alpha_{1950}$"
-            ylabel=r"$\delta_{1950}$"
+            label1=r"$\alpha_{1950}$"
+            label2=r"$\delta_{1950}$"
         elif coord_system == "gal":
-            xlabel=r"$l$"
-            ylabel=r"$b$"
-        else:
-            xlabel=r""
-            ylabel=r""
+            label1=r"$l$"
+            label2=r"$b$"
+
+        if label1 and self.get_grid_helper()._center_world is not None:
+            label1 = r"$\Delta$"+label1
+            label2 = r"$\Delta$"+label2
+
+        self.axis["bottom","top"].label.set_text(label1)
+        self.axis["left","right"].label.set_text(label2)
 
 
+    def _set_default_label_using_ctypes(self):
+        ctype1_name, ctype2_name = self.projection.ctypes[:2]
+        equinox = self.projection.equinox
 
-        if xlabel and self.get_grid_helper()._center_world is not None:
-            xlabel = r"$\Delta$"+xlabel
-            ylabel = r"$\Delta$"+ylabel
+        label1 = self._get_default_label1(ctype1_name, equinox)
+        label2 = self._get_default_label1(ctype2_name, equinox)
+        #coord_system = self.get_grid_helper().get_display_coord_system()
 
-        #self.axis["left"].label.set_text(ylabel)
+        if label1 and self.get_grid_helper()._center_world is not None:
+            label1 = r"$\Delta$"+label1
+            label2 = r"$\Delta$"+label2
+
+        self.axis["bottom","top"].label.set_text(label1)
+        self.axis["left","right"].label.set_text(label2)
         #self.axis["right"].label.set_text(ylabel)
         #self.axis["bottom"].label.set_text(xlabel)
         #self.axis["top"].label.set_text(xlabel)
-        self.set_xlabel(xlabel)
-        self.set_ylabel(ylabel)
+        #self.set_xlabel(xlabel)
+        #self.set_ylabel(ylabel)
         #self.axis["bottom"].label.set_text(xlabel)
         #self.axis["top"].label.set_text(xlabel)
 
 
-    def set_ticklabel1_type(self, labtyp, **labtyp_kwargs):
+    def set_default_label(self):
+
+        if self.get_grid_helper()._wcsgrid_orig_coord_system is not None:
+            self._set_default_label()
+        else:
+            self._set_default_label_using_ctypes()
+
+
+
+
+    def set_ticklabel1_type_deprecated(self, labtyp, **labtyp_kwargs):
         """
         Up to 2 values.  The spatial label type of the x and y axes.
         Minimum match is active.  Select from:
- 
+
          "delta"     the label is in offsets (arcsec, arcmin, etc)
 
          "hms"       the label is in H M S.S (e.g. for RA)
@@ -1146,8 +1288,8 @@ class AxesWcs(HostAxes):
 
         offset_types = ["delta", "arcsec", "arcmin", "arcmas", "reldeg", "relpix"]
 
-        labtyp, labtyp_kwargs_ = _parse_label_type(labtyp) 
-       
+        labtyp, labtyp_kwargs_ = _parse_label_type(labtyp)
+
         if labtyp in offset_types:
             labtyp_is_offset = True
         else:
@@ -1166,7 +1308,7 @@ class AxesWcs(HostAxes):
             gh.set_ticklabel1_type("delta",
                                    center_world=offset_world,
                                    scale=1.)
-         
+
         self.set_default_label()
 
         # for k,v in labtyp1_kwargs.iteritems():
@@ -1175,19 +1317,31 @@ class AxesWcs(HostAxes):
         # for k,v in labtyp1_kwargs.iteritems():
         #     _labtyp_update(gh, 1, labtyp2, k, v)
 
+    def set_ticklabel1_type(self, labtyp, **labtyp_kwargs):
+        self.get_grid_helper().set_ticklabel1_type(labtyp, **labtyp_kwargs)
+
+    def set_ticklabel2_type(self, labtyp, **labtyp_kwargs):
+        self.get_grid_helper().set_ticklabel2_type(labtyp, **labtyp_kwargs)
+
     def set_ticklabel_type(self, labtyp1, labtyp2,
                            offset_center=None,
-                           #labtyp1_kwargs=None,
-                           #labtyp2_kwargs=None,
+                           labtyp1_kwargs=None,
+                           labtyp2_kwargs=None,
                            ):
         """
         Up to 2 values.  The spatial label type of the x and y axes.
         Minimum match is active.  Select from:
- 
+
          "delta"     the label is in offsets (arcsec, arcmin, etc)
 
          "hms"       the label is in H M S.S (e.g. for RA)
          "dms"       the label is in D M S.S (e.g. for DEC)
+
+         "absval"    the label is in actual wcs value
+         "absdeg"    the label is in degrees
+         "arcdeg"    the label is in arcdegree offsets
+         "arcmin"    the label is in arcminute offsets
+         "arcsec"    the label is in arcsecond offsets
 
          offset_center : offset center in pixel coordinate
         """
@@ -1196,10 +1350,7 @@ class AxesWcs(HostAxes):
 
         # To be implemented
         """
-         "arcsec"    the label is in arcsecond offsets
-         "arcmin"    the label is in arcminute offsets
          "arcmas"    the label is in milli-arcsec offsets
-         "absdeg"    the label is in degrees
          "reldeg"    the label is in degree offsets
                      The above assume the pixel increment is in radians.
          "abspix"    the label is in pixels
@@ -1212,54 +1363,18 @@ class AxesWcs(HostAxes):
                      the header.
          "relnat"    the label is in offset natural coordinates
          "none"      no label and no numbers or ticks on the axis
-         """
+        """
 
-        offset_types = ["delta", "arcsec", "arcmin", "arcmas", "reldeg", "relpix"]
-
-        labtyp1, labtyp1_kwargs = _parse_label_type(labtyp1) 
-        labtyp2, labtyp2_kwargs = _parse_label_type(labtyp2) 
-       
-        if labtyp1 in offset_types:
-            labtyp1_is_offset = True
-        else:
-            labtyp1_is_offset = False
-
-        if labtyp2 in offset_types:
-            labtyp2_is_offset = True
-        else:
-            labtyp2_is_offset = False
-
-        gh = self.get_grid_helper()
-        if labtyp1_is_offset and labtyp2_is_offset:
-            if offset_center is not None:
-                gh.set_ticklabel_mode("delta", center_pixel=offset_center)
-            else:
-                raise RuntimeError("offset_center is required for given label types")
-        elif (not labtyp1_is_offset) and (not labtyp2_is_offset):
-            gh.set_ticklabel_mode("normal")
-        else:
-            raise RuntimeError("given label types are incompatible")
-         
-        self.set_default_label()
-
-        for k,v in labtyp1_kwargs.iteritems():
-            _labtyp_update(gh, 0, labtyp1, k, v)
-
-        for k,v in labtyp1_kwargs.iteritems():
-            _labtyp_update(gh, 1, labtyp2, k, v)
-
-
-
-
+        self.set_ticklabel1_type(labtyp1, **labtyp1_kwargs)
+        self.set_ticklabel2_type(labtyp2, **labtyp2_kwargs)
 
 
 
     def set_label_type(self, labtyp1, labtyp2,
-                                      offset_center=None):
-        self.set_ticklabel_type_deprecated(labtyp1, labtyp2,
-                                           offset_center=offset_center,
-                                           )
+                       offset_center=None):
         warnings.warn("set_label_type is deprecated. Use set_ticklabel_type")
+        self.set_ticklabel_type_deprecated(labtyp1, labtyp2,
+                                           offset_center=offset_center)
 
     # def set_label_type(self, labtyp1, labtyp2,
     #                    offset_center=None,
@@ -1396,8 +1511,39 @@ class AxesWcs(HostAxes):
 
         return asb
 
-
 SubplotWcs = maxes.subplot_class_factory(AxesWcs)
+
+
+
+
+
+
+# class AxesWcsSky(AxesWcs):
+
+#     def set_default_label2(self):
+#         coord_system = self.get_grid_helper().get_display_coord_system()
+#         if coord_system is None:
+#             coord_system = self.get_grid_helper()._wcsgrid_orig_coord_system
+
+#         if coord_system == "fk5":
+#             label1=r"$\alpha_{2000}$"
+#             label2=r"$\delta_{2000}$"
+#         elif coord_system == "fk4":
+#             label1=r"$\alpha_{1950}$"
+#             label2=r"$\delta_{1950}$"
+#         elif coord_system == "gal":
+#             label1=r"$l$"
+#             label2=r"$b$"
+
+#         if label1 and self.get_grid_helper()._center_world is not None:
+#             label1 = r"$\Delta$"+label1
+#             label2 = r"$\Delta$"+label2
+
+#         self.axis["bottom","top"].label.set_text(label1)
+#         self.axis["left","right"].label.set_text(label2)
+
+
+
 
 
 
