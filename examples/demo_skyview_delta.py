@@ -18,8 +18,7 @@ header_radio = f_radio[0].header
 
 
 # grid helper to be used.
-grid_helper = pywcsgrid2.GridHelper(wcs=header_xray)
-grid_helper.update_wcsgrid_params(label_density=(2,2))
+grid_helper = pywcsgrid2.GridHelperSky(wcs=header_xray)
 
 # AxesGrid to display tow images side-by-side
 fig = plt.figure(1, (6,3.5))
@@ -33,7 +32,10 @@ ax1 = grid[0]
 #from mpl_toolkits.axes_grid1.angle_helper import LocatorDMS
 #from pywcsgrid2.axes_wcs import FormatterDMSDelta
 
-ax1.get_grid_helper().set_ticklabel_mode("delta", center_pixel=(50, 50))
+#ax1.get_grid_helper().set_ticklabel_mode("delta", center_pixel=(50, 50))
+ax1.set_ticklabel_type("delta",
+                       center_pixel=(146, 139))
+ax1.locator_params(nbins=3)
 
 
 # use imshow for a simply image display.
