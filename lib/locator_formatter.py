@@ -4,17 +4,17 @@ import mpl_toolkits.axisartist.angle_helper as angle_helper
 class LocatorDMS(angle_helper.LocatorDMS):
     def set_params(self, **kwargs):
         if "nbins" in kwargs:
-            self.den = kwargs.pop("nbins")
+            self.den = int(kwargs.pop("nbins"))
 
 class LocatorHMS(angle_helper.LocatorHMS):
     def set_params(self, **kwargs):
         if "nbins" in kwargs:
-            self.den = kwargs.pop("nbins")
+            self.den = int(kwargs.pop("nbins"))
 
-class FixedLocator(grid_finder.FixedLocator):
-    def __init__(self, locs):
+class FixedLocator(object):
+    def __init__(self, locs, factor=None):
         self._locs = locs
-        self._factor = None
+        self._factor = factor
 
 
     def __call__(self, v1, v2):
@@ -31,6 +31,8 @@ class FixedLocator(grid_finder.FixedLocator):
     def set_params(self, **kwargs):
         if "factor" in kwargs:
             self.set_factor(kwargs.pop("factor"))
+        if 'locs' in kwargs:
+            self._locs = kwargs.pop('locs')
 
 
 
