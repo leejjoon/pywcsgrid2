@@ -1041,7 +1041,7 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
 
     def imshow_affine(self, *kl, **kwargs):
 
-        if kwargs.pop("interpolation", "nearest") != "nearest":
+        if kwargs.setdefault("interpolation", "nearest") != "nearest":
             raise ValueError("interpolation parameter must not be set or should be 'nearest'")
         im = ParasiteAxesAuxTrans.imshow(self, *kl, **kwargs)
         x1, x2, y1, y2 = im.get_extent()
