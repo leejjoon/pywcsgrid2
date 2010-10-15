@@ -69,6 +69,10 @@ class AnchoredCompass(AnchoredOffsetbox):
                                    prop=prop,
                                    frameon=frameon)
 
+    def set_path_effects(self, path_effects):
+        for a in [self.arrow1, self.arrow2, self.txt1, self.txt2]:
+            a.set_path_effects(path_effects)
+
     def _update_arrow(self, renderer):
         ax = self._ax
 

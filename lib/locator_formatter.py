@@ -1,5 +1,6 @@
 import mpl_toolkits.axisartist.grid_finder as grid_finder
 import mpl_toolkits.axisartist.angle_helper as angle_helper
+import numpy as np
 
 class LocatorDMS(angle_helper.LocatorDMS):
     def set_params(self, **kwargs):

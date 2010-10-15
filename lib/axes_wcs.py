@@ -449,7 +449,7 @@ class GridHelperWcsBase(object):
         label_density=(4, 4),
         """
 
-        warnings.warn("update_wcsgrid_params is deprecated. Use set_ticklabel_type")
+        warnings.warn("update_wcsgrid_params is deprecated. Use set_ticklabel_type or locator_params")
 
         self._wcsgrid_params.update(**kwargs)
 
@@ -571,15 +571,20 @@ class GridHelperWcsBase(object):
                 formatter = FormatterPrettyPrint()
 
         else:
-            if labtyp == "absval":
-                locator = MaxNLocator(nbins)
-                scale = labtyp_kwargs.pop("scale", 1)
-                locator.set_factor(scale)
+            if labtyp in ["absval", "absdeg"]:
+                if locs is not None:
+                    locator = FixedLocator(locs)
+                else:
+                    locator = MaxNLocator(nbins)
+
+                if labtyp == "absval":
+                    scale = labtyp_kwargs.pop("scale", 1)
+                    locator.set_factor(scale)
+                elif labtyp == "absdeg":
+                    pass
+
                 formatter = FormatterPrettyPrint()
-            elif labtyp == "absdeg":
-                locator = MaxNLocator(nbins)
-                formatter = FormatterDMSDelta()
-                #formatter = FormatterHMS()
+
             elif labtyp == "hms":
                 locator = LocatorHMS(nbins)
                 formatter = FormatterHMS()
@@ -1162,7 +1167,7 @@ class AxesWcs(HostAxes):
 
         self._init_parasites()
 
-        self.set_default_label()
+        self.set_default_label("default", "default")
 
 
     def _init_parasites(self):
@@ -1326,6 +1331,10 @@ class AxesWcs(HostAxes):
                 label1 = label1 + r" [$^{\prime\prime}$]"
             elif ticktyp1 == "arcmas":
                 label1 = label1 + r" [mas]"
+
+        else:
+            if ticktyp1 == "absdeg":
+                label1 = label1 + r" [$^{\circ}$]"
         return label1
 
     def set_default_label(self, ticktyp1=None, ticktyp2=None):
@@ -1335,11 +1344,13 @@ class AxesWcs(HostAxes):
         else:
             label1, label2 = self._get_default_label_using_ctypes()
 
-        label1 = self._decorate_default_label(label1, ticktyp1)
-        label2 = self._decorate_default_label(label2, ticktyp2)
+        if ticktyp1 is not None:
+            label1 = self._decorate_default_label(label1, ticktyp1)
+            self.axis["bottom","top"].label.set_text(label1)
 
-        self.axis["bottom","top"].label.set_text(label1)
-        self.axis["left","right"].label.set_text(label2)
+        if ticktyp2 is not None:
+            label2 = self._decorate_default_label(label2, ticktyp2)
+            self.axis["left","right"].label.set_text(label2)
 
 
 
@@ -1459,8 +1470,14 @@ class AxesWcs(HostAxes):
         self.get_grid_helper().invalidate()
 
 
+    default_path_effects = []
+
+    def set_default_path_effects(self, path_effects):
+        self.default_path_effects = path_effects
+
     def add_beam_size(self, major_pixel, minor_pixel, angle, loc,
                       frameon=False, borderpad=.8, patch_props=None,
+                      path_effects=None,
                       **kwargs):
         """
         Add a ellipse patch to the axes with given sizes. This is
@@ -1492,11 +1509,17 @@ class AxesWcs(HostAxes):
         else:
             ae.ellipse.set(**patch_props)
 
+        if path_effects is None:
+            path_effects = self.default_path_effects
+
+        if path_effects:
+            ae.ellipse.set_path_effects(path_effects)
+
         self.add_artist(ae)
         return ae
 
 
-    def add_inner_title(self, title, loc, **kwargs):
+    def add_inner_title(self, title, loc, path_effects=None, **kwargs):
         """
         Add a text at the inside corner of the axes.
         It simply uses mpl_toolkits.axes_grid1.anchored_artists.AnchoredText.
@@ -1504,14 +1527,27 @@ class AxesWcs(HostAxes):
         for more details
         """
         # Figure title
-        at = AnchoredText(title, loc=loc, **kwargs)
+
+        if path_effects is None:
+            path_effects = self.default_path_effects
+
+        if path_effects:
+            kwargs.setdefault("frameon", False)
+            at = AnchoredText(title, loc=loc, **kwargs)
+            at.txt._text.set_path_effects(path_effects)
+        else:
+            at = AnchoredText(title, loc=loc, **kwargs)
+
         self.add_artist(at)
+
         return at
 
 
     def add_compass(self, loc, coord="fk5", arrow_length=0.15,
                     txt1="E", txt2="N",
-                    delta_a1=0, delta_a2=0, **kwargs):
+                    delta_a1=0, delta_a2=0,
+                    path_effects=None,
+                    **kwargs):
         """
         Add two arros with appropriate labels showing the increasing
         direction of the coordinate. The default label is "E" and "N".
@@ -1535,12 +1571,19 @@ class AxesWcs(HostAxes):
                              txt1=txt1, txt2=txt2,
                              delta_a1=delta_a1, delta_a2=delta_a2,
                              **kwargs)
+        if path_effects is None:
+            path_effects = self.default_path_effects
+
+        if path_effects:
+            ac.set_path_effects(path_effects)
+
         self.add_artist(ac)
         return ac
 
 
     def add_size_bar(self, length_pixel, label, loc, sep=5,
-                     borderpad=0.8, frameon=False, **kwargs):
+                     borderpad=0.8, frameon=False,
+                     path_effects=None, **kwargs):
         """
         Add a horizontal line with a label underneath. Intended to
         display the angular size.
@@ -1555,12 +1598,21 @@ class AxesWcs(HostAxes):
 
         """
 
+        if path_effects is None:
+            path_effects = self.default_path_effects
+
         asb =  AnchoredSizeBar(self.transData,
                                length_pixel,
                                label,
                                loc=loc,
                                borderpad=borderpad, sep=sep,
-                               frameon=frameon)
+                               frameon=frameon,
+                               **kwargs)
+        if path_effects:
+            for a in [asb.size_bar._children[0],
+                      asb.txt_label._text]:
+                a.set_path_effects(path_effects)
+
         self.add_artist(asb)
 
         return asb
