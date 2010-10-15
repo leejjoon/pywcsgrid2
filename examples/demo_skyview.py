@@ -47,15 +47,16 @@ cax1.xaxis.get_major_formatter().set_offset_string(r"$\times 10^{-5}$")
 
 ax2 = grid[1]
 d = f_radio[0].data
-# The second image have a different wcs. While imshow works (it
-# will interpolate the second image into the image coordinate of the
-# first image), pcolormesh is prefered when the pixel size of the
-# second image is larger than that of the first image.
+# The second image have a different wcs. While imshow works, it will
+# interpolate the second image into the image coordinate of the first
+# image. You may use pcolormesh when the pixel size of the second
+# image is larger than that of the first image. Or you may use
+# inshow_affine.
+
 #im2 = ax2[header_radio].pcolormesh(d, cmap=cm.gray_r)
-im2 = ax2[header_radio].imshow_affine(d, 
+im2 = ax2[header_radio].imshow_affine(d,
                                       cmap=cm.gray_r, origin="lower")
-#x1, x2, y1, y2 = im2.get_extent()
-#im2._image_skew_coordinate = None
+
 grid.cbar_axes[1].colorbar(im2)
 grid.cbar_axes[1].toggle_label(True)
 
@@ -70,6 +71,5 @@ cont2 = ax1[header_radio].contour(d, colors="k")
 ax1.add_inner_title("X-ray", loc=2)
 ax2.add_inner_title("Radio", loc=2)
 
-plt.draw()
 plt.show()
 

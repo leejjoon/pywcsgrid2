@@ -19,14 +19,13 @@ ax.grid()
 
 # grid & ticks in Galactic coordinate.
 ax.set_display_coord_system("gal")
-ax.get_grid_helper().update_wcsgrid_params(coord_format=("dms","dms"))
+ax.set_ticklabel_type("dms", "dms")
 
 # let xaxis display "b", and yaxis "l"
 ax.swap_tick_coord()
 
 # turn on top and right ticktables
-ax.axis["top"].major_ticklabels.set_visible(True)
-ax.axis["right"].major_ticklabels.set_visible(True)
+ax.axis["top","right"].toggle(ticklabels=True)
 
 plt.draw()
 plt.show()

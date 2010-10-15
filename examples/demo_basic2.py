@@ -20,9 +20,12 @@ ax.set_ylim(23, 98)
 # draw grids
 ax.grid()
 
-# change grid density
-ax.update_wcsgrid_params(label_density=[6,4])
+# make y ticklabels in absolute degree.
+ax.set_ticklabel2_type("absdeg", locs=[-65, -67.5, -70, -72.5])
+ax.set_default_label(None, "absdeg") # update the label using the default values
 
-plt.draw()
+# change grid density of the x axis
+ax.locator_params(axis="x", nbins=6)
+
 plt.show()
 
