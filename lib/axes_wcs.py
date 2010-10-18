@@ -32,7 +32,9 @@ GridFinderBase = grid_finder.GridFinderBase
 from mpl_toolkits.axisartist.angle_helper import ExtremeFinderCycle
 
 from locator_formatter import LocatorDMS, LocatorHMS, FixedLocator, \
-     FixedFormatter, MaxNLocator
+     FixedFormatter, MaxNLocator, FormatterPrettyPrint
+
+
 
 from mpl_toolkits.axisartist.angle_helper import FormatterDMS, FormatterHMS
 
@@ -124,8 +126,9 @@ wcs_trans_collection = WcsTransCollection()
 import matplotlib.ticker as mticker
 
 class FormatterDMSDelta(object):
-    def __init__(self):
+    def __init__(self, usetex=True):
         self._fmt = mticker.ScalarFormatter()
+        self._fmt._usetex = usetex
         self._fmt.create_dummy_axis()
         self._ignore_factor = True
 
@@ -358,9 +361,6 @@ class GridHelperWcsBase(object):
         if sy is not None:
             self._delta_trans.set_sy(sy)
 
-    def get_mode(self):
-        return self._mode
-
 #     def set_center_world(self, lon, lat):
 #         x, y = self.projection.topixel(([lon], [lat]))
 #         self._center_pixel = x[0]-1, y[0]-1
@@ -547,8 +547,6 @@ class GridHelperWcsBase(object):
 
     def _set_ticklabel_type(self, labtyp, **labtyp_kwargs):
 
-        from mpl_toolkits.axisartist.grid_finder import FormatterPrettyPrint
-
         nbins = labtyp_kwargs.pop("nbins", 4)
         locs = labtyp_kwargs.pop("locs", None)
 
@@ -662,10 +660,11 @@ class GridHelperWcsBase(object):
         values. However, manual ticks are not possible for labtyp of
         hms, dms, delta. The *locs* parameter will be simply ignored.
 
-
         For the wcs coordinate, the default values are in the unit of
         degree.  And for the ctype of longitude, you may specify
         latitude (in degree) instead of the scale.
+
+        .. plot:: figures/demo_labtyp.py
 
         """
         self._check_scale_for_longitude(0, labtyp, labtyp_kwargs)
@@ -680,7 +679,9 @@ class GridHelperWcsBase(object):
                                 )
 
     def set_ticklabel2_type(self, labtyp, **labtyp_kwargs):
-
+        """
+        see :meth:`~pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type`.
+        """
         self._check_scale_for_longitude(1, labtyp, labtyp_kwargs)
 
         offset, scale, locator, formatter = \
@@ -692,7 +693,6 @@ class GridHelperWcsBase(object):
                                 tick_formatter2=formatter
                                 )
 
-    set_ticklabel2_type.__doc__ = set_ticklabel1_type.__doc__
 
 
     def _get_center_world_and_default_scale_factor(self, center_pixel):
@@ -726,15 +726,16 @@ class GridHelperWcsBase(object):
         """
         Set the label type of the x and y axis. Available options are
 
-         "hms"       the label is in H M S.S (e.g. for RA)
-         "dms"       the label is in D M S.S (e.g. for DEC)
-         "absval"    the label is in actual wcs value
-         "absdeg"    the label is in degrees
-
-         "delta"     the label is in offsets (arcsec, arcmin, etc)
-         "arcdeg"    the label is in arcdegree offsets
-         "arcmin"    the label is in arcminute offsets
-         "arcsec"    the label is in arcsecond offsets
+        =========  ================================================
+         "hms"     label is in H M S.S (e.g. for RA)               
+         "dms"     label is in D M S.S (e.g. for DEC)              
+         "absval"  label is in actual wcs value                    
+         "absdeg"  label is in degrees                             
+         "delta"   label is in offsets (arcsec, arcmin, etc)       
+         "arcdeg"  label is in arcdegree offsets                   
+         "arcmin"  label is in arcminute offsets                   
+         "arcsec"  label is in arcsecond offsets                   
+        =========  ================================================
 
         If labtyp2 is None, labtyp1 is used.
 
@@ -745,14 +746,21 @@ class GridHelperWcsBase(object):
 
         If None, the center position of the current view-limit will be used.
 
-        labtyp1_kwargs and labtyp2_kwargs should be a dictionary of
-        keyword arguments that will be passed with labtyp1 and
-        labtyp2. Any other keyword arguments will be passed with both
-        labtyp1 and labtyp2. The available keywords arguments will
-        depends on the value of labtyp1 and labtyp2. For most common
+        *labtyp1_kwargs* and *labtyp2_kwargs* should be a dictionary of
+        keyword arguments that are associated withwith *labtyp1* and
+        *labtyp2*. Any other keyword arguments will be associated both with
+        *labtyp1* and *labtyp2*. The available keywords arguments will
+        depends on the value of *labtyp1* and *labtyp2*. For most common
         options *nbins* and *locs*. *nbins* specify approximate number
         of automatically generated tics, while the *locs* manually
         specify the tick locations.
+
+
+        labtyp of individual axis can be set using
+        :meth:`~pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type`
+        and
+        :meth:`~pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel2_type`
+        methods. See documentaion of these methods for more details.
         """
 
         if center_pixel is  None:
@@ -1406,6 +1414,11 @@ class AxesWcs(HostAxes):
         return label1
 
     def set_default_label(self, ticktyp1=None, ticktyp2=None):
+        """
+        set x and y labels with the default values that are
+        automatically determined according to the ticktyp and ctype of
+        the axis.
+        """
 
         if self.get_grid_helper()._wcsgrid_orig_coord_system is not None:
             label1, label2 = self._get_default_label()
@@ -1423,9 +1436,27 @@ class AxesWcs(HostAxes):
 
 
     def set_ticklabel1_type(self, labtyp, **labtyp_kwargs):
+        """
+        Set the label type of the x axis. Available options
+        depend on the grid_helper used. The default is
+        GridHelperWcsBase and its variants.
+
+        See
+        :meth:`~pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type`
+        for available options.
+        """
         self.get_grid_helper().set_ticklabel1_type(labtyp, **labtyp_kwargs)
 
     def set_ticklabel2_type(self, labtyp, **labtyp_kwargs):
+        """
+        Set the label type of the y axis. Available options
+        depend on the grid_helper used. The default is
+        GridHelperWcsBase and its variants.
+
+        See
+        :meth:`~pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type`
+        for available options.
+        """
         self.get_grid_helper().set_ticklabel2_type(labtyp, **labtyp_kwargs)
 
     def set_ticklabel_type(self, labtyp1, labtyp2=None,
@@ -1435,35 +1466,13 @@ class AxesWcs(HostAxes):
                            **kwargs
                            ):
         """
-        Set the label type of the x and y axes. Available options are
+        Set the label type of the x and y axes. Available options
+        depend on the grid_helper used. The default is
+        GridHelperWcsBase and its variants.
 
-         "hms"       the label is in H M S.S (e.g. for RA)
-         "dms"       the label is in D M S.S (e.g. for DEC)
-         "absval"    the label is in actual wcs value
-         "absdeg"    the label is in degrees
-
-         "delta"     the label is in offsets (arcsec, arcmin, etc)
-         "arcdeg"    the label is in arcdegree offsets
-         "arcmin"    the label is in arcminute offsets
-         "arcsec"    the label is in arcsecond offsets
-
-        If labtyp2 is None, labtyp1 is used.
-
-        For labtyp in ["delta", "arcdeg", "arcmin", "arcsec"],
-        offset_center parameter needs to be specified.
-
-         offset_center : in pixel coordinate (data coordinate in matplotlib)
-
-        if Not, the center position of the current view-limit will be used.
-
-        labtyp1_kwargs and labtyp2_kwargs need to be a dictionary of
-        keyword arguments that will be passed with labtyp1 and
-        labtyp2. Any other keyword arguments will be passed with both
-        labtyp1 and labtyp2. The available keywords arguments will
-        depends on the value of labtyp1 and labtyp2. For most common
-        options *nbins* and *locs*. *nbins* specify approximate number
-        of automatically generated tics, while the *locs* manually
-        specify the tick locations.
+        See
+        :meth:`~pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel_type`
+        for available options.
         """
 
         # Borrowed from Miriad's cgdisp.
@@ -1531,6 +1540,10 @@ class AxesWcs(HostAxes):
     default_path_effects = []
 
     def set_default_path_effects(self, path_effects):
+        """
+        *default_path_effects* is applied to all the artists created by
+        add-* methods. *default_path_effects* must be a list of path effects.
+        """
         self.default_path_effects = path_effects
 
     def add_beam_size(self, major_pixel, minor_pixel, angle, loc,

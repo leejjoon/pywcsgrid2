@@ -60,3 +60,11 @@ class FixedFormatter(object):
         """
 
         return self._labels
+
+import mpl_toolkits.axisartist.grid_finder as grid_finder
+class FormatterPrettyPrint(grid_finder.FormatterPrettyPrint):
+    def __init__(self, useMathText=True):
+        grid_finder.FormatterPrettyPrint.__init__(self)
+        #self._fmt._useMathText = useMathText
+        self._fmt._usetex = True
+        
