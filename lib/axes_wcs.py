@@ -31,7 +31,8 @@ GridFinderBase = grid_finder.GridFinderBase
 
 from mpl_toolkits.axisartist.angle_helper import ExtremeFinderCycle
 
-from locator_formatter import LocatorDMS, LocatorHMS, FixedLocator, MaxNLocator
+from locator_formatter import LocatorDMS, LocatorHMS, FixedLocator, \
+     FixedFormatter, MaxNLocator
 
 from mpl_toolkits.axisartist.angle_helper import FormatterDMS, FormatterHMS
 
@@ -445,6 +446,8 @@ class GridHelperWcsBase(object):
 
     def update_wcsgrid_params(self, **kwargs):
         """
+        This method is deprecated. Use set_ticklabel_type or locator_params.
+
         coord_format=("hms", "dms"),
         label_density=(4, 4),
         """
@@ -543,12 +546,32 @@ class GridHelperWcsBase(object):
 
 
     def _set_ticklabel_type(self, labtyp, **labtyp_kwargs):
+
         from mpl_toolkits.axisartist.grid_finder import FormatterPrettyPrint
 
         nbins = labtyp_kwargs.pop("nbins", 4)
         locs = labtyp_kwargs.pop("locs", None)
 
-        if labtyp in ["delta", "arcdeg", "arcmin", "arcsec"]:
+        if labtyp == "manual":
+            offset = labtyp_kwargs.pop("offset", 0)
+            scale = labtyp_kwargs.pop("scale", 1)
+
+            labels = labtyp_kwargs.pop("labels", None)
+
+            if locs is None or labels is None:
+                raise ValueError("manual labtyp requires locs and labels parameters")
+            if len(locs) != len(labels):
+                raise ValueError("locs and labels must be losts of same lengths.")
+
+
+            locator = FixedLocator(locs)
+            locator.set_factor(scale)
+
+            formatter = FixedFormatter(labels)
+
+            return offset, scale, locator, formatter
+
+        elif labtyp in ["delta", "arcdeg", "arcmin", "arcsec"]:
             offset = labtyp_kwargs.pop("offset")
             scale = labtyp_kwargs.pop("scale", 1)
 
@@ -617,28 +640,32 @@ class GridHelperWcsBase(object):
 
     def set_ticklabel1_type(self, labtyp, **labtyp_kwargs):
         """
-        labtyp is one of
+        labtyp : there are two kinds of labtyp, offset-types and
+        non-offset-type.  For offset-type labtyp, the label values are
+        shifted from the original by the amount of the given
+        *offset*. For either types, one can optionally specify the
+        *scale* parameter and the scaled values (offset will be
+        applied first if given) will be used. i.e.,
+
+            world1 = (world0 - offset) * scale
+
+        Followings are currently available labtyp.
+
+         * non-offset : absval, absdeg, hms, dms
+         * offset : delta, arcdeg, arcmin, arcsec
 
 
-         "hms":
-         "dms":
-         "absdeg":
-
-         "delta":
-         "arcdeg":
-         "arcmin":
-         "arcsec":
+        By default, the tick locations will be chosen
+        automatically. And *nbins* parameter controls the approximate
+        number of ticks. When you want your ticks at the specified
+        location, use the *locs* parameter, which takes a list of tick
+        values. However, manual ticks are not possible for labtyp of
+        hms, dms, delta. The *locs* parameter will be simply ignored.
 
 
-        optional keyword argument
-
-        world1 = (world0 - offset) * scale
-
-        offset (in the wcs unit, e,g,, degree)
-        scale : scale factor that the world unit will be scaled
-
-        For ctype of longitude, you can specify latitude (in degree)
-        instead of the scale.
+        For the wcs coordinate, the default values are in the unit of
+        degree.  And for the ctype of longitude, you may specify
+        latitude (in degree) instead of the scale.
 
         """
         self._check_scale_for_longitude(0, labtyp, labtyp_kwargs)
@@ -664,6 +691,8 @@ class GridHelperWcsBase(object):
                                 grid_locator2=locator,
                                 tick_formatter2=formatter
                                 )
+
+    set_ticklabel2_type.__doc__ = set_ticklabel1_type.__doc__
 
 
     def _get_center_world_and_default_scale_factor(self, center_pixel):
@@ -694,6 +723,37 @@ class GridHelperWcsBase(object):
                            center_pixel=None,
                            labtyp1_kwargs=None, labtyp2_kwargs=None,
                            **kwargs):
+        """
+        Set the label type of the x and y axis. Available options are
+
+         "hms"       the label is in H M S.S (e.g. for RA)
+         "dms"       the label is in D M S.S (e.g. for DEC)
+         "absval"    the label is in actual wcs value
+         "absdeg"    the label is in degrees
+
+         "delta"     the label is in offsets (arcsec, arcmin, etc)
+         "arcdeg"    the label is in arcdegree offsets
+         "arcmin"    the label is in arcminute offsets
+         "arcsec"    the label is in arcsecond offsets
+
+        If labtyp2 is None, labtyp1 is used.
+
+        For labtyp in ["delta", "arcdeg", "arcmin", "arcsec"],
+        offset_center parameter needs to be specified.
+
+         offset_center : in pixel coordinate (data coordinate in matplotlib)
+
+        If None, the center position of the current view-limit will be used.
+
+        labtyp1_kwargs and labtyp2_kwargs should be a dictionary of
+        keyword arguments that will be passed with labtyp1 and
+        labtyp2. Any other keyword arguments will be passed with both
+        labtyp1 and labtyp2. The available keywords arguments will
+        depends on the value of labtyp1 and labtyp2. For most common
+        options *nbins* and *locs*. *nbins* specify approximate number
+        of automatically generated tics, while the *locs* manually
+        specify the tick locations.
+        """
 
         if center_pixel is  None:
             tx, ty, sx, sy = None, None, None, None
@@ -971,6 +1031,9 @@ class ParasiteAxesSky(ParasiteAxesAuxTrans):
 
 
     def update_wcsgrid_params(self, **ka):
+        """
+        This method is deprecated. Use set_ticklabel_type or locator_params.
+        """
         self.get_grid_helper().update_wcsgrid_params(**ka)
 
 
@@ -1220,6 +1283,8 @@ class AxesWcs(HostAxes):
 
     def update_wcsgrid_params(self, **ka):
         """
+        This method is deprecated. Use set_ticklabel_type or locator_params.
+
         adjust the controlling option for ticks and grid.
 
         The option should be given as keyword arguments.
@@ -1384,34 +1449,24 @@ class AxesWcs(HostAxes):
 
         If labtyp2 is None, labtyp1 is used.
 
-        For labtyp in ["delta", "arcdeg", "arcmin", "arcsec", "relkms"],
+        For labtyp in ["delta", "arcdeg", "arcmin", "arcsec"],
         offset_center parameter needs to be specified.
 
          offset_center : in pixel coordinate (data coordinate in matplotlib)
 
         if Not, the center position of the current view-limit will be used.
+
+        labtyp1_kwargs and labtyp2_kwargs need to be a dictionary of
+        keyword arguments that will be passed with labtyp1 and
+        labtyp2. Any other keyword arguments will be passed with both
+        labtyp1 and labtyp2. The available keywords arguments will
+        depends on the value of labtyp1 and labtyp2. For most common
+        options *nbins* and *locs*. *nbins* specify approximate number
+        of automatically generated tics, while the *locs* manually
+        specify the tick locations.
         """
 
         # Borrowed from Miriad's cgdisp.
-
-        # To be implemented
-        """
-         "arcmas"    the label is in milli-arcsec offsets
-
-         "kms"       the label is in km/s
-         "relkms"    the label is in km/s offset
-
-         "abspix"    the label is in pixels
-         "relpix"    the label is in pixel offsets
-         "abskms"    the label is in km/s
-         "relkms"    the label is in km/s offsets
-         "absghz"    the label is in GHz
-         "relghz"    the label is in GHz offsets
-         "absnat"    the label is in natural coordinates as defined by
-                     the header.
-         "relnat"    the label is in offset natural coordinates
-         "none"      no label and no numbers or ticks on the axis
-        """
 
         if labtyp2 is None:
             labtyp2 = labtyp1

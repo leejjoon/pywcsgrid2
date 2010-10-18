@@ -44,3 +44,19 @@ class MaxNLocator(grid_finder.MaxNLocator):
 
         grid_finder.MaxNLocator.set_params(self, **kwargs)
 
+
+class FixedFormatter(object):
+    def __init__(self, labels):
+        """
+        format_dict : dictionary for format strings to be used.
+        formatter : fall-back formatter
+        """
+        super(FixedFormatter, self).__init__()
+        self._labels = labels
+
+    def __call__(self, direction, factor, values):
+        """
+        factor is ignored.
+        """
+
+        return self._labels
