@@ -328,7 +328,7 @@ class GridHelperWcsBase(object):
 
         if axis_nums is None:
             axis_nums = [0,1]
-        self.projection = projection.substitue(axis_nums, [0]*projection.naxis)
+        self.projection = projection.substitute(axis_nums, [0]*projection.naxis)
 
         #self.projection = projection
 
@@ -1316,7 +1316,10 @@ class AxesWcs(HostAxes):
         elif coord_system == "gal":
             label1=r"$l$"
             label2=r"$b$"
-
+        else:
+            label1=r""
+            label2=r""
+            
         return label1, label2
 
 

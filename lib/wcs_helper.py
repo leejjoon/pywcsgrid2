@@ -35,10 +35,12 @@ if not _kapteyn_installed and not _pywcs_installed:
 FK4 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk4, 'B1950.0')
 FK5 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk5, 'J2000.0')
 GAL = kapteyn_celestial.galactic
+ECL = kapteyn_celestial.ecliptic
 
 coord_system = dict(fk4=FK4,
                     fk5=FK5,
-                    gal=GAL)
+                    gal=GAL,
+                    ecl=ECL)
 
 def is_equal_coord_sys(src, dest):
     return (src.lower() == dest.lower())
@@ -94,6 +96,9 @@ def _coord_system_guess(ctype_name):
     elif ctype_name.upper().startswith("GLON") or \
        ctype_name.upper().startswith("GLAT"):
         ctype =  "gal"
+    elif ctype_name.upper().startswith("ELON") or \
+       ctype_name.upper().startswith("ELAT"):
+        ctype =  "ecl"
     elif ctype_name.upper().startswith("VEL"):
         ctype =  "vel"
     else:
@@ -150,6 +155,9 @@ def coord_system_guess(ctype1_name, ctype2_name, equinox):
     if ctype1_name.upper().startswith("GLON") and \
        ctype2_name.upper().startswith("GLAT"):
         return "gal"
+    elif ctype1_name.upper().startswith("ELON") and \
+       ctype2_name.upper().startswith("ELAT"):
+        return "ecl"
 
 
 
@@ -216,7 +224,7 @@ class ProjectionKapteyn(ProjectionBase):
 
 
 class _ProjectionSubInterface:
-    def substitue(self, axis_nums_to_keep, ref_pixel):
+    def substitute(self, axis_nums_to_keep, ref_pixel):
         for i in axis_nums_to_keep:
             if i >= self.naxis:
                 raise ValueError("Incorrect axis number")
@@ -229,7 +237,7 @@ class _ProjectionSubInterface:
 
     def sub(self, axes):
         axis_nums_to_keep = [i-1 for i in axes]
-        return self.substitue(axis_nums_to_keep, [0] * self.naxis)
+        return self.substitute(axis_nums_to_keep, [0] * self.naxis)
 
 
 class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
@@ -408,6 +416,78 @@ class ProjectionPywcs(ProjectionBase):
     def sub(self, axes):
         wcs = self._pywcs.sub(axes=axes)
         return ProjectionPywcs(wcs)
+
+
+class ProjectionSimple(ProjectionBase):
+    """
+    A wrapper for pywcs
+    """
+    def __init__(self, header):
+        self._pywcs = pywcs.WCS(header=header)
+        self._simple_init(header)
+        
+    def _get_ctypes(self):
+        return tuple(self._pywcs.wcs.ctype)
+
+    ctypes = property(_get_ctypes)
+
+    def _get_equinox(self):
+        return self._pywcs.wcs.equinox
+
+    equinox = property(_get_equinox)
+
+    def _get_naxis(self):
+        return self._pywcs.wcs.naxis
+
+    naxis = property(_get_naxis)
+
+    def _simple_init(self, header):
+        self.crpix1 = header["CRPIX1"]
+        self.crval1 = header["CRVAL1"]
+        self.cdelt1 = header["CDELT1"]
+
+        self.crpix2 = header["CRPIX2"]
+        self.crval2 = header["CRVAL2"]
+        self.cdelt2 = header["CDELT2"]
+
+        self.cos_phi = 1 #np.cos(self.crval2/180.*np.pi)
+
+    def _simple_to_pixel(self, lon, lat):
+        lon, lat = np.asarray(lon), np.asarray(lat)
+        x = (lon - self.crval1)/self.cdelt1*self.cos_phi + self.crpix1
+        y = (lat - self.crval2)/self.cdelt2 + self.crpix2
+
+        return x, y
+    
+    def _simple_to_world(self, x, y):
+        x, y = np.asarray(x), np.asarray(y)
+        lon = (x - self.crpix1)*self.cdelt1/self.cos_phi + self.crval1
+        lat = (y - self.crpix2)*self.cdelt2 + self.crval2
+
+        return lon, lat
+
+    def topixel(self, xy):
+        """ 1, 1 base """
+        lon, lat = xy[0], xy[1]
+        x, y = self._simple_to_pixel(lon, lat)
+        return np.array([x, y])
+
+
+    def toworld(self, xy):
+        """ 1, 1 base """
+        x, y = xy[0], xy[1]
+        lon, lat = self._simple_to_world(x, y)
+        return np.array([lon, lat])
+
+    def substitute(self, axis_nums, values):
+        return self
+
+    def sub(self, axis_nums):
+        return self
+    
+    # def sub(self, axes):
+    #     wcs = self._pywcs.sub(axes=axes)
+    #     return ProjectionPywcs(wcs)
 
 
 if _pywcs_installed:
