@@ -87,6 +87,13 @@ The ticklabel type of individual axis also can be changed. ::
 Above example command makes the 2nd axis (dec.) of the absolute degree
 type with given tick locations.
 
+Here are some examples of available ticklabel types.
+
+.. plot:: figures/demo_labtyp.py
+
+See :meth:`~pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type` for more details.
+
+
 You may use locator_params command (which is introduced in mpl v1.0)
 to adjust the locator parameters. ::
 
@@ -144,44 +151,84 @@ sky coordinates are degrees.::
 .. plot:: figures/demo_basic4.py
 
 
-Fits Images of Different WCS
-============================
+Displaying Fits File of Different WCS
+=====================================
 
-Instead of string ("fk4", "fk5", "gal"), you can use other pyfits
-header instance. The returning axes has a data coordinate of the pixel
-(image) coordinate of the given header.
+Often you need to compare two (or more) fits images with different WCS
+information. You may compare the image side by side. Or, you may show
+one of the image as contours an the other in pseudo-color (or gray)
+image. The AxesWcs supports parasite axes of different WCS header.
+For example, if *ax* is created with a header information *h1*, then
+*ax[h2]* have data coordinate of another header *h2*. Here is an
+example, ::
 
-Most of plot commands (other than image-related routine) will work as
-expected.  However, displaying images in other wcs coordinate system
-needs some consideration. You may simply use imshow ::
+    f1 = pyfits.open("f1.fits")
+    f2 = pyfits.open("f2.fits") # the WCS information is different from f1
 
-  f2 = pyfits.open("another.fits")
-  h2, d2 = f2[0].header, f2[0].data
-  ax[h2].imshow(d2)
+    h1, h2 = f1[0].header, f2[0].header
 
-This will regrid the original image into the target wcs (regriding is
-necessary since matplotlib's imshow only supports rectangular
-image). If you don't want your data to be regridded, a vector drawing
-command pcolormesh is recommended. But pcolormesh is only optimized
-for agg backend and become extremely slow with increasing image size
-in other backends. Therefore, it is highly recommended that pcolormesh
-command is rasterized (rasterization is fully supported in pdf and svg
-backend, and partially available in ps backend). If you're intended to
-save the output in bitmap (e.g., png) or ps (including eps) format,
-you may use imshow_affine command (this is only properly supported in
-agg and ps backend). imshow_affine uses affine transform to place the
-images. Thus, this should not be used if the image is large enough so
-that the distortion is significant.  Contouring command will work
-fine. Contours will be drawn in the original wcs coordinate and then
-will be transformed to the target coordinate.
+    ax = pywcsgrid2.subplot(111, header=h1)
+    ax.imshow(f1[0].data) # working in pixel coordinate of h1
+
+    ax[h2].contour(f2[0].data) # in pixel coordinate of h2!
+
+If you're working on multiple axes, it is better to explicitly create
+GridHelper object and share them among multiple axes. Also, when you
+want to share both x and y-axis among axes and want to have equal
+aspect ratio, you may use adjustable="box-forced" option. ::
+
+  grid_helper = pywcsgrid2.GridHelper(wcs=h1)
+  
+  ax1 = pywcsgrid2.subplot(121, grid_helper=grid_helper,
+                           aspect=1, adjustable="box-forced")
+  ax1.imshow(f1[0].data)
+  
+  ax2 = pywcsgrid2.subplot(122, grid_helper=grid_helper,
+                           aspect=1, adjustable="box-forced",
+                           sharex=ax1, sharey=ax1)
+  ax2[h2].pcolormesh(f2[0].data)
+
+
+
+
+When you use parasite axes (e.g., "ax[h2]"), most of plot commands
+(other than image-related routine) will work as expected.  However,
+displaying images in other wcs coordinate system needs some
+consideration. You may simply use imshow ::
+
+  ax[h2].imshow(f2[0].data)
+
+However, this will regrid the original image (f2[0].data) into the
+target wcs (regriding is necessary since matplotlib's imshow only
+supports rectangular image). If you don't want your data to be
+regridded, there are a few options available. You may use AxesWcs have
+*imshow_affine* method. With this, the image will be transformed by
+the backend (not by matplotlib) without regridding in matplotlib
+side.  ::
+
+  ax[h2].imshow_affine(f2[0].data)
+
+Since it uses an affine transform, it should not be used for images of
+large field of view where transformation is significantly non-linear.
+Also, this is only supported for agg backends and ps backend.
+Another option is to use a vector drawing command pcolormesh as in the
+above example. But pcolormesh is only optimized for agg backend and
+become extremely slow with increasing image size in other
+backends. Therefore, you may want to rasterize the
+pcolormesh (rasterization is fully supported in pdf and svg backend,
+and partially available in ps backend). 
+
+On the other hand, all the vector-oriented commands, such as contour,
+will work as expected.
 
 The example below is a more sophisticated one. The two fits images
 with different wcs are plotted using the
 mpl_toolkits.axes_grid1.AxesGrid. Both axes are created using the wcs
 information of the first image. Note that the gridhelper object is
 explicitly created and handed to the axes, i.e., the gridhelper is
-shared between two axes (this is to share grid parameters). The second
-image, which has different wcs information is drawn using pcolormesh.
+shared between two axes (this is to share tick label parameters). The
+second image, which has different wcs information is drawn using
+pcolormesh.
 
 
 .. plot:: figures/demo_skyview.py

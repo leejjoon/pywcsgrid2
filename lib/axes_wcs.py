@@ -740,19 +740,20 @@ class GridHelperWcsBase(object):
         If labtyp2 is None, labtyp1 is used.
 
         For labtyp in ["delta", "arcdeg", "arcmin", "arcsec"],
-        offset_center parameter needs to be specified.
+        *center_pixel* parameter needs to be specified, from which
+        the offsets will be calculated.
 
-         offset_center : in pixel coordinate (data coordinate in matplotlib)
+         center_pixel : in pixel coordinate (data coordinate in matplotlib)
 
         If None, the center position of the current view-limit will be used.
 
         *labtyp1_kwargs* and *labtyp2_kwargs* should be a dictionary of
-        keyword arguments that are associated withwith *labtyp1* and
+        keyword arguments that are associated with *labtyp1* and
         *labtyp2*. Any other keyword arguments will be associated both with
         *labtyp1* and *labtyp2*. The available keywords arguments will
-        depends on the value of *labtyp1* and *labtyp2*. For most common
-        options *nbins* and *locs*. *nbins* specify approximate number
-        of automatically generated tics, while the *locs* manually
+        depends on the value of *labtyp1* and *labtyp2*. Most common
+        options are *nbins* and *locs*. *nbins* specify approximate number
+        of automatically generated ticks. *locs* manually
         specify the tick locations.
 
 
