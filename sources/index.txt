@@ -7,8 +7,9 @@ displaying astronomical fits images.  It provides a custom Axes class
 images.  Its main functionality is to draw ticks, ticklabels, and
 grids in an appropriate sky coordinates.  
 
-.. image:: _static/image.png
+.. image:: _static/image.jpg
    :width: 500
+   :target: images/image.jpg
 
 
 Documentation

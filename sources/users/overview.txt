@@ -9,10 +9,10 @@ matplotlib, instead of creating a new tool on top of the matplotlib.
 In essence, it provides a custom Axes class (derived from mpl's
 original Axes class) suitable for displaying fits images.  Its main
 functionality is to draw ticks, ticklabels, and grids in an
-appropriate sky coordinates.  A recent version of the matplotlib (>
-0.99.0) is required which includes axes_grid toolkit.  In addition to
-pyfits, you need either pywcs (from svn) or kapteyn package installed.
-See :ref:`installing` for more detailes.
+appropriate sky coordinates.  pywcsgrid2 requires matplotlib v1.0 (or
+above) and is heavily based on the axes_grid1 and axisartist toolkit.
+In addition to pyfits to read in fits files, you need either pywcs or
+kapteyn package installed.  See :ref:`installing` for more detailes.
 
 .. contents::
    :depth: 1
@@ -64,16 +64,43 @@ the ticks are also rotated accordingly.::
 
     ax.grid()
 
-You can not use the mpl methods like ``set_ticks``. Instead, you need
-to change the wcsgrid parameters associated. For example, to set the
-approximate number of ticks in each axis, ::
+The axes in the pywcsgrid2 toolkit is based on
+*mpl_toolkits.axisartist*.  Therefore, note that the mpl methods like
+``set_ticks`` won't work. For tick handling, pywcsgrid2 provides
+methods suitable for astronomical images. *set_ticklabel_type* changes
+the labeling of the ticks. For example,::
 
-  # change grid density
-  ax.update_wcsgrid_params(label_density=[6,4])
+    ax.set_ticklabel_type("hms", "dms")
+
+make ticklabels in first axis
+(longitude) in the form of hour, minute and second and ticks in the
+second axis in the form of degree, minute and seconds. To change the
+ticklabeling of second axis into absoute degree::
+
+    ax.set_ticklabel_type("hms", "absdeg")
+
+
+The ticklabel type of individual axis also can be changed. ::
+
+    ax.set_ticklabel2_type("absdeg", locs=[-65, -67.5, -70, -72.5])
+
+Above example command makes the 2nd axis (dec.) of the absolute degree
+type with given tick locations.
+
+Here are some examples of available ticklabel types.
+
+.. plot:: figures/demo_labtyp.py
+
+See :meth:`~pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type` for more details.
+
+
+You may use locator_params command (which is introduced in mpl v1.0)
+to adjust the locator parameters. ::
+
+    ax.locator_params(axis="x", nbins=6)
 
 .. plot:: figures/demo_basic2.py
 
-Custom tick location is not currently (but will be) supported.
 
 Changing Cooditnate System
 ==========================
@@ -91,7 +118,7 @@ Sometimes, you will need to swap the axis for better tick labeling
     ax.swap_tick_coord()
 
 The pywcsgrid2.Axes class is derived from the
-mpl_toolkits.axes_grid.axislines.Axes. For example, to turn on the top
+mpl_toolkits.axisartist.axislines.Axes. For example, to turn on the top
 and right tick labels,::
 
   ax.axis["top"].major_ticklabels.set_visible(True)
@@ -124,40 +151,84 @@ sky coordinates are degrees.::
 .. plot:: figures/demo_basic4.py
 
 
-Fits Images of Different WCS
-============================
+Displaying Fits File of Different WCS
+=====================================
 
-Instead of string ("fk4", "fk5", "gal"), you can use other pyfits
-header instance. The returning axes has a data coordinate of the pixel
-(image) coordinate of the given header.
+Often you need to compare two (or more) fits images with different WCS
+information. You may compare the image side by side. Or, you may show
+one of the image as contours an the other in pseudo-color (or gray)
+image. The AxesWcs supports parasite axes of different WCS header.
+For example, if *ax* is created with a header information *h1*, then
+*ax[h2]* have data coordinate of another header *h2*. Here is an
+example, ::
 
-Most of plot commands (other than image-related routine) will work as
-expected.  However, displaying images in other wcs coordinate system
-needs some consideration. You may simply use imshow ::
+    f1 = pyfits.open("f1.fits")
+    f2 = pyfits.open("f2.fits") # the WCS information is different from f1
 
-  f2 = pyfits.open("another.fits")
-  h2, d2 = f2[0].header, f2[0].data
-  ax[h2].imshow(d2)
+    h1, h2 = f1[0].header, f2[0].header
 
-This will regrid the original image into the target wcs (regriding is
-necessary since matplotlib's imshow only supports rectangular
-image). If you don't want your data to be regridded, a vector drawing
-command pcolormesh is recommended. But pcolormesh is only optimized for agg
-backend and become extremely slow with increasing image size in other
-backends. Therefore, it is highly recommended
-that pcolormesh command is rasterized (rasterization is
-fully supported in pdf and svg backend, and partially available in ps
-backend). Contouring command will work fine. Contours will be drawn in
-the original wcs coordinate and then will be transformed to the target
-coordinate.
+    ax = pywcsgrid2.subplot(111, header=h1)
+    ax.imshow(f1[0].data) # working in pixel coordinate of h1
+
+    ax[h2].contour(f2[0].data) # in pixel coordinate of h2!
+
+If you're working on multiple axes, it is better to explicitly create
+GridHelper object and share them among multiple axes. Also, when you
+want to share both x and y-axis among axes and want to have equal
+aspect ratio, you may use adjustable="box-forced" option. ::
+
+  grid_helper = pywcsgrid2.GridHelper(wcs=h1)
+  
+  ax1 = pywcsgrid2.subplot(121, grid_helper=grid_helper,
+                           aspect=1, adjustable="box-forced")
+  ax1.imshow(f1[0].data)
+  
+  ax2 = pywcsgrid2.subplot(122, grid_helper=grid_helper,
+                           aspect=1, adjustable="box-forced",
+                           sharex=ax1, sharey=ax1)
+  ax2[h2].pcolormesh(f2[0].data)
+
+
+
+
+When you use parasite axes (e.g., "ax[h2]"), most of plot commands
+(other than image-related routine) will work as expected.  However,
+displaying images in other wcs coordinate system needs some
+consideration. You may simply use imshow ::
+
+  ax[h2].imshow(f2[0].data)
+
+However, this will regrid the original image (f2[0].data) into the
+target wcs (regriding is necessary since matplotlib's imshow only
+supports rectangular image). If you don't want your data to be
+regridded, there are a few options available. You may use AxesWcs have
+*imshow_affine* method. With this, the image will be transformed by
+the backend (not by matplotlib) without regridding in matplotlib
+side.  ::
+
+  ax[h2].imshow_affine(f2[0].data)
+
+Since it uses an affine transform, it should not be used for images of
+large field of view where transformation is significantly non-linear.
+Also, this is only supported for agg backends and ps backend.
+Another option is to use a vector drawing command pcolormesh as in the
+above example. But pcolormesh is only optimized for agg backend and
+become extremely slow with increasing image size in other
+backends. Therefore, you may want to rasterize the
+pcolormesh (rasterization is fully supported in pdf and svg backend,
+and partially available in ps backend). 
+
+On the other hand, all the vector-oriented commands, such as contour,
+will work as expected.
 
 The example below is a more sophisticated one. The two fits images
 with different wcs are plotted using the
-mpl_toolkits.axes_grid.AxesGrid. Both axes are created using the wcs
+mpl_toolkits.axes_grid1.AxesGrid. Both axes are created using the wcs
 information of the first image. Note that the gridhelper object is
 explicitly created and handed to the axes, i.e., the gridhelper is
-shared between two axes (this is to share grid parameters). The second
-image, which has different wcs information is drawn using pcolormesh.
+shared between two axes (this is to share tick label parameters). The
+second image, which has different wcs information is drawn using
+pcolormesh.
 
 
 .. plot:: figures/demo_skyview.py
@@ -177,7 +248,7 @@ coordinate::
   axis = ax["gal"].new_floating_axis(1, 0.)
   ax.axis["b=0"] = axis
 
-See mpl_toolkits.axes_grid for more about the floating axis.
+See mpl_toolkits.axisartist for more about the floating axis.
 
 Here is a complete example,
 
@@ -188,7 +259,7 @@ Inset Axes
 ==========
 
 pywcsgrid2 itself does not provide any particular functionality to
-support inset axes. However, inset axes is supported by the axes_grid
+support inset axes. However, inset axes is supported by the axes_grid1
 toolkit, which can be seemingless utilized with pywcsgrid2.  See
 `axes_grid toolkit documentation
 <http://matplotlib.sourceforge.net/mpl_toolkits/axes_grid/users/overview.html#insetlocator>`__
@@ -201,7 +272,7 @@ Axes Annotation
 ===============
 
 pywcsgrid2.Axes provides a few helper fucntion to annotate the
-axes. Most of them uses mpl_toolkits.axes_grid.anchored_artists, i.e.,
+axes. Most of them uses mpl_toolkits.axes_grid1.anchored_artists, i.e.,
 the *loc* parameter in most of the commands is the location code as in
 the legend command.::
 

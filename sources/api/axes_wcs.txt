@@ -1,11 +1,9 @@
 
-:mod:`pywcsgrid2.Axes`
+:mod:`pywcsgrid2.axes_wcs`
 =======================================
 
-.. autoclass:: pywcsgrid2.Axes
+.. autoclass:: pywcsgrid2.axes_wcs.GridHelperWcsBase
    :members:
-   :undoc-members:
-
 
 .. autoclass:: pywcsgrid2.axes_wcs.AxesWcs
    :members:

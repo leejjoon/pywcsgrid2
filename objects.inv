@@ -1,13 +1,22 @@
 # Sphinx inventory version 1
 # Project: pywcsgrid2
 # Version: 0.1
+pywcsgrid2.axes_wcs.GridHelperWcsBase.update_wcsgrid_params method api/axes_wcs.html
+pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel2_type method api/axes_wcs.html
 pywcsgrid2.axes_wcs.AxesWcs.add_compass method api/axes_wcs.html
+pywcsgrid2.axes_wcs.AxesWcs.swap_tick_coord method api/axes_wcs.html
 pywcsgrid2.axes_wcs.AxesWcs.update_wcsgrid_params method api/axes_wcs.html
 pywcsgrid2.axes_wcs.AxesWcs.set_default_label method api/axes_wcs.html
+pywcsgrid2.axes_wcs.AxesWcs.set_ticklabel1_type method api/axes_wcs.html
 pywcsgrid2.axes_wcs.AxesWcs.add_size_bar method api/axes_wcs.html
-pywcsgrid2.axes_wcs.AxesWcs.swap_tick_coord method api/axes_wcs.html
+pywcsgrid2.axes_wcs.AxesWcs.set_label_type method api/axes_wcs.html
 pywcsgrid2.axes_wcs.AxesWcs class api/axes_wcs.html
-pywcsgrid2.Axes attribute api/axes_wcs.html
+pywcsgrid2.axes_wcs.GridHelperWcsBase class api/axes_wcs.html
 pywcsgrid2.axes_wcs.AxesWcs.add_inner_title method api/axes_wcs.html
-pywcsgrid2.axes_wcs.AxesWcs.set_display_coord_system method api/axes_wcs.html
+pywcsgrid2.axes_wcs.AxesWcs.set_ticklabel_type method api/axes_wcs.html
+pywcsgrid2.axes_wcs.AxesWcs.set_default_path_effects method api/axes_wcs.html
+pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel_type method api/axes_wcs.html
 pywcsgrid2.axes_wcs.AxesWcs.add_beam_size method api/axes_wcs.html
+pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type method api/axes_wcs.html
+pywcsgrid2.axes_wcs.AxesWcs.set_ticklabel2_type method api/axes_wcs.html
+pywcsgrid2.axes_wcs.AxesWcs.set_display_coord_system method api/axes_wcs.html

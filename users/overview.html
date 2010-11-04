@@ -54,14 +54,14 @@
         <div class="sphinxsidebarwrapper">
             <h3><a href="../index.html">Table Of Contents</a></h3>
             <ul>
-<li><a class="reference" href="">Overview</a><ul>
-<li><a class="reference" href="#basic-image-display">Basic Image Display</a></li>
-<li><a class="reference" href="#changing-cooditnate-system">Changing Cooditnate System</a></li>
-<li><a class="reference" href="#plotting-in-sky-coordinate">Plotting in Sky Coordinate</a></li>
-<li><a class="reference" href="#fits-images-of-different-wcs">Fits Images of Different WCS</a></li>
-<li><a class="reference" href="#floating-axis">Floating Axis</a></li>
-<li><a class="reference" href="#inset-axes">Inset Axes</a></li>
-<li><a class="reference" href="#axes-annotation">Axes Annotation</a></li>
+<li><a class="reference external" href="#">Overview</a><ul>
+<li><a class="reference external" href="#basic-image-display">Basic Image Display</a></li>
+<li><a class="reference external" href="#changing-cooditnate-system">Changing Cooditnate System</a></li>
+<li><a class="reference external" href="#plotting-in-sky-coordinate">Plotting in Sky Coordinate</a></li>
+<li><a class="reference external" href="#displaying-fits-file-of-different-wcs">Displaying Fits File of Different WCS</a></li>
+<li><a class="reference external" href="#floating-axis">Floating Axis</a></li>
+<li><a class="reference external" href="#inset-axes">Inset Axes</a></li>
+<li><a class="reference external" href="#axes-annotation">Axes Annotation</a></li>
 </ul>
 </li>
 </ul>
@@ -107,19 +107,19 @@ matplotlib, instead of creating a new tool on top of the matplotlib.
 In essence, it provides a custom Axes class (derived from mpl&#8217;s
 original Axes class) suitable for displaying fits images.  Its main
 functionality is to draw ticks, ticklabels, and grids in an
-appropriate sky coordinates.  A recent version of the matplotlib (&gt;
-0.99.0) is required which includes axes_grid toolkit.  In addition to
-pyfits, you need either pywcs (from svn) or kapteyn package installed.
-See <a class="reference" href="installing.html#installing"><em>Installing</em></a> for more detailes.</p>
-<div class="contents local topic">
+appropriate sky coordinates.  pywcsgrid2 requires matplotlib v1.0 (or
+above) and is heavily based on the axes_grid1 and axisartist toolkit.
+In addition to pyfits to read in fits files, you need either pywcs or
+kapteyn package installed.  See <a class="reference external" href="installing.html#installing"><em>Installing</em></a> for more detailes.</p>
+<div class="contents local topic" id="contents">
 <ul class="simple">
-<li><a class="reference" href="#basic-image-display" id="id1" name="id1">Basic Image Display</a></li>
-<li><a class="reference" href="#changing-cooditnate-system" id="id2" name="id2">Changing Cooditnate System</a></li>
-<li><a class="reference" href="#plotting-in-sky-coordinate" id="id3" name="id3">Plotting in Sky Coordinate</a></li>
-<li><a class="reference" href="#fits-images-of-different-wcs" id="id4" name="id4">Fits Images of Different WCS</a></li>
-<li><a class="reference" href="#floating-axis" id="id5" name="id5">Floating Axis</a></li>
-<li><a class="reference" href="#inset-axes" id="id6" name="id6">Inset Axes</a></li>
-<li><a class="reference" href="#axes-annotation" id="id7" name="id7">Axes Annotation</a></li>
+<li><a class="reference internal" href="#basic-image-display" id="id1">Basic Image Display</a></li>
+<li><a class="reference internal" href="#changing-cooditnate-system" id="id2">Changing Cooditnate System</a></li>
+<li><a class="reference internal" href="#plotting-in-sky-coordinate" id="id3">Plotting in Sky Coordinate</a></li>
+<li><a class="reference internal" href="#displaying-fits-file-of-different-wcs" id="id4">Displaying Fits File of Different WCS</a></li>
+<li><a class="reference internal" href="#floating-axis" id="id5">Floating Axis</a></li>
+<li><a class="reference internal" href="#inset-axes" id="id6">Inset Axes</a></li>
+<li><a class="reference internal" href="#axes-annotation" id="id7">Axes Annotation</a></li>
 </ul>
 </div>
 <div class="section" id="basic-image-display">
@@ -130,22 +130,24 @@ using pywcsgrid2&#8217;s subplot command  with its header (wcs) information.</p>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
 <span class="n">f</span> <span class="o">=</span> <span class="n">pyfits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;data/lmc.fits&quot;</span><span class="p">)</span>
-<span class="n">h</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">f</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+<span class="n">h</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
 
 <span class="c"># image display with mpl&#39;s original subplot(axes)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mf">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s">&quot;lower&quot;</span><span class="p">)</span>
 
 
 <span class="c"># image display with pywcsgrid2</span>
 <span class="kn">import</span> <span class="nn">pywcsgrid2</span>
 
-<span class="n">pywcsgrid2</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mf">122</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">h</span><span class="p">)</span>
+<span class="n">pywcsgrid2</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">h</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s">&quot;lower&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>[<a class="reference" href="../plot_directive/figures/demo_basic1.py">source code</a>, <a class="reference" href="../plot_directive/figures/demo_basic1.hires.png">hires.png</a>, <a class="reference" href="../plot_directive/figures/demo_basic1.pdf">pdf</a>]</p>
+<p>[<a class="reference external" href="../plot_directive/figures/demo_basic1.py">source code</a>, <a class="reference external" href="../plot_directive/figures/demo_basic1.hires.png">hires.png</a>, <a class="reference external" href="../plot_directive/figures/demo_basic1.pdf">pdf</a>]</p>
+<div class="figure">
 <img alt="../images/demo_basic1.png" src="../images/demo_basic1.png" />
+</div>
 <p><em>pywcsgrid2.subplot</em> creates an instance of the <em>pywcsgrid2.Axes</em> class, which
 is derived from mpl&#8217;s Axes but draws ticks in proper sky coordinate.
 Note that the data coordinate of the AxesWcs axes is the image (pixel)
@@ -155,8 +157,8 @@ be in image coordinates (0-based).</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">ax</span> <span class="o">=</span> <span class="n">pywcsgrid2</span><span class="o">.</span><span class="n">axes</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">],</span> <span class="n">header</span><span class="o">=</span><span class="n">h</span><span class="p">)</span>
 
 <span class="c"># viewlimits in image coordinate</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mf">6</span><span class="p">,</span> <span class="mf">81</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">23</span><span class="p">,</span> <span class="mf">98</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">81</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">23</span><span class="p">,</span> <span class="mi">98</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>As in the MPL, the <tt class="docutils literal"><span class="pre">grid</span></tt> method draws grid lines. It will draw
@@ -165,16 +167,42 @@ the ticks are also rotated accordingly.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>You can not use the mpl methods like <tt class="docutils literal"><span class="pre">set_ticks</span></tt>. Instead, you need
-to change the wcsgrid parameters associated. For example, to set the
-approximate number of ticks in each axis,</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># change grid density</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">update_wcsgrid_params</span><span class="p">(</span><span class="n">label_density</span><span class="o">=</span><span class="p">[</span><span class="mf">6</span><span class="p">,</span><span class="mf">4</span><span class="p">])</span>
+<p>The axes in the pywcsgrid2 toolkit is based on
+<em>mpl_toolkits.axisartist</em>.  Therefore, note that the mpl methods like
+<tt class="docutils literal"><span class="pre">set_ticks</span></tt> won&#8217;t work. For tick handling, pywcsgrid2 provides
+methods suitable for astronomical images. <em>set_ticklabel_type</em> changes
+the labeling of the ticks. For example,:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ax</span><span class="o">.</span><span class="n">set_ticklabel_type</span><span class="p">(</span><span class="s">&quot;hms&quot;</span><span class="p">,</span> <span class="s">&quot;dms&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>[<a class="reference" href="../plot_directive/figures/demo_basic2.py">source code</a>, <a class="reference" href="../plot_directive/figures/demo_basic2.hires.png">hires.png</a>, <a class="reference" href="../plot_directive/figures/demo_basic2.pdf">pdf</a>]</p>
+<p>make ticklabels in first axis
+(longitude) in the form of hour, minute and second and ticks in the
+second axis in the form of degree, minute and seconds. To change the
+ticklabeling of second axis into absoute degree:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ax</span><span class="o">.</span><span class="n">set_ticklabel_type</span><span class="p">(</span><span class="s">&quot;hms&quot;</span><span class="p">,</span> <span class="s">&quot;absdeg&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The ticklabel type of individual axis also can be changed.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ax</span><span class="o">.</span><span class="n">set_ticklabel2_type</span><span class="p">(</span><span class="s">&quot;absdeg&quot;</span><span class="p">,</span> <span class="n">locs</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">65</span><span class="p">,</span> <span class="o">-</span><span class="mf">67.5</span><span class="p">,</span> <span class="o">-</span><span class="mi">70</span><span class="p">,</span> <span class="o">-</span><span class="mf">72.5</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Above example command makes the 2nd axis (dec.) of the absolute degree
+type with given tick locations.</p>
+<p>Here are some examples of available ticklabel types.</p>
+<p>[<a class="reference external" href="../plot_directive/figures/demo_labtyp.py">source code</a>, <a class="reference external" href="../plot_directive/figures/demo_labtyp.hires.png">hires.png</a>, <a class="reference external" href="../plot_directive/figures/demo_labtyp.pdf">pdf</a>]</p>
+<div class="figure">
+<img alt="../images/demo_labtyp.png" src="../images/demo_labtyp.png" />
+</div>
+<p>See <a title="pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type" class="reference external" href="../api/axes_wcs.html#pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type"><tt class="xref docutils literal"><span class="pre">set_ticklabel1_type()</span></tt></a> for more details.</p>
+<p>You may use locator_params command (which is introduced in mpl v1.0)
+to adjust the locator parameters.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ax</span><span class="o">.</span><span class="n">locator_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="n">nbins</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>[<a class="reference external" href="../plot_directive/figures/demo_basic2.py">source code</a>, <a class="reference external" href="../plot_directive/figures/demo_basic2.hires.png">hires.png</a>, <a class="reference external" href="../plot_directive/figures/demo_basic2.pdf">pdf</a>]</p>
+<div class="figure">
 <img alt="../images/demo_basic2.png" src="../images/demo_basic2.png" />
-<p>Custom tick location is not currently (but will be) supported.</p>
+</div>
 </div>
 <div class="section" id="changing-cooditnate-system">
 <h2><a class="toc-backref" href="#id2">Changing Cooditnate System</a><a class="headerlink" href="#changing-cooditnate-system" title="Permalink to this headline">¶</a></h2>
@@ -191,14 +219,16 @@ Sometimes, you will need to swap the axis for better tick labeling
 </pre></div>
 </div>
 <p>The pywcsgrid2.Axes class is derived from the
-mpl_toolkits.axes_grid.axislines.Axes. For example, to turn on the top
+mpl_toolkits.axisartist.axislines.Axes. For example, to turn on the top
 and right tick labels,:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">[</span><span class="s">&quot;top&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">major_ticklabels</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">[</span><span class="s">&quot;right&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">major_ticklabels</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>[<a class="reference" href="../plot_directive/figures/demo_basic3.py">source code</a>, <a class="reference" href="../plot_directive/figures/demo_basic3.hires.png">hires.png</a>, <a class="reference" href="../plot_directive/figures/demo_basic3.pdf">pdf</a>]</p>
+<p>[<a class="reference external" href="../plot_directive/figures/demo_basic3.py">source code</a>, <a class="reference external" href="../plot_directive/figures/demo_basic3.hires.png">hires.png</a>, <a class="reference external" href="../plot_directive/figures/demo_basic3.pdf">pdf</a>]</p>
+<div class="figure">
 <img alt="../images/demo_basic3.png" src="../images/demo_basic3.png" />
+</div>
 </div>
 <div class="section" id="plotting-in-sky-coordinate">
 <h2><a class="toc-backref" href="#id3">Plotting in Sky Coordinate</a><a class="headerlink" href="#plotting-in-sky-coordinate" title="Permalink to this headline">¶</a></h2>
@@ -212,50 +242,95 @@ fk5 coordinate (available coordinates = &#8220;fk4&#8221;, &#8220;fk5&#8221;, &#
 not all) of the valid mpl plot commands will work. The unit for the
 sky coordinates are degrees.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># (alpha, delta) in degree</span>
-<span class="n">ax</span><span class="p">[</span><span class="s">&quot;fk4&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">x</span><span class="o">/</span><span class="mf">24.</span><span class="o">*</span><span class="mf">360</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">4</span><span class="p">,</span> <span class="mf">5</span><span class="p">,</span> <span class="mf">6</span><span class="p">]],</span>
-                <span class="p">[</span><span class="o">-</span><span class="mf">74</span><span class="p">,</span> <span class="o">-</span><span class="mf">70</span><span class="p">,</span> <span class="o">-</span><span class="mf">66</span><span class="p">],</span> <span class="s">&quot;ro-&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="s">&quot;fk4&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">x</span><span class="o">/</span><span class="mf">24.</span><span class="o">*</span><span class="mi">360</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]],</span>
+                <span class="p">[</span><span class="o">-</span><span class="mi">74</span><span class="p">,</span> <span class="o">-</span><span class="mi">70</span><span class="p">,</span> <span class="o">-</span><span class="mi">66</span><span class="p">],</span> <span class="s">&quot;ro-&quot;</span><span class="p">)</span>
 
 <span class="c"># (l, b)  in degree</span>
-<span class="n">ax</span><span class="p">[</span><span class="s">&quot;gal&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">([(</span><span class="mf">285</span><span class="p">),</span> <span class="p">(</span><span class="mf">276.</span><span class="p">)],</span>
-               <span class="p">[(</span><span class="o">-</span><span class="mf">30</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">36</span><span class="p">)])</span>
+<span class="n">ax</span><span class="p">[</span><span class="s">&quot;gal&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">([(</span><span class="mi">285</span><span class="p">),</span> <span class="p">(</span><span class="mf">276.</span><span class="p">)],</span>
+               <span class="p">[(</span><span class="o">-</span><span class="mi">30</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">36</span><span class="p">)])</span>
 </pre></div>
 </div>
-<p>[<a class="reference" href="../plot_directive/figures/demo_basic4.py">source code</a>, <a class="reference" href="../plot_directive/figures/demo_basic4.hires.png">hires.png</a>, <a class="reference" href="../plot_directive/figures/demo_basic4.pdf">pdf</a>]</p>
+<p>[<a class="reference external" href="../plot_directive/figures/demo_basic4.py">source code</a>, <a class="reference external" href="../plot_directive/figures/demo_basic4.hires.png">hires.png</a>, <a class="reference external" href="../plot_directive/figures/demo_basic4.pdf">pdf</a>]</p>
+<div class="figure">
 <img alt="../images/demo_basic4.png" src="../images/demo_basic4.png" />
 </div>
-<div class="section" id="fits-images-of-different-wcs">
-<h2><a class="toc-backref" href="#id4">Fits Images of Different WCS</a><a class="headerlink" href="#fits-images-of-different-wcs" title="Permalink to this headline">¶</a></h2>
-<p>Instead of string (&#8220;fk4&#8221;, &#8220;fk5&#8221;, &#8220;gal&#8221;), you can use other pyfits
-header instance. The returning axes has a data coordinate of the pixel
-(image) coordinate of the given header.</p>
-<p>Most of plot commands (other than image-related routine) will work as
-expected.  However, displaying images in other wcs coordinate system
-needs some consideration. You may simply use imshow</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">f2</span> <span class="o">=</span> <span class="n">pyfits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;another.fits&quot;</span><span class="p">)</span>
-<span class="n">h2</span><span class="p">,</span> <span class="n">d2</span> <span class="o">=</span> <span class="n">f2</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">f2</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-<span class="n">ax</span><span class="p">[</span><span class="n">h2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">d2</span><span class="p">)</span>
+</div>
+<div class="section" id="displaying-fits-file-of-different-wcs">
+<h2><a class="toc-backref" href="#id4">Displaying Fits File of Different WCS</a><a class="headerlink" href="#displaying-fits-file-of-different-wcs" title="Permalink to this headline">¶</a></h2>
+<p>Often you need to compare two (or more) fits images with different WCS
+information. You may compare the image side by side. Or, you may show
+one of the image as contours an the other in pseudo-color (or gray)
+image. The AxesWcs supports parasite axes of different WCS header.
+For example, if <em>ax</em> is created with a header information <em>h1</em>, then
+<em>ax[h2]</em> have data coordinate of another header <em>h2</em>. Here is an
+example,</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">f1</span> <span class="o">=</span> <span class="n">pyfits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;f1.fits&quot;</span><span class="p">)</span>
+<span class="n">f2</span> <span class="o">=</span> <span class="n">pyfits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;f2.fits&quot;</span><span class="p">)</span> <span class="c"># the WCS information is different from f1</span>
+
+<span class="n">h1</span><span class="p">,</span> <span class="n">h2</span> <span class="o">=</span> <span class="n">f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="n">f2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">pywcsgrid2</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">h1</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="c"># working in pixel coordinate of h1</span>
+
+<span class="n">ax</span><span class="p">[</span><span class="n">h2</span><span class="p">]</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">f2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="c"># in pixel coordinate of h2!</span>
 </pre></div>
 </div>
-<p>This will regrid the original image into the target wcs (regriding is
-necessary since matplotlib&#8217;s imshow only supports rectangular
-image). If you don&#8217;t want your data to be regridded, a vector drawing
-command pcolormesh is recommended. But pcolormesh is only optimized for agg
-backend and become extremely slow with increasing image size in other
-backends. Therefore, it is highly recommended
-that pcolormesh command is rasterized (rasterization is
-fully supported in pdf and svg backend, and partially available in ps
-backend). Contouring command will work fine. Contours will be drawn in
-the original wcs coordinate and then will be transformed to the target
-coordinate.</p>
+<p>If you&#8217;re working on multiple axes, it is better to explicitly create
+GridHelper object and share them among multiple axes. Also, when you
+want to share both x and y-axis among axes and want to have equal
+aspect ratio, you may use adjustable=&#8221;box-forced&#8221; option.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">grid_helper</span> <span class="o">=</span> <span class="n">pywcsgrid2</span><span class="o">.</span><span class="n">GridHelper</span><span class="p">(</span><span class="n">wcs</span><span class="o">=</span><span class="n">h1</span><span class="p">)</span>
+
+<span class="n">ax1</span> <span class="o">=</span> <span class="n">pywcsgrid2</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">,</span> <span class="n">grid_helper</span><span class="o">=</span><span class="n">grid_helper</span><span class="p">,</span>
+                         <span class="n">aspect</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">adjustable</span><span class="o">=</span><span class="s">&quot;box-forced&quot;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+<span class="n">ax2</span> <span class="o">=</span> <span class="n">pywcsgrid2</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="n">grid_helper</span><span class="o">=</span><span class="n">grid_helper</span><span class="p">,</span>
+                         <span class="n">aspect</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">adjustable</span><span class="o">=</span><span class="s">&quot;box-forced&quot;</span><span class="p">,</span>
+                         <span class="n">sharex</span><span class="o">=</span><span class="n">ax1</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="n">ax1</span><span class="p">)</span>
+<span class="n">ax2</span><span class="p">[</span><span class="n">h2</span><span class="p">]</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">f2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When you use parasite axes (e.g., &#8220;ax[h2]&#8221;), most of plot commands
+(other than image-related routine) will work as expected.  However,
+displaying images in other wcs coordinate system needs some
+consideration. You may simply use imshow</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ax</span><span class="p">[</span><span class="n">h2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">f2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>However, this will regrid the original image (f2[0].data) into the
+target wcs (regriding is necessary since matplotlib&#8217;s imshow only
+supports rectangular image). If you don&#8217;t want your data to be
+regridded, there are a few options available. You may use AxesWcs have
+<em>imshow_affine</em> method. With this, the image will be transformed by
+the backend (not by matplotlib) without regridding in matplotlib
+side.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ax</span><span class="p">[</span><span class="n">h2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow_affine</span><span class="p">(</span><span class="n">f2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Since it uses an affine transform, it should not be used for images of
+large field of view where transformation is significantly non-linear.
+Also, this is only supported for agg backends and ps backend.
+Another option is to use a vector drawing command pcolormesh as in the
+above example. But pcolormesh is only optimized for agg backend and
+become extremely slow with increasing image size in other
+backends. Therefore, you may want to rasterize the
+pcolormesh (rasterization is fully supported in pdf and svg backend,
+and partially available in ps backend).</p>
+<p>On the other hand, all the vector-oriented commands, such as contour,
+will work as expected.</p>
 <p>The example below is a more sophisticated one. The two fits images
 with different wcs are plotted using the
-mpl_toolkits.axes_grid.AxesGrid. Both axes are created using the wcs
+mpl_toolkits.axes_grid1.AxesGrid. Both axes are created using the wcs
 information of the first image. Note that the gridhelper object is
 explicitly created and handed to the axes, i.e., the gridhelper is
-shared between two axes (this is to share grid parameters). The second
-image, which has different wcs information is drawn using pcolormesh.</p>
-<p>[<a class="reference" href="../plot_directive/figures/demo_skyview.py">source code</a>, <a class="reference" href="../plot_directive/figures/demo_skyview.hires.png">hires.png</a>, <a class="reference" href="../plot_directive/figures/demo_skyview.pdf">pdf</a>]</p>
+shared between two axes (this is to share tick label parameters). The
+second image, which has different wcs information is drawn using
+pcolormesh.</p>
+<p>[<a class="reference external" href="../plot_directive/figures/demo_skyview.py">source code</a>, <a class="reference external" href="../plot_directive/figures/demo_skyview.hires.png">hires.png</a>, <a class="reference external" href="../plot_directive/figures/demo_skyview.pdf">pdf</a>]</p>
+<div class="figure">
 <img alt="../images/demo_skyview.png" src="../images/demo_skyview.png" />
+</div>
 </div>
 <div class="section" id="floating-axis">
 <h2><a class="toc-backref" href="#id5">Floating Axis</a><a class="headerlink" href="#floating-axis" title="Permalink to this headline">¶</a></h2>
@@ -267,49 +342,55 @@ argument indicate which coordinate, and the second argument is the
 value. For example, if you want to have a floating axis of b=0,
 i.e. the second coordinate (index starts at 0) is 0 in the Galactic
 coordinate:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">axis</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="s">&quot;gal&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">new_floating_axis</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span> <span class="mf">0.</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">axis</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="s">&quot;gal&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">new_floating_axis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">[</span><span class="s">&quot;b=0&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">axis</span>
 </pre></div>
 </div>
-<p>See mpl_toolkits.axes_grid for more about the floating axis.</p>
+<p>See mpl_toolkits.axisartist for more about the floating axis.</p>
 <p>Here is a complete example,</p>
-<p>[<a class="reference" href="../plot_directive/figures/demo_floating_axis.py">source code</a>, <a class="reference" href="../plot_directive/figures/demo_floating_axis.hires.png">hires.png</a>, <a class="reference" href="../plot_directive/figures/demo_floating_axis.pdf">pdf</a>]</p>
+<p>[<a class="reference external" href="../plot_directive/figures/demo_floating_axis.py">source code</a>, <a class="reference external" href="../plot_directive/figures/demo_floating_axis.hires.png">hires.png</a>, <a class="reference external" href="../plot_directive/figures/demo_floating_axis.pdf">pdf</a>]</p>
+<div class="figure">
 <img alt="../images/demo_floating_axis.png" src="../images/demo_floating_axis.png" />
+</div>
 </div>
 <div class="section" id="inset-axes">
 <h2><a class="toc-backref" href="#id6">Inset Axes</a><a class="headerlink" href="#inset-axes" title="Permalink to this headline">¶</a></h2>
 <p>pywcsgrid2 itself does not provide any particular functionality to
-support inset axes. However, inset axes is supported by the axes_grid
+support inset axes. However, inset axes is supported by the axes_grid1
 toolkit, which can be seemingless utilized with pywcsgrid2.  See
-<a class="reference" href="http://matplotlib.sourceforge.net/mpl_toolkits/axes_grid/users/overview.html#insetlocator">axes_grid toolkit documentation</a>
+<a class="reference external" href="http://matplotlib.sourceforge.net/mpl_toolkits/axes_grid/users/overview.html#insetlocator">axes_grid toolkit documentation</a>
 for more details.</p>
-<p>[<a class="reference" href="../plot_directive/figures/demo_inset.py">source code</a>, <a class="reference" href="../plot_directive/figures/demo_inset.hires.png">hires.png</a>, <a class="reference" href="../plot_directive/figures/demo_inset.pdf">pdf</a>]</p>
+<p>[<a class="reference external" href="../plot_directive/figures/demo_inset.py">source code</a>, <a class="reference external" href="../plot_directive/figures/demo_inset.hires.png">hires.png</a>, <a class="reference external" href="../plot_directive/figures/demo_inset.pdf">pdf</a>]</p>
+<div class="figure">
 <img alt="../images/demo_inset.png" src="../images/demo_inset.png" />
+</div>
 </div>
 <div class="section" id="axes-annotation">
 <h2><a class="toc-backref" href="#id7">Axes Annotation</a><a class="headerlink" href="#axes-annotation" title="Permalink to this headline">¶</a></h2>
 <p>pywcsgrid2.Axes provides a few helper fucntion to annotate the
-axes. Most of them uses mpl_toolkits.axes_grid.anchored_artists, i.e.,
+axes. Most of them uses mpl_toolkits.axes_grid1.anchored_artists, i.e.,
 the <em>loc</em> parameter in most of the commands is the location code as in
 the legend command.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># Figure title</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">add_inner_title</span><span class="p">(</span><span class="s">&quot;Figure 1&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mf">2</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">add_inner_title</span><span class="p">(</span><span class="s">&quot;Figure 1&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
 <span class="c"># compass</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">add_compass</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">1</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">add_compass</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="c"># Beam size</span>
 <span class="c"># (major, minor) = 3, 4 in pixel, angle=20</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">add_beam_size</span><span class="p">(</span><span class="mf">3</span><span class="p">,</span> <span class="mf">4</span><span class="p">,</span> <span class="mf">20</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mf">3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">add_beam_size</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 
 <span class="c"># Size</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">add_size_bar</span><span class="p">(</span><span class="mf">10</span><span class="p">,</span> <span class="c"># 30&#39; in in pixel</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">add_size_bar</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="c"># 30&#39; in in pixel</span>
                 <span class="s">r&quot;$30^{\prime}$&quot;</span><span class="p">,</span>
-                <span class="n">loc</span><span class="o">=</span><span class="mf">8</span><span class="p">)</span>
+                <span class="n">loc</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>[<a class="reference" href="../plot_directive/figures/demo_compass.py">source code</a>, <a class="reference" href="../plot_directive/figures/demo_compass.hires.png">hires.png</a>, <a class="reference" href="../plot_directive/figures/demo_compass.pdf">pdf</a>]</p>
+<p>[<a class="reference external" href="../plot_directive/figures/demo_compass.py">source code</a>, <a class="reference external" href="../plot_directive/figures/demo_compass.hires.png">hires.png</a>, <a class="reference external" href="../plot_directive/figures/demo_compass.pdf">pdf</a>]</p>
+<div class="figure">
 <img alt="../images/demo_compass.png" src="../images/demo_compass.png" />
+</div>
 </div>
 </div>
 
@@ -340,8 +421,8 @@ the legend command.:</p>
     </div>
     <div class="footer">
       &copy; Copyright 2009, Jae-Joon Lee.
-      Last updated on Aug 03, 2009.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+      Last updated on Nov 04, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4.
     </div>
   </body>
 </html>

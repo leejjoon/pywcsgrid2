@@ -1,8 +1,13 @@
 import pyfits
 import matplotlib.pyplot as plt
 import pywcsgrid2
+import matplotlib.patheffects as patheffects
 
 
+# use path_effects
+my_path_effects = [patheffects.withStroke(linewidth=3,
+                                          foreground="w")]
+pywcsgrid2.Axes.default_path_effects = my_path_effects
 
 
 
@@ -14,16 +19,15 @@ if 1:
     plt.figure(1, [4.5,4.])
 
     ax = pywcsgrid2.axes([0.15, 0.15, 0.8, 0.8], header=h)
-    ax.update_wcsgrid_params(coord_format=("dms", "dms"))
 
-    ax.imshow(d, origin="low", #vmin=0, vmax=4000,
-              cmap=plt.cm.gray_r, interpolation="nearest")
+    ax.imshow(d, origin="low",
+              cmap=plt.cm.gist_heat_r, interpolation="nearest")
 
     ax.set_xlim(20, 52)
     ax.set_ylim(20, 52)
 
     # Figure title
-    ax.add_inner_title("Figure 1", loc=2)
+    t = ax.add_inner_title("Figure 1", loc=2, path_effects=False)
 
     # compass
     ax.add_compass(loc=1)

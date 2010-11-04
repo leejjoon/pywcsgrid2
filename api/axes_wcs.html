@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pywcsgrid2.Axes &mdash; pywcsgrid2 v0.1a documentation</title>
+    <title>pywcsgrid2.axes_wcs &mdash; pywcsgrid2 v0.1a documentation</title>
     <link rel="stylesheet" href="../static/mpl.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -77,17 +77,120 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="pywcsgrid2-axes">
-<h1><tt class="xref docutils literal"><span class="pre">pywcsgrid2.Axes</span></tt><a class="headerlink" href="#pywcsgrid2-axes" title="Permalink to this headline">¶</a></h1>
-<dl class="attribute">
-<dt id="pywcsgrid2.Axes">
-<tt class="descclassname">pywcsgrid2.</tt><tt class="descname">Axes</tt><a class="headerlink" href="#pywcsgrid2.Axes" title="Permalink to this definition">¶</a></dt>
-<dd>alias of <tt class="xref docutils literal"><span class="pre">AxesWcs</span></tt></dd></dl>
+  <div class="section" id="pywcsgrid2-axes-wcs">
+<h1><tt class="xref docutils literal"><span class="pre">pywcsgrid2.axes_wcs</span></tt><a class="headerlink" href="#pywcsgrid2-axes-wcs" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pywcsgrid2.axes_wcs.GridHelperWcsBase">
+<em class="property">class </em><tt class="descclassname">pywcsgrid2.axes_wcs.</tt><tt class="descname">GridHelperWcsBase</tt><big>(</big><em>wcs</em>, <em>axis_nums=None</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.GridHelperWcsBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type">
+<tt class="descname">set_ticklabel1_type</tt><big>(</big><em>labtyp</em>, <em>**labtyp_kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>labtyp : there are two kinds of labtyp, offset-types and
+non-offset-type.  For offset-type labtyp, the label values are
+shifted from the original by the amount of the given
+<em>offset</em>. For either types, one can optionally specify the
+<em>scale</em> parameter and the scaled values (offset will be
+applied first if given) will be used. i.e.,</p>
+<blockquote>
+world1 = (world0 - offset) * scale</blockquote>
+<p>Followings are currently available labtyp.</p>
+<blockquote>
+<ul class="simple">
+<li>non-offset : absval, absdeg, hms, dms</li>
+<li>offset : delta, arcdeg, arcmin, arcsec</li>
+</ul>
+</blockquote>
+<p>By default, the tick locations will be chosen
+automatically. And <em>nbins</em> parameter controls the approximate
+number of ticks. When you want your ticks at the specified
+location, use the <em>locs</em> parameter, which takes a list of tick
+values. However, manual ticks are not possible for labtyp of
+hms, dms, delta. The <em>locs</em> parameter will be simply ignored.</p>
+<p>For the wcs coordinate, the default values are in the unit of
+degree.  And for the ctype of longitude, you may specify
+latitude (in degree) instead of the scale.</p>
+<p>[<a class="reference external" href="../plot_directive/figures/demo_labtyp.py">source code</a>, <a class="reference external" href="../plot_directive/figures/demo_labtyp.hires.png">hires.png</a>, <a class="reference external" href="../plot_directive/figures/demo_labtyp.pdf">pdf</a>]</p>
+<div class="figure">
+<img alt="../images/demo_labtyp.png" src="../images/demo_labtyp.png" />
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel2_type">
+<tt class="descname">set_ticklabel2_type</tt><big>(</big><em>labtyp</em>, <em>**labtyp_kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel2_type" title="Permalink to this definition">¶</a></dt>
+<dd>see <a title="pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type" class="reference internal" href="#pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type"><tt class="xref docutils literal"><span class="pre">set_ticklabel1_type()</span></tt></a>.</dd></dl>
+
+<dl class="method">
+<dt id="pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel_type">
+<tt class="descname">set_ticklabel_type</tt><big>(</big><em>labtyp1</em>, <em>labtyp2</em>, <em>center_pixel=None</em>, <em>labtyp1_kwargs=None</em>, <em>labtyp2_kwargs=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the label type of the x and y axis. Available options are</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="84%" />
+</colgroup>
+<tbody valign="top">
+<tr><td>&#8220;hms&#8221;</td>
+<td>label is in H M S.S (e.g. for RA)</td>
+</tr>
+<tr><td>&#8220;dms&#8221;</td>
+<td>label is in D M S.S (e.g. for DEC)</td>
+</tr>
+<tr><td>&#8220;absval&#8221;</td>
+<td>label is in actual wcs value</td>
+</tr>
+<tr><td>&#8220;absdeg&#8221;</td>
+<td>label is in degrees</td>
+</tr>
+<tr><td>&#8220;delta&#8221;</td>
+<td>label is in offsets (arcsec, arcmin, etc)</td>
+</tr>
+<tr><td>&#8220;arcdeg&#8221;</td>
+<td>label is in arcdegree offsets</td>
+</tr>
+<tr><td>&#8220;arcmin&#8221;</td>
+<td>label is in arcminute offsets</td>
+</tr>
+<tr><td>&#8220;arcsec&#8221;</td>
+<td>label is in arcsecond offsets</td>
+</tr>
+</tbody>
+</table>
+<p>If labtyp2 is None, labtyp1 is used.</p>
+<p>For labtyp in [&#8220;delta&#8221;, &#8220;arcdeg&#8221;, &#8220;arcmin&#8221;, &#8220;arcsec&#8221;],
+<em>center_pixel</em> parameter needs to be specified, from which
+the offsets will be calculated.</p>
+<blockquote>
+center_pixel : in pixel coordinate (data coordinate in matplotlib)</blockquote>
+<p>If None, the center position of the current view-limit will be used.</p>
+<p><em>labtyp1_kwargs</em> and <em>labtyp2_kwargs</em> should be a dictionary of
+keyword arguments that are associated with <em>labtyp1</em> and
+<em>labtyp2</em>. Any other keyword arguments will be associated both with
+<em>labtyp1</em> and <em>labtyp2</em>. The available keywords arguments will
+depends on the value of <em>labtyp1</em> and <em>labtyp2</em>. Most common
+options are <em>nbins</em> and <em>locs</em>. <em>nbins</em> specify approximate number
+of automatically generated ticks. <em>locs</em> manually
+specify the tick locations.</p>
+<p>labtyp of individual axis can be set using
+<a title="pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type" class="reference internal" href="#pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type"><tt class="xref docutils literal"><span class="pre">set_ticklabel1_type()</span></tt></a>
+and
+<a title="pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel2_type" class="reference internal" href="#pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel2_type"><tt class="xref docutils literal"><span class="pre">set_ticklabel2_type()</span></tt></a>
+methods. See documentaion of these methods for more details.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pywcsgrid2.axes_wcs.GridHelperWcsBase.update_wcsgrid_params">
+<tt class="descname">update_wcsgrid_params</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.GridHelperWcsBase.update_wcsgrid_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method is deprecated. Use set_ticklabel_type or locator_params.</p>
+<p>coord_format=(&#8220;hms&#8221;, &#8220;dms&#8221;),
+label_density=(4, 4),</p>
+</dd></dl>
+
+</dd></dl>
 
 <dl class="class">
 <dt id="pywcsgrid2.axes_wcs.AxesWcs">
-<em class="property">
-class </em><tt class="descclassname">pywcsgrid2.axes_wcs.</tt><tt class="descname">AxesWcs</tt><big>(</big><em>*kl</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pywcsgrid2.axes_wcs.</tt><tt class="descname">AxesWcs</tt><big>(</big><em>*kl</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates an axes for displaying FITS images. The axes uses the
 FITS header information for ticks and grids appropriate for
 sky coordinate.</p>
@@ -107,7 +210,7 @@ a new pywcsgrid2.GridHelper instance is created using the header.</dd>
 <em>grid_helper</em>: pywcsgrid2.GridHelper instance</blockquote>
 <dl class="method">
 <dt id="pywcsgrid2.axes_wcs.AxesWcs.add_beam_size">
-<tt class="descname">add_beam_size</tt><big>(</big><em>major_pixel</em>, <em>minor_pixel</em>, <em>angle</em>, <em>loc</em>, <em>frameon=False</em>, <em>borderpad=0.80000000000000004</em>, <em>patch_props=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.add_beam_size" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">add_beam_size</tt><big>(</big><em>major_pixel</em>, <em>minor_pixel</em>, <em>angle</em>, <em>loc</em>, <em>frameon=False</em>, <em>borderpad=0.80000000000000004</em>, <em>patch_props=None</em>, <em>path_effects=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.add_beam_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a ellipse patch to the axes with given sizes. This is
 intended to display beam size (or PSF size) of the observed
 image.  The ellipse is located according to the <em>loc</em>
@@ -122,12 +225,12 @@ parameter, which should be the location code as in the legend.</p>
 <dd>Patch creation, e.g. facecolor, alpha, etc.</dd>
 </dl>
 </blockquote>
-<p>See mpl_toolkits.axes_grid.anchored_artists for orther options.</p>
+<p>See mpl_toolkits.axes_grid1.anchored_artists for orther options.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pywcsgrid2.axes_wcs.AxesWcs.add_compass">
-<tt class="descname">add_compass</tt><big>(</big><em>loc</em>, <em>coord='fk5'</em>, <em>arrow_length=0.14999999999999999</em>, <em>txt1='E'</em>, <em>txt2='N'</em>, <em>delta_a1=0</em>, <em>delta_a2=0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.add_compass" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">add_compass</tt><big>(</big><em>loc</em>, <em>coord='fk5'</em>, <em>arrow_length=0.14999999999999999</em>, <em>txt1='E'</em>, <em>txt2='N'</em>, <em>delta_a1=0</em>, <em>delta_a2=0</em>, <em>path_effects=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.add_compass" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add two arros with appropriate labels showing the increasing
 direction of the coordinate. The default label is &#8220;E&#8221; and &#8220;N&#8221;.</p>
 <p>Keyword arguments:</p>
@@ -145,15 +248,15 @@ direction of the coordinate. The default label is &#8220;E&#8221; and &#8220;N&#
 
 <dl class="method">
 <dt id="pywcsgrid2.axes_wcs.AxesWcs.add_inner_title">
-<tt class="descname">add_inner_title</tt><big>(</big><em>title</em>, <em>loc</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.add_inner_title" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">add_inner_title</tt><big>(</big><em>title</em>, <em>loc</em>, <em>path_effects=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.add_inner_title" title="Permalink to this definition">¶</a></dt>
 <dd>Add a text at the inside corner of the axes.
-It simply uses mpl_toolkits.axes_grid.anchored_artists.AnchoredText.
-See mpl_toolkits.axes_grid.anchored_artists.AnchoredText
+It simply uses mpl_toolkits.axes_grid1.anchored_artists.AnchoredText.
+See mpl_toolkits.axes_grid1.anchored_artists.AnchoredText
 for more details</dd></dl>
 
 <dl class="method">
 <dt id="pywcsgrid2.axes_wcs.AxesWcs.add_size_bar">
-<tt class="descname">add_size_bar</tt><big>(</big><em>length_pixel</em>, <em>label</em>, <em>loc</em>, <em>sep=5</em>, <em>borderpad=0.80000000000000004</em>, <em>frameon=False</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.add_size_bar" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">add_size_bar</tt><big>(</big><em>length_pixel</em>, <em>label</em>, <em>loc</em>, <em>sep=5</em>, <em>borderpad=0.80000000000000004</em>, <em>frameon=False</em>, <em>path_effects=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.add_size_bar" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a horizontal line with a label underneath. Intended to
 display the angular size.</p>
 <p>Keyword arguments:</p>
@@ -166,8 +269,16 @@ display the angular size.</p>
 
 <dl class="method">
 <dt id="pywcsgrid2.axes_wcs.AxesWcs.set_default_label">
-<tt class="descname">set_default_label</tt><big>(</big><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.set_default_label" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<tt class="descname">set_default_label</tt><big>(</big><em>ticktyp1=None</em>, <em>ticktyp2=None</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.set_default_label" title="Permalink to this definition">¶</a></dt>
+<dd>set x and y labels with the default values that are
+automatically determined according to the ticktyp and ctype of
+the axis.</dd></dl>
+
+<dl class="method">
+<dt id="pywcsgrid2.axes_wcs.AxesWcs.set_default_path_effects">
+<tt class="descname">set_default_path_effects</tt><big>(</big><em>path_effects</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.set_default_path_effects" title="Permalink to this definition">¶</a></dt>
+<dd><em>default_path_effects</em> is applied to all the artists created by
+add-* methods. <em>default_path_effects</em> must be a list of path effects.</dd></dl>
 
 <dl class="method">
 <dt id="pywcsgrid2.axes_wcs.AxesWcs.set_display_coord_system">
@@ -177,6 +288,44 @@ display the angular size.</p>
 <dt>Accept:</dt>
 <dd>&#8220;fk5&#8221;|&#8221;fk4&#8221;|&#8221;gal&#8221;</dd>
 </dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pywcsgrid2.axes_wcs.AxesWcs.set_label_type">
+<tt class="descname">set_label_type</tt><big>(</big><em>labtyp1</em>, <em>labtyp2</em>, <em>offset_center=None</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.set_label_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pywcsgrid2.axes_wcs.AxesWcs.set_ticklabel1_type">
+<tt class="descname">set_ticklabel1_type</tt><big>(</big><em>labtyp</em>, <em>**labtyp_kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.set_ticklabel1_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the label type of the x axis. Available options
+depend on the grid_helper used. The default is
+GridHelperWcsBase and its variants.</p>
+<p>See
+<a title="pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type" class="reference internal" href="#pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type"><tt class="xref docutils literal"><span class="pre">set_ticklabel1_type()</span></tt></a>
+for available options.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pywcsgrid2.axes_wcs.AxesWcs.set_ticklabel2_type">
+<tt class="descname">set_ticklabel2_type</tt><big>(</big><em>labtyp</em>, <em>**labtyp_kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.set_ticklabel2_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the label type of the y axis. Available options
+depend on the grid_helper used. The default is
+GridHelperWcsBase and its variants.</p>
+<p>See
+<a title="pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type" class="reference internal" href="#pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type"><tt class="xref docutils literal"><span class="pre">set_ticklabel1_type()</span></tt></a>
+for available options.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pywcsgrid2.axes_wcs.AxesWcs.set_ticklabel_type">
+<tt class="descname">set_ticklabel_type</tt><big>(</big><em>labtyp1</em>, <em>labtyp2=None</em>, <em>center_pixel=None</em>, <em>labtyp1_kwargs=None</em>, <em>labtyp2_kwargs=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.set_ticklabel_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the label type of the x and y axes. Available options
+depend on the grid_helper used. The default is
+GridHelperWcsBase and its variants.</p>
+<p>See
+<a title="pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel_type" class="reference internal" href="#pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel_type"><tt class="xref docutils literal"><span class="pre">set_ticklabel_type()</span></tt></a>
+for available options.</p>
 </dd></dl>
 
 <dl class="method">
@@ -192,7 +341,8 @@ useful when you plot highly curved coordinate system.</dd></dl>
 <dl class="method">
 <dt id="pywcsgrid2.axes_wcs.AxesWcs.update_wcsgrid_params">
 <tt class="descname">update_wcsgrid_params</tt><big>(</big><em>**ka</em><big>)</big><a class="headerlink" href="#pywcsgrid2.axes_wcs.AxesWcs.update_wcsgrid_params" title="Permalink to this definition">¶</a></dt>
-<dd><p>adjust the controlling option for ticks and grid.</p>
+<dd><p>This method is deprecated. Use set_ticklabel_type or locator_params.</p>
+<p>adjust the controlling option for ticks and grid.</p>
 <p>The option should be given as keyword arguments.</p>
 <p>Keyword arguments:</p>
 <blockquote>
@@ -239,8 +389,8 @@ tick locations. The default is (4, 4).</dd>
     </div>
     <div class="footer">
       &copy; Copyright 2009, Jae-Joon Lee.
-      Last updated on Aug 03, 2009.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+      Last updated on Nov 04, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4.
     </div>
   </body>
 </html>
