@@ -17,9 +17,8 @@ f_radio = pyfits.open(radio_name)
 header_radio = f_radio[0].header
 
 
-# grid helper to be used.
+# grid helper
 grid_helper = pywcsgrid2.GridHelper(wcs=header_xray)
-grid_helper.update_wcsgrid_params(label_density=(2,2))
 
 # AxesGrid to display tow images side-by-side
 fig = plt.figure(1, (6,3.5))
@@ -38,11 +37,15 @@ im.set_clim(4.e-05, 0.00018)
 ticklocs = [6, 9, 12, 15]
 
 cax1 = grid.cbar_axes[0]
-cbar1=cax1.colorbar(im, ticks=[t*1.e-5 for t in ticklocs])
+cbar1 = cax1.colorbar(im)
 cax1.toggle_label(True)
-
+cax1.set_xticks([t*1.e-5 for t in ticklocs])
 cax1.set_xticklabels(["$%d$" % t for t in ticklocs])
-cax1.xaxis.get_major_formatter().set_offset_string(r"$\times 10^{-5}$")
+#cax1.xaxis.get_major_formatter().set_offset_string(r"$\times 10^{-5}$")
+cax1.annotate(r"$\times 10^{-5}$",
+              xy=(1,1), xycoords="axes fraction",
+              xytext=(0, 15), textcoords="offset points",
+              va="bottom", ha="right", size="small")
 
 
 ax2 = grid[1]
@@ -70,6 +73,10 @@ cont2 = ax1[header_radio].contour(d, colors="k")
 
 ax1.add_inner_title("X-ray", loc=2)
 ax2.add_inner_title("Radio", loc=2)
+
+ax1.locator_params("both", nbins=2) # since ax1 and ax2 shares a
+                                    # grid_helper, it affects not only
+                                    # ax1 but also ax2.
 
 plt.show()
 
