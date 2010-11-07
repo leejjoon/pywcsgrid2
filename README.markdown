@@ -15,9 +15,9 @@ in an appropriate sky coordinates.
 
 ![pywcsgrid2 sample](http://leejjoon.github.com/pywcsgrid2/images/image.jpg)
 
-Homepage : http://leejjoon.github.com/pywcsgrid2/
+Homepage : [http://leejjoon.github.com/pywcsgrid2/](http://leejjoon.github.com/pywcsgrid2/)
 
-Gallery : http://leejjoon.github.com/matplotlib_astronomy_gallery/
+Gallery : [http://leejjoon.github.com/matplotlib_astronomy_gallery/](http://leejjoon.github.com/matplotlib_astronomy_gallery/)
 
 LICENSE
 -------
