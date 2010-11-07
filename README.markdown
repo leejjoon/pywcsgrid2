@@ -7,11 +7,9 @@ displaying astronomical fits images. It provides a custom Axes class
 images. Its main functionality is to draw ticks, ticklabels, and grids
 in an appropriate sky coordinates.
 
- * Provide a custom Matplotlib Axes class based on [mpl_toolkits.axisartist](http://matplotlib.sourceforge.net/mpl_toolkits/axes_grid/index.html#toolkit-axesgrid-index)
-   module
+ * Provide a custom Matplotlib Axes class based on [mpl_toolkits.axisartist](http://matplotlib.sourceforge.net/mpl_toolkits/axes_grid/index.html#toolkit-axesgrid-index) module
 
- * Easy integration with [mpl_toolkits.axes_grid1](http://matplotlib.sourceforge.net/mpl_toolkits/axes_grid/index.html#toolkit-axesgrid-index)
-   module 
+ * Easy integration with [mpl_toolkits.axes_grid1](http://matplotlib.sourceforge.net/mpl_toolkits/axes_grid/index.html#toolkit-axesgrid-index) module 
 
  * For a sampling, see the [gallery](http://leejjoon.github.com/matplotlib_astronomy_gallery/)
 
