@@ -1426,13 +1426,11 @@ class AxesWcs(HostAxes):
         else:
             label1, label2 = self._get_default_label_using_ctypes()
 
-        if ticktyp1 is not None:
-            label1 = self._decorate_default_label(label1, ticktyp1)
-            self.axis["bottom","top"].label.set_text(label1)
+        label1 = self._decorate_default_label(label1, ticktyp1)
+        self.axis["bottom","top"].label.set_text(label1)
 
-        if ticktyp2 is not None:
-            label2 = self._decorate_default_label(label2, ticktyp2)
-            self.axis["left","right"].label.set_text(label2)
+        label2 = self._decorate_default_label(label2, ticktyp2)
+        self.axis["left","right"].label.set_text(label2)
 
 
 
