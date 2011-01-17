@@ -1642,6 +1642,7 @@ class AxesWcs(HostAxes):
         ac = AnchoredCompass(self, self[coord].transAux, loc=loc,
                              txt1=txt1, txt2=txt2,
                              delta_a1=delta_a1, delta_a2=delta_a2,
+                             arrow_fraction=arrow_length,
                              **kwargs)
         if path_effects is None:
             path_effects = self.default_path_effects
