@@ -23,7 +23,7 @@ matplotlib
 pywcs
 -----
 * used for coordinate conversions
-* `Homepage <https://www.stsci.edu/trac/ssb/astrolib>`__
+* `Homepage <https://trac6.assembla.com/astrolib>`__
 
 Kapteyn Package
 ---------------
