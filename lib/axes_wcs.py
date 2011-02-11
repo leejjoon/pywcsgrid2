@@ -789,6 +789,10 @@ class GridHelperWcsBase(object):
         self.set_ticklabel2_type(labtyp2, **labtyp2_kwargs)
 
 
+    def set_lon_ref(self, ref):
+        #_fix_lon
+        self.projection.set_lon_ref(ref)
+
 
 class GridHelperWcsSkyBase(GridHelperWcsBase):
     _GRIDHELPER_CLASS=GridHelperCurveLinear
@@ -855,6 +859,83 @@ class GridHelperWcsSkyBase(GridHelperWcsBase):
 
     def get_display_coord_system(self):
         return self._wcsgrid_display_coord_system
+
+
+    def _get_line_path_naive(self, axes, x, y):
+        
+        from matplotlib.path import Path
+
+        if self.projection._lon_ref is None:
+            return Path(zip(x, y))
+            
+        #tr = axes[0].transAux.inverted()
+        #rrdd = tr.transform(np.array([x, y]).transpose())
+
+        #rr, dd = rrdd[:,0], rrdd[:,1]
+        rr, dd = self.projection.toworld((x,y))
+        #print rr.astype("i"), rr1.astype("i")
+        rr += self.projection._lon_ref #self._lon_ref
+
+        rri = np.floor_divide(rr, 360.)
+        rrid = rri[1:] - rri[:-1]
+
+        codes = np.empty(rri.shape, dtype="i")
+        codes.fill(Path.LINETO)
+
+        i0 = 0
+        for i1, in np.transpose(rrid.nonzero()):
+            codes[i0] = Path.MOVETO
+            i0 = i1+1
+        codes[i0] = Path.MOVETO
+
+        return Path(zip(x, y), codes=codes)
+
+
+    def _get_line_path(self, axes, x, y):
+        
+        from matplotlib.path import Path
+
+        if self.projection._lon_ref is None:
+            return Path(zip(x, y))
+            
+        #rr, dd = self.projection.toworld((x,y))
+        #rrid = np.abs(rr[1:] - rr[:-1]) > 50.
+        x1, x2 = axes.get_xlim()
+        dx = abs(x2-x1)*.1
+        rrid = np.abs(x[1:] - x[:-1]) > dx
+        codes = np.empty(x.shape, dtype="i")
+        codes.fill(Path.LINETO)
+
+        i0 = 0
+        codes[i0] = Path.MOVETO
+        for i1, in np.transpose(rrid.nonzero()):
+            codes[i1+1] = Path.MOVETO
+
+        return Path(zip(x, y), codes=codes)
+
+
+    def new_floating_axis(self, nth_coord,
+                          value,
+                          axes=None,
+                          axis_direction="bottom",
+                          allsky=False
+                          ):
+
+        #axisline = self._GRIDHELPER_CLASS.new_floating_axis( \
+        #    self, nth_coord, value, axes, axis_direction)
+        axisline = super(GridHelperWcsSkyBase, self).new_floating_axis( \
+            nth_coord, value, axes, axis_direction)
+
+        if allsky:
+            h = axisline.get_helper()
+
+            # fixme
+            h._line_num_points = 1500
+            h._get_line_path = self._get_line_path
+        
+        #axisline.line.set_clip_on(True)
+        #axisline.line.set_clip_box(axisline.axes.patch)
+        return axisline
 
 
 class GridHelperWcsSimple(GridHelperWcsBase, GridHelperCurveLinear):
@@ -949,7 +1030,7 @@ class GridHelperWcsSky(GridHelperWcsSkyBase, GridHelperCurveLinear):
 GridHelperWcs = GridHelperWcsSky
 
 
-class GridHelperWcsFloating(GridHelperWcsBase, floating_axes.GridHelperCurveLinear):
+class GridHelperWcsFloating(GridHelperWcsSkyBase, floating_axes.GridHelperCurveLinear):
     def __init__(self, wcs, extremes,
                  orig_coord=None,
                  grid_locator1=None,
@@ -958,7 +1039,10 @@ class GridHelperWcsFloating(GridHelperWcsBase, floating_axes.GridHelperCurveLine
                  tick_formatter2=None,
                  ):
 
-        GridHelperWcsBase.__init__(self, wcs, orig_coord)
+        #GridHelperWcsBase.__init__(self, wcs, orig_coord)
+
+        orig_coord, axis_nums = None, None
+        GridHelperWcsSkyBase.__init__(self, wcs, orig_coord, axis_nums)
 
 
         if grid_locator1 is None:
@@ -1250,7 +1334,6 @@ class AxesWcs(HostAxes):
         self._wcsgrid_wcsaxes = {0:ax}
         self.parasites.append(ax)
 
-
     def __getitem__(self, key):
 
         # check if key is a valid coord_sys instance
@@ -1412,6 +1495,7 @@ class AxesWcs(HostAxes):
         else:
             if ticktyp1 == "absdeg":
                 label1 = label1 + r" [$^{\circ}$]"
+
         return label1
 
     def set_default_label(self, ticktyp1=None, ticktyp2=None):
@@ -1720,7 +1804,6 @@ SubplotWcs = maxes.subplot_class_factory(AxesWcs)
 
 #         self.axis["bottom","top"].label.set_text(label1)
 #         self.axis["left","right"].label.set_text(label2)
-
 
 
 

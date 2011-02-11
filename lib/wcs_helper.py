@@ -168,6 +168,45 @@ class ProjectionBase(object):
     """
     A wrapper for kapteyn.projection or pywcs
     """
+
+    def __init__(self):
+        self._lon_ref = None
+
+        for i, ct in enumerate(self.ctypes):
+            if _pattern_ra.match(ct) or _pattern_glon.match(ct):
+                self._lon_axis = i
+                break
+        else:
+            self._lon_axis = None
+            
+    def get_lon(self):
+        pass
+
+    
+    def set_lon_ref(self, ref):
+        self._lon_ref = ref
+        
+    def _fix_lon(self, lon, lon_ref=None):
+        """
+        transform lon into values in range [self._lon_ref, self._lon_ref+360]
+        """
+        if lon_ref is None:
+            lon_ref = self._lon_ref
+
+        if self._lon_ref is not None:
+            lon_ = lon - self._lon_ref
+            lon2 = lon_ - 360*np.floor_divide(lon_, 360.)
+            lon2[lon_==360] = 360
+            return lon2 + self._lon_ref
+        else:
+            return lon
+
+    def fix_lon(self, lon_lat):
+        """
+        """
+        if self._lon_axis is not None:
+            lon_lat[self._lon_axis] = self._fix_lon(lon_lat[self._lon_axis])
+
     # def _get_ctypes(self):
     #     pass
 
@@ -195,6 +234,7 @@ class ProjectionKapteyn(ProjectionBase):
     A wrapper for kapteyn.projection
     """
     def __init__(self, header):
+        ProjectionBase.__init__(self)
         if isinstance(header, pyfits.Header):
             self._proj = kapteyn.wcs.Projection(header)
         else:
@@ -250,6 +290,8 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
         else:
             self._pywcs = header
 
+        ProjectionBase.__init__(self)
+
     def _get_ctypes(self):
         return tuple(self._pywcs.wcs.ctype)
 
@@ -268,13 +310,29 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
 
     def topixel(self, xy):
         """ 1, 1 base """
-        xy2 = self._pywcs.wcs_sky2pix(np.asarray(xy).T, 1)
-        return xy2.T
+
+        lon_lat = np.array(xy)
+
+        self.fix_lon(lon_lat)
+
+        xy1 = lon_lat.transpose()
+
+        # somehow, wcs_sky2pix does not work for some cases
+        xy21 = [self._pywcs.wcs_sky2pix([xy11], 1)[0] for xy11 in xy1]
+        #xy21 = self._pywcs.wcs_sky2pix(xy1, 1)
+
+        xy2 = np.array(xy21).transpose()
+        return xy2
 
     def toworld(self, xy):
         """ 1, 1 base """
         xy2 = self._pywcs.wcs_pix2sky(np.asarray(xy).T, 1)
-        return xy2.T
+
+        lon_lat = xy2.T
+        # fixme
+        self.fix_lon(lon_lat)
+
+        return lon_lat
 
     #def sub(self, axes):
     #    wcs = self._pywcs.sub(axes=axes)
@@ -301,6 +359,7 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
         _ref_world0 = np.asarray(proj.toworld(_ref_pixel0))
         self._ref_world = _ref_world0.reshape((len(ref_pixel),))
 
+        ProjectionBase.__init__(self)
 
 
         # for n in range(proj.naxis):
@@ -377,6 +436,9 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
         #xyz2r = [d for (i, d) in enumerate(xyz2) if i in self._axis_nums_to_keep]
         xyz2r = [xyz2[i] for i in self._axis_nums_to_keep]
 
+        # fixme
+        #xyz2r[0] = self._fix_lon(xyz2r[0])
+
         return xyz2r
 
 
@@ -386,6 +448,7 @@ class ProjectionPywcs(ProjectionBase):
     A wrapper for pywcs
     """
     def __init__(self, header):
+        ProjectionBase.__init__(self)
         if isinstance(header, pyfits.Header):
             self._pywcs = pywcs.WCS(header=header)
         else:
@@ -423,6 +486,7 @@ class ProjectionSimple(ProjectionBase):
     A wrapper for pywcs
     """
     def __init__(self, header):
+        ProjectionBase.__init__(self)
         self._pywcs = pywcs.WCS(header=header)
         self._simple_init(header)
         
@@ -454,6 +518,9 @@ class ProjectionSimple(ProjectionBase):
 
     def _simple_to_pixel(self, lon, lat):
         lon, lat = np.asarray(lon), np.asarray(lat)
+
+        lon = self._fix_lon(lon)
+
         x = (lon - self.crval1)/self.cdelt1*self.cos_phi + self.crpix1
         y = (lat - self.crval2)/self.cdelt2 + self.crpix2
 
@@ -463,6 +530,8 @@ class ProjectionSimple(ProjectionBase):
         x, y = np.asarray(x), np.asarray(y)
         lon = (x - self.crpix1)*self.cdelt1/self.cos_phi + self.crval1
         lat = (y - self.crpix2)*self.cdelt2 + self.crval2
+
+        lon = self._fix_lon(lon)
 
         return lon, lat
 
@@ -491,6 +560,11 @@ class ProjectionSimple(ProjectionBase):
 
 
 if _pywcs_installed:
+#     def ProjectionPywcsNdSimple(header):
+#         if header["ctype1"].lower().endswith("car") and \
+#            header["ctype2"].lower().endswith("car"):
+#             return ProjectionSimple
+#         return ProjectionPywcsNd
     ProjectionDefault = ProjectionPywcsNd
 else:
     ProjectionDefault = ProjectionKapteyn
