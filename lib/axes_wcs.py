@@ -43,9 +43,45 @@ from mpl_toolkits.axisartist.grid_helper_curvelinear \
 
 import mpl_toolkits.axisartist.grid_helper_curvelinear as grid_helper_curvelinear
 
+import mpl_toolkits.axisartist.floating_axes as floating_axes
 
 # implment locator_params that is not ioncluded in matplotlib 1.0
 class GridHelperCurveLinear(grid_helper_curvelinear.GridHelperCurveLinear):
+    def locator_params(self, axis='both', **kwargs):
+        """
+        Convenience method for controlling tick locators.
+
+        Keyword arguments:
+
+        *axis*
+            ['x' | 'y' | 'both']  Axis on which to operate;
+            default is 'both'.
+
+        Remaining keyword arguments are passed to directly to
+        set_params method of each locators.
+
+        Typically one might want to reduce the maximum number
+        of ticks, for example::
+
+            ax.locator_params(nbins=4)
+
+        """
+
+        if kwargs.has_key("tight"):
+            warnings.warn("axislines ignores *tight* parameter")
+
+        _x = axis in ['x', 'both']
+        _y = axis in ['y', 'both']
+
+        if _x:
+            self.grid_finder.grid_locator1.set_params(**kwargs)
+        if _y:
+            self.grid_finder.grid_locator2.set_params(**kwargs)
+
+        self.invalidate()
+
+
+class GridHelperCurveLinearFloating(floating_axes.GridHelperCurveLinear):
     def locator_params(self, axis='both', **kwargs):
         """
         Convenience method for controlling tick locators.
@@ -88,7 +124,6 @@ from aux_artists import AnchoredCompass
 
 import mpl_toolkits.axisartist as axisartist
 from mpl_toolkits.axisartist import ParasiteAxesAuxTrans
-import mpl_toolkits.axisartist.floating_axes as floating_axes
 
 import weakref
 
@@ -1030,7 +1065,7 @@ class GridHelperWcsSky(GridHelperWcsSkyBase, GridHelperCurveLinear):
 GridHelperWcs = GridHelperWcsSky
 
 
-class GridHelperWcsFloating(GridHelperWcsSkyBase, floating_axes.GridHelperCurveLinear):
+class GridHelperWcsFloating(GridHelperWcsSkyBase, GridHelperCurveLinearFloating):
     def __init__(self, wcs, extremes,
                  orig_coord=None,
                  grid_locator1=None,
@@ -1045,14 +1080,32 @@ class GridHelperWcsFloating(GridHelperWcsSkyBase, floating_axes.GridHelperCurveL
         GridHelperWcsSkyBase.__init__(self, wcs, orig_coord, axis_nums)
 
 
+        if orig_coord in ["fk5", "fk4"]:
+            ctype1, ctype2 = "RA", "DEC"
+        elif orig_coord == "gal":
+            ctype1, ctype2 = "GLON", "GLAT"
+        elif orig_coord is None:
+            ctype1, ctype2 = self.projection.ctypes[:2]
+        else:
+            raise ValueError("unknown coord type")
+
+        
+
+        _loc1, _form1 = self._get_default_locator_formatter(ctype1)
+        _loc2, _form2 = self._get_default_locator_formatter(ctype2)
+        
         if grid_locator1 is None:
-            grid_locator1=LocatorHMS(4)
+            grid_locator1 = _loc1
+            #grid_locator1=LocatorHMS(4)
         if grid_locator2 is None:
-            grid_locator2=LocatorDMS(4)
+            grid_locator2 = _loc2
+            #grid_locator2=LocatorDMS(4)
         if tick_formatter1 is None:
-            tick_formatter1=FormatterHMS()
+            tick_formatter1=_form1
+            #tick_formatter1=FormatterHMS()
         if tick_formatter2 is None:
-            tick_formatter2=FormatterDMS()
+            tick_formatter2=_form2
+            #tick_formatter2=FormatterDMS()
 
         klass = floating_axes.GridHelperCurveLinear
         klass.__init__(self, self._wcs_trans,
