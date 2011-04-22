@@ -1241,7 +1241,10 @@ class AxesWcs(HostAxes):
 
         self.set_default_label("default", "default")
 
+    def __iter__(self):
+        raise TypeError("AxesWcs object is not iterable")
 
+    
     def _init_parasites(self):
         ax = ParasiteAxesAuxTrans(self,
                                   #WcsSky2PixelTransform(self._wcs),
