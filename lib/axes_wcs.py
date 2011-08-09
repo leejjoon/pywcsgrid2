@@ -586,40 +586,35 @@ class GridHelperWcsBase(object):
         locs = labtyp_kwargs.pop("locs", None)
 
         if labtyp == "manual":
-            offset = labtyp_kwargs.pop("offset", 0)
-            scale = labtyp_kwargs.pop("scale", 1)
 
             labels = labtyp_kwargs.pop("labels", None)
 
             if locs is None or labels is None:
                 raise ValueError("manual labtyp requires locs and labels parameters")
             if len(locs) != len(labels):
-                raise ValueError("locs and labels must be losts of same lengths.")
+                raise ValueError("locs and labels must be of same lengths.")
 
 
             locator = FixedLocator(locs)
-            locator.set_factor(scale)
 
             formatter = FixedFormatter(labels)
 
-            return offset, scale, locator, formatter
-
-        elif labtyp in ["delta", "arcdeg", "arcmin", "arcsec"]:
-            offset = labtyp_kwargs.pop("offset")
-            scale = labtyp_kwargs.pop("scale", 1)
+        elif labtyp in ["relval", "delta", "arcdeg", "arcmin", "arcsec"]:
 
             if labtyp in ["delta"]:
                 locator = LocatorDMS(nbins)
-            elif labtyp in ["arcdeg", "arcmin", "arcsec"]:
+            elif labtyp in ["relval", "arcdeg", "arcmin", "arcsec"]:
                 if locs is not None:
                     locator = FixedLocator(locs)
                 else:
                     locator = MaxNLocator(nbins)
 
-            if labtyp == "arcmin":
-                locator.set_factor(60.)
-            elif labtyp == "arcsec":
-                locator.set_factor(3600.)
+                if labtyp == "arcmin":
+                    locator.set_factor(60)
+                elif labtyp == "arcsec":
+                    locator.set_factor(3600)
+                else:
+                    pass
 
             if labtyp in ["delta"]:
                 formatter = FormatterDMSDelta()
@@ -634,8 +629,7 @@ class GridHelperWcsBase(object):
                     locator = MaxNLocator(nbins)
 
                 if labtyp == "absval":
-                    scale = labtyp_kwargs.pop("scale", 1)
-                    locator.set_factor(scale)
+                    pass
                 elif labtyp == "absdeg":
                     pass
 
@@ -647,31 +641,31 @@ class GridHelperWcsBase(object):
             elif labtyp == "dms":
                 locator = LocatorDMS(nbins)
                 formatter = FormatterDMS()
-#             else:
-#                 #self.update_delta_trans(ty=0, sy=1)
-#                 locator = MaxNLocator(nbins)
-#                 formatter = FormatterPrettyPrint()
             else:
                 raise ValueError("Unknown labeltype : %s" % (labtyp))
 
-            offset, scale = 0, 1
+            #locator.set_factor(scale)
 
-        return offset, scale, locator, formatter
+            offset = 0
+
+        return locator, formatter
 
 
     def _check_scale_for_longitude(self, naxis, labtyp, labtyp_kwargs):
         if labtyp in ["delta", "arcdeg", "arcmin", "arcsec"]:
             ctype = self.projection.ctypes[naxis]
-            if _pattern_longitude.match(ctype) and "scale" not in labtyp_kwargs:
+            if _pattern_longitude.match(ctype): # and "scale" not in labtyp_kwargs:
                 lat = labtyp_kwargs.pop("latitude", None)
                 if lat is None:
-                    raise RuntimeError("For ctype of longitude, either scale or the latitude parameter needs to be set")
+                    if "scale" not in labtyp_kwargs:
+                        raise RuntimeError("For ctype of longitude, either scale or the latitude parameter needs to be set")
                 else:
-                    scale = 1./np.cos(lat/180.*np.pi)
-                    labtyp_kwargs["scale"] = scale
+                    scale0 = labtyp_kwargs.get("scale", 1)
+                    scale = np.cos(lat/180.*np.pi)
+                    labtyp_kwargs["scale"] = scale*scale0
 
 
-    def set_ticklabel1_type(self, labtyp, **labtyp_kwargs):
+    def set_ticklabel1_type(self, labtyp, adjust_scale=True, **labtyp_kwargs):
         """
         labtyp : there are two kinds of labtyp, offset-types and
         non-offset-type.  For offset-type labtyp, the label values are
@@ -685,43 +679,56 @@ class GridHelperWcsBase(object):
         Followings are currently available labtyp.
 
          * non-offset : absval, absdeg, hms, dms
-         * offset : delta, arcdeg, arcmin, arcsec
+         * offset : relval, delta, arcdeg, arcmin, arcsec
 
 
         By default, the tick locations will be chosen
-        automatically. And *nbins* parameter controls the approximate
+        automatically.
+
+        The *nbins* parameter controls the approximate
         number of ticks. When you want your ticks at the specified
         location, use the *locs* parameter, which takes a list of tick
         values. However, manual ticks are not possible for labtyp of
         hms, dms, delta. The *locs* parameter will be simply ignored.
 
         For the wcs coordinate, the default values are in the unit of
-        degree.  And for the ctype of longitude, you may specify
-        latitude (in degree) instead of the scale.
+        degree.
+
+        For the ctype of longitude, an optional keyword parameter
+        *latitude* nay be giveb (in degree). When specified, the 
+        scale value will be multiplied by cos(longitude).
 
         .. plot:: figures/demo_labtyp.py
 
         """
-        self._check_scale_for_longitude(0, labtyp, labtyp_kwargs)
+        if adjust_scale:
+            self._check_scale_for_longitude(0, labtyp, labtyp_kwargs)
 
-        offset, scale, locator, formatter = \
-                self._set_ticklabel_type(labtyp, **labtyp_kwargs)
-        self.update_delta_trans(sx=scale, tx=offset)
+        offset = labtyp_kwargs.pop("offset", 0)
+        scale = labtyp_kwargs.pop("scale", 1)
+
+        locator, formatter = self._set_ticklabel_type(labtyp, **labtyp_kwargs)
+
+        self.update_delta_trans(sx=1./scale, tx=offset)
 
         self.update_grid_finder(aux_trans=self._delta_trans+self._wcs_trans,
                                 grid_locator1=locator,
                                 tick_formatter1=formatter
                                 )
 
-    def set_ticklabel2_type(self, labtyp, **labtyp_kwargs):
+    def set_ticklabel2_type(self, labtyp, adjust_scale=True, **labtyp_kwargs):
         """
         see :meth:`~pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type`.
         """
-        self._check_scale_for_longitude(1, labtyp, labtyp_kwargs)
+        if adjust_scale:
+            self._check_scale_for_longitude(1, labtyp, labtyp_kwargs)
 
-        offset, scale, locator, formatter = \
-                self._set_ticklabel_type(labtyp, **labtyp_kwargs)
-        self.update_delta_trans(sy=scale, ty=offset)
+        offset = labtyp_kwargs.pop("offset", 0)
+        scale = labtyp_kwargs.pop("scale", 1)
+
+        locator, formatter = self._set_ticklabel_type(labtyp, **labtyp_kwargs)
+
+        self.update_delta_trans(sy=1./scale, ty=offset)
 
         self.update_grid_finder(aux_trans=self._delta_trans+self._wcs_trans,
                                 grid_locator2=locator,
@@ -740,13 +747,13 @@ class GridHelperWcsBase(object):
         if _pattern_latitude.match(ctype2):
             scale2 = 1
             if _pattern_longitude.match(ctype1):
-                scale1 = 1./np.cos(clat/180.*np.pi)
+                scale1 = np.cos(clat/180.*np.pi)
             else:
                 scale1 = None
         if _pattern_latitude.match(ctype1):
             scale1 = 1
             if _pattern_longitude.match(ctype2):
-                scale2 = 1./np.cos(clon/180.*np.pi)
+                scale2 = np.cos(clon/180.*np.pi)
             else:
                 scale2 = None
 
