@@ -164,6 +164,26 @@ def coord_system_guess(ctype1_name, ctype2_name, equinox):
     return None
 
 
+def fix_header(header):
+    "return a new fixed header"
+
+    cards = pyfits.CardList()
+
+    for c in header.ascardlist():
+        # ignore comments and history
+        if c.key in ["COMMENT", "HISTORY"]:
+            continue
+
+        # use "deg"
+        if c.key.startswith("CUNIT") and c.value.lower().startswith("deg"):
+            c = pyfits.Card(c.key, "deg")
+
+        cards.append(c)
+        
+    h = pyfits.Header(cards)
+    return h
+
+
 class ProjectionBase(object):
     """
     A wrapper for kapteyn.projection or pywcs
@@ -286,6 +306,7 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     """
     def __init__(self, header):
         if isinstance(header, pyfits.Header):
+            header = fix_header(header)
             self._pywcs = pywcs.WCS(header=header)
         else:
             self._pywcs = header
