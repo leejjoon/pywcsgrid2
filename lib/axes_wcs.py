@@ -1263,7 +1263,7 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
     def imshow_affine(self, *kl, **kwargs):
 
         if kwargs.setdefault("interpolation", "none") != "none":
-            raise ValueError("interpolation parameter must not be set or should be 'nearest'")
+            raise ValueError("interpolation parameter must not be set or should be 'none'")
         im = ParasiteAxesAuxTrans.imshow(self, *kl, **kwargs)
         x1, x2, y1, y2 = im.get_extent()
         im._image_skew_coordinate = (x2, y1)
