@@ -7,6 +7,8 @@ from axes_wcs import GridHelperWcsSky, GridHelperWcsSimple
 GridHelperSky, GridHelperSimple = GridHelperWcsSky, GridHelperWcsSimple
 GridHelper = GridHelperSky
 
+from floating_axes import FloatingAxes, FloatingSubplot
+
 import matplotlib.pyplot as plt
 
 def _check_kwargs(kwargs):
@@ -48,6 +50,40 @@ def subplot(*args, **kwargs):
     return ax
 
 
+def floating_axes(*args, **kwargs):
+
+    assert("header" in kwargs)
+    assert("extremes" in kwargs)
+
+    nargs = len(args)
+    if len(args)==0: return floating_subplot(111, **kwargs)
+    if nargs>1:
+        raise TypeError('Only one non keyword arg to axes allowed')
+    arg = args[0]
+
+    if isinstance(arg, Axes):
+        a = plt.gcf().sca(arg)
+    else:
+        rect = arg
+        ax = FloatingAxes(plt.gcf(), rect, **kwargs)
+        a = plt.gcf().add_axes(ax)
+    plt.draw_if_interactive()
+    return a
+
+
+def floating_subplot(*args, **kwargs):
+    """
+    """
+
+    assert("header" in kwargs)
+    assert("extremes" in kwargs)
+
+    fig = plt.gcf()
+    ax = FloatingSubplot(fig, *args, **kwargs)
+    ax = plt.subplot(ax)
+    return ax
+
+
 import re
 
 _wcs_key_pattern = re.compile(r'^(NAXIS|CD|CDELT|CRPIX|CRVAL|CTYPE|CROTA|LONGPOLE|LATPOLE|PV|DISTORT|OBJECT|BUNIT|EPOCH|EQUINOX|LTV|LTM|DTV|DTM)')
@@ -59,6 +95,5 @@ def filterwcs(h):
     import pyfits
     l = [card for card in h.ascardlist() if _wcs_key_pattern.match(card.key)]
     return pyfits.Header(l)
-
 
 
