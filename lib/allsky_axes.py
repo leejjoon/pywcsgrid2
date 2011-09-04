@@ -72,8 +72,12 @@ LATPOLE =       90.00000000000 / Galactic latitude of native pole
     
     cards = pyfits.CardList()
     for l in header_list:
-        card = pyfits.Card()
-        card.fromstring(l.strip())
+        # check if fromstring is a classmethod
+        if type(pyfits.Card.__dict__["fromstring"]) is classmethod:
+            card = pyfits.Card.fromstring(l.strip())
+        else:
+            card = pyfits.Card()
+            card.fromstring(l.strip())
         cards.append(card)
 
     h = pyfits.Header(cards)
