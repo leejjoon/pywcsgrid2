@@ -841,7 +841,7 @@ class GridHelperWcsSkyBase(GridHelperWcsBase):
 
     def _init_projection(self, wcs, orig_coord, axis_nums=None):
 
-        GridHelperWcsBase._init_projection(self, wcs, axis_nums=None)
+        GridHelperWcsBase._init_projection(self, wcs, axis_nums)
 
         if orig_coord is None:
             ctype1, ctype2 = self.projection.ctypes[:2]
