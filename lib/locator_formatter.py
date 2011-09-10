@@ -2,15 +2,8 @@ import mpl_toolkits.axisartist.grid_finder as grid_finder
 import mpl_toolkits.axisartist.angle_helper as angle_helper
 import numpy as np
 
-class LocatorDMS(angle_helper.LocatorDMS):
-    def set_params(self, **kwargs):
-        if "nbins" in kwargs:
-            self.den = int(kwargs.pop("nbins"))
-
-class LocatorHMS(angle_helper.LocatorHMS):
-    def set_params(self, **kwargs):
-        if "nbins" in kwargs:
-            self.den = int(kwargs.pop("nbins"))
+from mpl_toolkits.axisartist.angle_helper import LocatorH, LocatorHM, LocatorHMS, \
+     LocatorD, LocatorDM, LocatorDMS
 
 class FixedLocator(object):
     def __init__(self, locs, factor=None):
@@ -67,4 +60,5 @@ class FormatterPrettyPrint(grid_finder.FormatterPrettyPrint):
         grid_finder.FormatterPrettyPrint.__init__(self)
         #self._fmt._useMathText = useMathText
         self._fmt._usetex = True
-        
+
+

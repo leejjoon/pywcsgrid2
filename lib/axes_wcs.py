@@ -31,7 +31,10 @@ GridFinderBase = grid_finder.GridFinderBase
 
 from mpl_toolkits.axisartist.angle_helper import ExtremeFinderCycle
 
-from locator_formatter import LocatorDMS, LocatorHMS, FixedLocator, \
+from locator_formatter import LocatorH, LocatorHM, LocatorHMS, \
+     LocatorD, LocatorDM, LocatorDMS
+
+from locator_formatter import FixedLocator, \
      FixedFormatter, MaxNLocator, FormatterPrettyPrint
 
 
@@ -641,6 +644,18 @@ class GridHelperWcsBase(object):
             elif labtyp == "dms":
                 locator = LocatorDMS(nbins)
                 formatter = FormatterDMS()
+            elif labtyp == "dm":
+                locator = LocatorDM(nbins)
+                formatter = FormatterDMS()
+            elif labtyp == "hm":
+                locator = LocatorHM(nbins)
+                formatter = FormatterHMS()
+            elif labtyp == "d":
+                locator = LocatorD(nbins)
+                formatter = FormatterDMS()
+            elif labtyp == "h":
+                locator = LocatorH(nbins)
+                formatter = FormatterHMS()
             else:
                 raise ValueError("Unknown labeltype : %s" % (labtyp))
 
@@ -695,7 +710,7 @@ class GridHelperWcsBase(object):
         degree.
 
         For the ctype of longitude, an optional keyword parameter
-        *latitude* nay be giveb (in degree). When specified, the 
+        *latitude* nay be giveb (in degree). When specified, the
         scale value will be multiplied by cos(longitude).
 
         .. plot:: figures/demo_labtyp.py
@@ -769,14 +784,14 @@ class GridHelperWcsBase(object):
         Set the label type of the x and y axis. Available options are
 
         =========  ================================================
-         "hms"     label is in H M S.S (e.g. for RA)               
-         "dms"     label is in D M S.S (e.g. for DEC)              
-         "absval"  label is in actual wcs value                    
-         "absdeg"  label is in degrees                             
-         "delta"   label is in offsets (arcsec, arcmin, etc)       
-         "arcdeg"  label is in arcdegree offsets                   
-         "arcmin"  label is in arcminute offsets                   
-         "arcsec"  label is in arcsecond offsets                   
+         "hms"     label is in H M S.S (e.g. for RA)
+         "dms"     label is in D M S.S (e.g. for DEC)
+         "absval"  label is in actual wcs value
+         "absdeg"  label is in degrees
+         "delta"   label is in offsets (arcsec, arcmin, etc)
+         "arcdeg"  label is in arcdegree offsets
+         "arcmin"  label is in arcminute offsets
+         "arcsec"  label is in arcsecond offsets
         =========  ================================================
 
         If labtyp2 is None, labtyp1 is used.
@@ -904,12 +919,12 @@ class GridHelperWcsSkyBase(GridHelperWcsBase):
 
 
     def _get_line_path_naive(self, axes, x, y):
-        
+
         from matplotlib.path import Path
 
         if self.projection._lon_ref is None:
             return Path(zip(x, y))
-            
+
         #tr = axes[0].transAux.inverted()
         #rrdd = tr.transform(np.array([x, y]).transpose())
 
@@ -934,12 +949,12 @@ class GridHelperWcsSkyBase(GridHelperWcsBase):
 
 
     def _get_line_path(self, axes, x, y):
-        
+
         from matplotlib.path import Path
 
         if self.projection._lon_ref is None:
             return Path(zip(x, y))
-            
+
         #rr, dd = self.projection.toworld((x,y))
         #rrid = np.abs(rr[1:] - rr[:-1]) > 50.
         x1, x2 = axes.get_xlim()
@@ -974,7 +989,7 @@ class GridHelperWcsSkyBase(GridHelperWcsBase):
             # fixme
             h._line_num_points = 1500
             h._get_line_path = self._get_line_path
-        
+
         #axisline.line.set_clip_on(True)
         #axisline.line.set_clip_box(axisline.axes.patch)
         return axisline
@@ -1096,11 +1111,11 @@ class GridHelperWcsFloating(GridHelperWcsSkyBase, GridHelperCurveLinearFloating)
         else:
             raise ValueError("unknown coord type")
 
-        
+
 
         _loc1, _form1 = self._get_default_locator_formatter(ctype1)
         _loc2, _form2 = self._get_default_locator_formatter(ctype2)
-        
+
         if grid_locator1 is None:
             grid_locator1 = _loc1
             #grid_locator1=LocatorHMS(4)
@@ -1388,7 +1403,7 @@ class AxesWcs(HostAxes):
     def __iter__(self):
         raise TypeError("AxesWcs object is not iterable")
 
-    
+
     def _init_parasites(self):
         ax = ParasiteAxesAuxTrans(self,
                                   #WcsSky2PixelTransform(self._wcs),
@@ -1539,7 +1554,7 @@ class AxesWcs(HostAxes):
         else:
             label1=r""
             label2=r""
-            
+
         return label1, label2
 
 
