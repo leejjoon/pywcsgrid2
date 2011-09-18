@@ -348,6 +348,31 @@ _pattern_longitude = re.compile(r"^(RA|GLON)")
 _pattern_latitude = re.compile(r"^(DEC|GLAT)")
 
 
+si_prefix = {-24: ("y", "yocto"),
+             -21: ("z", "zepto"),
+             -18: ("a", "atto"),
+             -15: ("f", "femto"),
+             -12: ("p", "pico"),
+             -9: ("n", "nano"),
+             -6: ("$\mu$", "micro"),
+             -3: ("m", "milli"),
+             -2: ("c", "centi"),
+             -1: ("d", "deci"),
+             #0: ("", ""),
+             1: ("da", "deca"),
+             2: ("h", "hecto"),
+             3: ("k", "kilo"),
+             6: ("M", "mega"),
+             9: ("G", "giga"),
+             12: ("T", "tera"),
+             15: ("P", "peta"),
+             18: ("E", "exa"),
+             21: ("Z", "zetta"),
+             24: ("Y", "yotta")}
+
+si_prefix_map = dict([(names[1], (logfactor, names[0])) \
+                       for logfactor, names in si_prefix.items()])
+
 
 class GridHelperWcsBase(object):
 
@@ -532,7 +557,7 @@ class GridHelperWcsBase(object):
         elif ctype_name.startswith("GLON") or ctype_name.startswith("GLAT"):
             return LocatorDMS(4), FormatterDMS()
         else:
-            return None, None
+            return MaxNLocator(), FormatterPrettyPrint()
 
 
     def _get_default_extreme_finder_par(self, ctype_name):
@@ -624,6 +649,11 @@ class GridHelperWcsBase(object):
             else:
                 formatter = FormatterPrettyPrint()
 
+        elif labtyp in si_prefix_map:
+            logfactor, _ = si_prefix_map[labtyp]
+            locator = MaxNLocator(nbins)
+            locator.set_factor(10**-logfactor)
+            formatter = FormatterPrettyPrint()
         else:
             if labtyp in ["absval", "absdeg"]:
                 if locs is not None:
@@ -1493,7 +1523,7 @@ class AxesWcs(HostAxes):
         self.axis["left"].get_helper().change_tick_coord(1)
         self.axis["right"].get_helper().change_tick_coord(1)
 
-        self.set_default_label()
+        self.set_default_label("default", "default")
 
     def _get_default_label1(self, ctype_name, equinox):
         if ctype_name.startswith("GLON"):
@@ -1514,10 +1544,22 @@ class AxesWcs(HostAxes):
                 label=r"$\delta_{1950}$"
             else:
                 label=r"$\delta_{%6.1f}$" % (equinox)
+        elif ctype_name.startswith("VELO"):
+            velo_system = ctype_name.split("-")[-1]
+            label = r"$v_{\mathrm{%s}}$" % velo_system
         else:
             label = ""
 
         return label
+
+
+    def _get_default_unit1(self, ctype_name):
+        if ctype_name.startswith("VELO"):
+            unit = r"m\,s$^{-1}$"
+        else:
+            unit = ""
+
+        return unit
 
 
     def _get_default_label_using_ctypes(self):
@@ -1536,6 +1578,16 @@ class AxesWcs(HostAxes):
         #self.set_ylabel(ylabel)
         #self.axis["bottom"].label.set_text(xlabel)
         #self.axis["top"].label.set_text(xlabel)
+
+
+    def _get_default_unit_using_ctypes(self):
+        ctype1_name, ctype2_name = self.projection.ctypes[:2]
+
+        unit1 = self._get_default_unit1(ctype1_name)
+        unit2 = self._get_default_unit1(ctype2_name)
+
+        return unit1, unit2
+
 
     def _get_default_label(self):
         coord_system = self.get_grid_helper().get_display_coord_system()
@@ -1558,7 +1610,7 @@ class AxesWcs(HostAxes):
         return label1, label2
 
 
-    def _decorate_default_label(self, label1, ticktyp1):
+    def _decorate_default_label(self, label1, ticktyp1, unit1):
         if ticktyp1 in ["delta", "arcdeg", "arcmin", "arcsec", "arcmas"]:
             label1 = r"$\Delta$"+label1
             if ticktyp1 == "arcdeg":
@@ -1570,9 +1622,18 @@ class AxesWcs(HostAxes):
             elif ticktyp1 == "arcmas":
                 label1 = label1 + r" [mas]"
 
-        else:
-            if ticktyp1 == "absdeg":
-                label1 = label1 + r" [$^{\circ}$]"
+        elif ticktyp1 == "absdeg":
+            label1 = label1 + r" [$^{\circ}$]"
+
+        elif ticktyp1 in si_prefix_map:
+            if unit1:
+                label1 = "%s [%s%s]" % (label1,
+                                        si_prefix_map[ticktyp1][1],
+                                        unit1)
+            else:
+                warnings.warn("While ticktype of %s used, it unit is unknwon. You may need to manually set the label")
+        elif unit1:
+            label1 = "%s [%s]" % (label1, unit1)
 
         return label1
 
@@ -1588,11 +1649,15 @@ class AxesWcs(HostAxes):
         else:
             label1, label2 = self._get_default_label_using_ctypes()
 
-        label1 = self._decorate_default_label(label1, ticktyp1)
-        self.axis["bottom","top"].label.set_text(label1)
+        unit1, unit2 = self._get_default_unit_using_ctypes()
 
-        label2 = self._decorate_default_label(label2, ticktyp2)
-        self.axis["left","right"].label.set_text(label2)
+        if ticktyp1 is not None:
+            label1 = self._decorate_default_label(label1, ticktyp1, unit1)
+            self.axis["bottom","top"].label.set_text(label1)
+
+        if ticktyp2 is not None:
+            label2 = self._decorate_default_label(label2, ticktyp2, unit2)
+            self.axis["left","right"].label.set_text(label2)
 
 
 
@@ -1607,6 +1672,7 @@ class AxesWcs(HostAxes):
         for available options.
         """
         self.get_grid_helper().set_ticklabel1_type(labtyp, **labtyp_kwargs)
+        self.set_default_label(labtyp, None)
 
     def set_ticklabel2_type(self, labtyp, **labtyp_kwargs):
         """
@@ -1619,6 +1685,7 @@ class AxesWcs(HostAxes):
         for available options.
         """
         self.get_grid_helper().set_ticklabel2_type(labtyp, **labtyp_kwargs)
+        self.set_default_label(None, labtyp)
 
     def set_ticklabel_type(self, labtyp1, labtyp2=None,
                            center_pixel=None,
