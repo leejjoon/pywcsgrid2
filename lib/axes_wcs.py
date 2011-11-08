@@ -691,7 +691,7 @@ class GridHelperWcsBase(object):
 
             #locator.set_factor(scale)
 
-            offset = 0
+            #offset = 0
 
         return locator, formatter
 
@@ -852,7 +852,7 @@ class GridHelperWcsBase(object):
         """
 
         if center_pixel is  None:
-            tx, ty, sx, sy = None, None, None, None
+            tx, ty, sx, sy = 0, 0, 1, 1 #None, None, None, None
         else:
             tx, ty, sx, sy = self._get_center_world_and_default_scale_factor(center_pixel)
 
@@ -1698,6 +1698,7 @@ class AxesWcs(HostAxes):
         depend on the grid_helper used. The default is
         GridHelperWcsBase and its variants.
 
+        if *center_pixel* is 'center', it is set to the center of the current view limits.
         See
         :meth:`~pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel_type`
         for available options.
@@ -1708,12 +1709,10 @@ class AxesWcs(HostAxes):
         if labtyp2 is None:
             labtyp2 = labtyp1
 
-        if center_pixel is None:
+        if center_pixel is "center":
             # use the center of the current viewlim
             x, y, w, h = self.viewLim.bounds
-            cx, cy = x + w/2., y + h/2.
-        else:
-            cx, cy = center_pixel
+            center_pixel = x + w/2., y + h/2.
 
         if labtyp1_kwargs is None:
             labtyp1_kwargs = {}
@@ -1724,7 +1723,7 @@ class AxesWcs(HostAxes):
 
         gh = self.get_grid_helper()
         gh.set_ticklabel_type(labtyp1, labtyp2,
-                              center_pixel=(cx, cy),
+                              center_pixel=center_pixel,
                               labtyp1_kwargs=labtyp1_kwargs,
                               labtyp2_kwargs=labtyp2_kwargs)
         self.set_default_label(labtyp1, labtyp2)
