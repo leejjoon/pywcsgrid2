@@ -28,8 +28,9 @@ HISTORY PUTAST: Jun 17 14:36:35 2009 World Coordinate System parameters written
 """
     cards = pyfits.CardList()
     for l in header.split("\n"):
-        card = pyfits.Card()
-        card.fromstring(l.strip())
+        #card = pyfits.Card()
+        #card.fromstring(l.strip())
+        card = pyfits.Card.fromstring(l.strip())
         cards.append(card)
     h = pyfits.Header(cards)
     return h
@@ -38,6 +39,7 @@ h = demo_header()
 nx, ny = h["naxis1"], h["naxis2"],
 
 labtypes = [("hms", {}),
+            ("h", {}),
             ("dms", {}),
             ("absdeg", {}),
             ("delta", dict(offset=h["crval1"], latitude=h["crval2"])),
