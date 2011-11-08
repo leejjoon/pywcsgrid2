@@ -21,7 +21,6 @@
 
 import numpy as n
 import types
-from string import upper
 import re
 
 # Some globals:
@@ -765,20 +764,22 @@ Notes:     An epoch can be set in various ways. The options are distinguished
                   3) YYYY-MM-DDTHH:MM:SS  FITS format with date and time.
                                           Example: 'F2002-04-04T09:42:42.1'
 
-Examples:        >>> epochs('F2008-03-31T8:09') should return:
-                 (2008.2474210134737, 2008.2459673739454, 2454556.8395833336)
-                 >>> epochs('F2007-01-14T13:18:59.9'):
-                 (2007.0378545262108, 2007.0364267212976, 2454115.0548599539)
-                 >>> epochs("j2007.0364267212976"):
-                 (2007.0378545262108, 2007.0364267212976, 2454115.0548599539)
-                 >>> epochs("b2007.0378545262108"):
-                 (2007.0378545262108, 2007.0364267212976, 2454115.0548599539)
-
 -----------------------------------------------------------------------
    """
+
+# """
+# Examples:        >>> epochs('F2008-03-31T8:09') should return:
+#                  (2008.2474210134737, 2008.2459673739454, 2454556.8395833336)
+#                  >>> epochs('F2007-01-14T13:18:59.9'):
+#                  (2007.0378545262108, 2007.0364267212976, 2454115.0548599539)
+#                  >>> epochs("j2007.0364267212976"):
+#                  (2007.0378545262108, 2007.0364267212976, 2454115.0548599539)
+#                  >>> epochs("b2007.0378545262108"):
+#                  (2007.0378545262108, 2007.0364267212976, 2454115.0548599539)
+#    """
    if not spec:
       mes = "No epoch in string"
-      raise Exception, mes
+      raise Exception(mes)
 
    b = j = jd = None
    
@@ -821,10 +822,10 @@ Examples:        >>> epochs('F2008-03-31T8:09') should return:
          b  = JD2epochBessel(jd)
          j  = JD2epochJulian(jd)
       else:
-         raise Exception, "Unknown prefix for epoch"
+         raise Exception("Unknown prefix for epoch")
    except:
       mes = "No prefix or cannot convert epoch to a number"
-      raise Exception, mes
+      raise Exception(mes)
 
    return (b, j, jd)
 
@@ -1708,7 +1709,7 @@ Notes:     Return matrix to transform equatorial coordinates from
       return M5*M4*M3*M2*M1
    else:
       mes = "Unknown celestial reference system: %s or %s" % (S1, S2) 
-      raise Exception, mes
+      raise Exception(mes)
 
 
 
@@ -1744,7 +1745,7 @@ Reference:  -
          return M3*M2*M1
       else:
          mes = "Unknown output sky system: %s" % (S2,)
-         raise Exception, mes
+         raise Exception(mes)
 
    elif skyin == ecliptic:
       if skyout == equatorial:
@@ -1770,7 +1771,7 @@ Reference:  -
          return M4*M3*M2*M1
       else:
          mes = "Unknown output sky system: %s" % (S2,)
-         raise Exception, mes
+         raise Exception(mes)
 
    elif skyin == galactic:
       if skyout == equatorial:                              # gal -> eq, epoch2
@@ -1789,7 +1790,7 @@ Reference:  -
          return M1
       else:
          mes = "Unknown output sky system: %s" % (S2,)
-         raise Exception, mes
+         raise Exception(mes)
 
    elif skyin == supergalactic:
       if skyout == equatorial:                              # sgal -> eq(epoch2)
@@ -1810,10 +1811,10 @@ Reference:  -
          return I()
       else:
          mes = "Unknown output sky system: %s" % (S2,)
-         raise Exception, mes
+         raise Exception(mes)
    else:
       mes = "Unknown input sky system: %s" % (S1,)
-      raise Exception, mes
+      raise Exception(mes)
 
 
 
