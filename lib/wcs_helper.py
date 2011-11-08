@@ -32,8 +32,9 @@ if not _kapteyn_installed and not _pywcs_installed:
 
     raise ImportError("\n".join(err))
 
-FK4 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk4, 'B1950.0')
-FK5 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk5, 'J2000.0')
+
+FK4 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk4)
+FK5 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk5)
 GAL = kapteyn_celestial.galactic
 ECL = kapteyn_celestial.ecliptic
 
@@ -307,14 +308,14 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     def __init__(self, header):
         if isinstance(header, pyfits.Header):
             header = fix_header(header)
-            self._pywcs = pywcs.WCS(header=header)
+            self._pywcs = pywcs.WCS(header=repr(header.ascard).encode("ascii"))
         else:
             self._pywcs = header
 
         ProjectionBase.__init__(self)
 
     def _get_ctypes(self):
-        return tuple(self._pywcs.wcs.ctype)
+        return tuple(s.decode() for s in self._pywcs.wcs.ctype)
 
     ctypes = property(_get_ctypes)
 
@@ -654,9 +655,9 @@ def estimate_angle(transSky2Pix, x0, y0):
 
 if __name__ == "__main__":
     fk5_to_fk4 = sky2sky(FK5, FK4)
-    print fk5_to_fk4([47.37], [6.32])
-    print fk5_to_fk4([47.37, 47.37], [6.32, 6.32])
-    print sky2sky("fk5", "FK4")([47.37, 47.37], [6.32, 6.32])
+    #print fk5_to_fk4([47.37], [6.32])
+    #print fk5_to_fk4([47.37, 47.37], [6.32, 6.32])
+    #print sky2sky("fk5", "FK4")([47.37, 47.37], [6.32, 6.32])
 
 
 

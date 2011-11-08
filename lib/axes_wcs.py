@@ -900,8 +900,8 @@ class GridHelperWcsSkyBase(GridHelperWcsBase):
             self._wcsgrid_orig_coord_system = coord_guess
             if coord_guess is None:
 
-                print "Unknown coordinate system, %s, %s, equinox=%.1f" \
-                                 % (ctype1, ctype2, equinox)
+                warnings.warn("Unknown coordinate system, %s, %s, equinox=%.1f" \
+                              % (ctype1, ctype2, equinox))
             #else:
             #    self._wcsgrid_orig_coord_system = coord_guess
         else:

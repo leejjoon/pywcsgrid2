@@ -1,4 +1,7 @@
-from distutils.core import setup
+from distribute_setup import use_setuptools
+use_setuptools()
+
+from setuptools import setup
 
 
 def main():
@@ -14,7 +17,7 @@ def main():
           packages = ['pywcsgrid2'],
           package_dir={'pywcsgrid2':'lib',
                        },
-
+          use_2to3 = True,
           )
 
 
