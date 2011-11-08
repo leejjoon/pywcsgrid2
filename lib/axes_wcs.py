@@ -1883,7 +1883,7 @@ class AxesWcs(HostAxes):
 
     def add_size_bar(self, length_pixel, label, loc, sep=5,
                      borderpad=0.8, frameon=False,
-                     path_effects=None, **kwargs):
+                     path_effects=None, color=None, **kwargs):
         """
         Add a horizontal line with a label underneath. Intended to
         display the angular size.
@@ -1908,6 +1908,12 @@ class AxesWcs(HostAxes):
                                borderpad=borderpad, sep=sep,
                                frameon=frameon,
                                **kwargs)
+
+        if color is not None:
+            scalebar = asb.size_bar.get_children()[0]
+            scalebar.set_ec(color)
+            asb.txt_label._text.set_color(color)
+
         if path_effects:
             for a in [asb.size_bar._children[0],
                       asb.txt_label._text]:

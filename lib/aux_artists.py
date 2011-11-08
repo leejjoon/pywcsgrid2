@@ -16,6 +16,7 @@ class AnchoredCompass(AnchoredOffsetbox):
                  txt1="E", txt2="N",
                  delta_a1=0, delta_a2=0,
                  pad=0.1, borderpad=0.5, prop=None, frameon=False,
+                 color=None
                  ):
         """
         Draw an arrows pointing the directions of E & N
@@ -40,22 +41,28 @@ class AnchoredCompass(AnchoredOffsetbox):
                                       arrow_transmuter=None,
                                       connectionstyle="arc3",
                                       connector=None,
+                                      color=color,
                                       **kwargs)
         self.arrow2 = FancyArrowPatch(posA=(0, 0), posB=(1, 1),
                                       arrowstyle="->",
                                       arrow_transmuter=None,
                                       connectionstyle="arc3",
                                       connector=None,
+                                      color=color,
                                       **kwargs)
 
 
         x1t, y1t, x2t, y2t = 1, 1, 1, 1
         self.txt1 = Text(x1t, y1t, txt1, rotation=0,
                          rotation_mode="anchor",
-                         va="center", ha="right")
+                         va="center", ha="right",
+                         color=color,
+                         fontproperties=prop)
         self.txt2 = Text(x2t, y2t, txt2, rotation=0,
                          rotation_mode="anchor",
-                         va="bottom", ha="center")
+                         va="bottom", ha="center",
+                         color=color,
+                         fontproperties=prop)
 
 
         self._box.add_artist(self.arrow1)
