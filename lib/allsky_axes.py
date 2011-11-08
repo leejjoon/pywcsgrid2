@@ -88,7 +88,7 @@ FloatingAxes = floatingaxes_class_factory(AxesWcs)
 FloatingSubplot = maxes.subplot_class_factory(FloatingAxes)
 
 
-_proj_pseudo_cyl_list = ["SFL", "PAR", "MOL"]
+_proj_pseudo_cyl_list = ["SFL", "PAR", "MOL", "AIT"]
 _proj_lat_limits = dict(MER= 75)
 
 def make_allsky_axes_from_header(fig, rect, header, lon_center,
@@ -163,7 +163,7 @@ def make_allsky_axes(fig, rect, coord, proj, lon_center=0,
 
 if __name__ == '__main__':
     
-    proj_list = ["CYP", "CEA", "CAR", "MER", "SFL", "PAR", "MOL", ]
+    proj_list = ["CYP", "CEA", "CAR", "MER", "SFL", "PAR", "MOL", "AIT" ]
 
 
     for proj in proj_list:
