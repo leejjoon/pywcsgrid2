@@ -308,7 +308,7 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     def __init__(self, header):
         if isinstance(header, pyfits.Header):
             header = fix_header(header)
-            self._pywcs = pywcs.WCS(header=repr(header.ascard).encode("ascii"))
+            self._pywcs = pywcs.WCS(header=header)
         else:
             self._pywcs = header
 
