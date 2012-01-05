@@ -7,15 +7,19 @@ import pyfits
 
 _wcs_module_import_log = []
 
-_pywcs_installed = False
+_pywcs_installed = True
 try:
     import pywcs
 except ImportError:
-    _wcs_module_import_log.append("Failed to import the pywcs")
-else:
-    if hasattr(pywcs.WCS, "sub"):
-        _pywcs_installed = True
-    else:
+    try:
+        import astropy.pywcs as pywcs
+    except ImportError:
+        _pywcs_installed = False
+        _wcs_module_import_log.append("Failed to import the pywcs")
+
+if _pywcs_installed:
+    if not hasattr(pywcs.WCS, "sub"):
+        _pywcs_installed = False
         _wcs_module_import_log.append("pywcs imported but does not have 'sub' attribute. More recent version of pywcs is required.")
 
 _kapteyn_installed = False

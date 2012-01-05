@@ -1,6 +1,11 @@
 import pyfits
 import numpy as np
-import pywcs
+
+try:
+    import pywcs
+except ImportError:
+    import astropy.pywcs as pywcs
+
 import healpy
 import warnings
 
