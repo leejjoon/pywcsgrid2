@@ -26,7 +26,7 @@ class HealpixData(object):
                                            header["ctype2"],
                                            equinox=header["equinox"])
             if (map_coord is not None) and (map_coord != self._coord):
-                warnings(" doing the conversion", map_coord)
+                warnings.warn(" doing the conversion " + map_coord)
                 phi, theta = sky2sky(map_coord, self._coord)(phi, theta)
                 
                 
