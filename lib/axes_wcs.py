@@ -1305,10 +1305,39 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
 
         return im
 
+    # this is a hack to find out the default interpolation mode for
+    # imshow with affine. It was "nearest" but changed to "none".
+    def get_imshow_affine_default_interpolation():
+        from matplotlib.image import AxesImage
+
+        class MyRenderer(object):
+            def option_scale_image(self):
+                return True
+
+        class TestNearest(object):
+            def get_interpolation(self):
+                return "nearest"
+
+        check_unsampled_image = AxesImage._check_unsampled_image.im_func
+        if_nearest = check_unsampled_image(TestNearest(),
+                                           MyRenderer())
+
+        if if_nearest:
+            return "nearest"
+        else:
+            return "none"
+
+    _imshow_affine_default_interpolation = get_imshow_affine_default_interpolation()
+    del get_imshow_affine_default_interpolation
+
+
     def imshow_affine(self, *kl, **kwargs):
 
-        if kwargs.setdefault("interpolation", "none") != "none":
-            raise ValueError("interpolation parameter must not be set or should be 'none'")
+
+        mode = self._imshow_affine_default_interpolation
+        if kwargs.setdefault("interpolation", mode) != mode:
+            raise ValueError("interpolation parameter must not be set or should be '%s'" % mode)
+
         im = ParasiteAxesAuxTrans.imshow(self, *kl, **kwargs)
         x1, x2, y1, y2 = im.get_extent()
         im._image_skew_coordinate = (x2, y1)
