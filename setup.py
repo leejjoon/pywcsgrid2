@@ -7,7 +7,7 @@ from setuptools import setup
 def main():
 
     setup(name = "pywcsgrid2",
-          version = "0.1b2",
+          version = "1.0-git",
           description = "pywcsgrid2 is a python module to be used with matplotlib for displaying astronomical fits images",
           author = "Jae-Joon Lee",
           author_email = "lee.j.joon@gmail.com",
