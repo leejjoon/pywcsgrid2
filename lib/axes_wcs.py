@@ -727,14 +727,14 @@ class GridHelperWcsBase(object):
         Set the label type of the x and y axis. Available options are
 
         =========  ================================================
-         "hms"     label is in H M S.S (e.g. for RA)               
-         "dms"     label is in D M S.S (e.g. for DEC)              
-         "absval"  label is in actual wcs value                    
-         "absdeg"  label is in degrees                             
-         "delta"   label is in offsets (arcsec, arcmin, etc)       
-         "arcdeg"  label is in arcdegree offsets                   
-         "arcmin"  label is in arcminute offsets                   
-         "arcsec"  label is in arcsecond offsets                   
+         "hms"     label is in H M S.S (e.g. for RA)
+         "dms"     label is in D M S.S (e.g. for DEC)
+         "absval"  label is in actual wcs value
+         "absdeg"  label is in degrees
+         "delta"   label is in offsets (arcsec, arcmin, etc)
+         "arcdeg"  label is in arcdegree offsets
+         "arcmin"  label is in arcminute offsets
+         "arcsec"  label is in arcsecond offsets
         =========  ================================================
 
         If labtyp2 is None, labtyp1 is used.
@@ -1116,10 +1116,38 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
 
         return im
 
+    # this is a hack to find out the default interpolation mode for
+    # imshow with affine. It was "nearest" but changed to "none".
+    def get_imshow_affine_default_interpolation():
+        from matplotlib.image import AxesImage
+
+        class MyRenderer(object):
+            def option_scale_image(self):
+                return True
+
+        class TestNearest(object):
+            def get_interpolation(self):
+                return "nearest"
+
+        check_unsampled_image = AxesImage._check_unsampled_image.im_func
+        if_nearest = check_unsampled_image(TestNearest(),
+                                           MyRenderer())
+
+        if if_nearest:
+            return "nearest"
+        else:
+            return "none"
+
+    _imshow_affine_default_interpolation = get_imshow_affine_default_interpolation()
+    del get_imshow_affine_default_interpolation
+
+
     def imshow_affine(self, *kl, **kwargs):
 
-        if kwargs.setdefault("interpolation", "nearest") != "nearest":
-            raise ValueError("interpolation parameter must not be set or should be 'nearest'")
+
+        mode = self._imshow_affine_default_interpolation
+        if kwargs.setdefault("interpolation", mode) != mode:
+            raise ValueError("interpolation parameter must not be set or should be '%s'" % mode)
         im = ParasiteAxesAuxTrans.imshow(self, *kl, **kwargs)
         x1, x2, y1, y2 = im.get_extent()
         im._image_skew_coordinate = (x2, y1)
@@ -1244,7 +1272,7 @@ class AxesWcs(HostAxes):
     def __iter__(self):
         raise TypeError("AxesWcs object is not iterable")
 
-    
+
     def _init_parasites(self):
         ax = ParasiteAxesAuxTrans(self,
                                   #WcsSky2PixelTransform(self._wcs),
@@ -1396,7 +1424,7 @@ class AxesWcs(HostAxes):
         else:
             label1=r""
             label2=r""
-            
+
         return label1, label2
 
 
