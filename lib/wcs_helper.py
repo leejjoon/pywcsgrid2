@@ -184,7 +184,7 @@ def fix_header(header):
             c = pyfits.Card(c.key, "deg")
 
         cards.append(c)
-        
+
     h = pyfits.Header(cards)
     return h
 
@@ -203,14 +203,14 @@ class ProjectionBase(object):
                 break
         else:
             self._lon_axis = None
-            
+
     def get_lon(self):
         pass
 
-    
+
     def set_lon_ref(self, ref):
         self._lon_ref = ref
-        
+
     def _fix_lon(self, lon, lon_ref=None):
         """
         transform lon into values in range [self._lon_ref, self._lon_ref+360]
@@ -515,7 +515,7 @@ class ProjectionSimple(ProjectionBase):
         ProjectionBase.__init__(self)
         self._pywcs = pywcs.WCS(header=header)
         self._simple_init(header)
-        
+
     def _get_ctypes(self):
         return tuple(self._pywcs.wcs.ctype)
 
@@ -551,7 +551,7 @@ class ProjectionSimple(ProjectionBase):
         y = (lat - self.crval2)/self.cdelt2 + self.crpix2
 
         return x, y
-    
+
     def _simple_to_world(self, x, y):
         x, y = np.asarray(x), np.asarray(y)
         lon = (x - self.crpix1)*self.cdelt1/self.cos_phi + self.crval1
@@ -579,7 +579,7 @@ class ProjectionSimple(ProjectionBase):
 
     def sub(self, axis_nums):
         return self
-    
+
     # def sub(self, axes):
     #     wcs = self._pywcs.sub(axes=axes)
     #     return ProjectionPywcs(wcs)
