@@ -312,6 +312,11 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     def __init__(self, header):
         if isinstance(header, pyfits.Header):
             header = fix_header(header)
+            # pywcs.WCS internally uses `repr(header.ascard)` which
+            # returns str, but expecte byte in py3.
+            import sys
+            if sys.version_info >= (3,0):
+                header = repr(header.ascard).encode("ascii")
             self._pywcs = pywcs.WCS(header=header)
         else:
             self._pywcs = header

@@ -1,4 +1,4 @@
-import warnings
+import warnings, sys
 
 import matplotlib.axes as maxes
 from matplotlib.cbook import is_string_like
@@ -1318,7 +1318,10 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
             def get_interpolation(self):
                 return "nearest"
 
-        check_unsampled_image = AxesImage._check_unsampled_image.im_func
+        check_unsampled_image = AxesImage._check_unsampled_image
+        if sys.version_info < (3,0):
+              check_unsampled_image = check_unsampled_image.im_func
+
         if_nearest = check_unsampled_image(TestNearest(),
                                            MyRenderer())
 
