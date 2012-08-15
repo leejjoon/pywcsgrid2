@@ -184,7 +184,9 @@ def fix_header(header):
         if c.key.startswith("CUNIT") and c.value.lower().startswith("deg"):
             c = pyfits.Card(c.key, "deg")
 
-        cards.append(c)
+        # We append the card as a tuple so that it doesn't matter if the Card
+        # object is from PyFITS or Astropy
+        cards.append((c.key, c.value, c.comment))
 
     h = pyfits.Header(cards)
     return h
@@ -260,11 +262,17 @@ class ProjectionKapteyn(ProjectionBase):
     A wrapper for kapteyn.projection
     """
     def __init__(self, header):
-        ProjectionBase.__init__(self)
-        if isinstance(header, pyfits.Header):
+
+        # Kapteyn doesn't care whether the header is from PyFITS or Astropy,
+        # but we can't check using isinstance, so instead we check if it has
+        # the 'ascard' attribute that both header classes define.
+
+        if hasattr(header, 'ascard'):
             self._proj = kapteyn.wcs.Projection(header)
         else:
             self._proj = header
+
+        ProjectionBase.__init__(self)
 
     def _get_ctypes(self):
         return self._proj.ctype
@@ -311,15 +319,27 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     A wrapper for pywcs
     """
     def __init__(self, header):
-        if isinstance(header, pyfits.Header):
+
+        # We can't check the header type using isinstance since we don't know
+        # if it comes from PyFITS or Astropy, so instead we check if it has
+        # the 'ascard' attribute that both header classes define.
+
+        if hasattr(header, 'ascard'):
+
             header = fix_header(header)
-            # pywcs.WCS internally uses `repr(header.ascard)` which
-            # returns str, but expecte byte in py3.
-            import sys
-            if sys.version_info >= (3,0):
-                header = repr(header.ascard).encode("ascii")
+
+            # Since we don't know if PyFITS or PyWCS are from Astropy, and the
+            # WCS object in PyWCS and Astropy both accept a string
+            # representation of the header, we use this instead (both
+            # internally use `repr(header.ascard)` which returns str,
+            # and is compatible with Python 3
+
+            header = repr(header.ascard).encode('latin1')
+
             self._pywcs = pywcs.WCS(header=header)
+
         else:
+
             self._pywcs = header
 
         ProjectionBase.__init__(self)
@@ -480,11 +500,30 @@ class ProjectionPywcs(ProjectionBase):
     A wrapper for pywcs
     """
     def __init__(self, header):
-        ProjectionBase.__init__(self)
-        if isinstance(header, pyfits.Header):
+
+        # We can't check the header type using isinstance since we don't know
+        # if it comes from PyFITS or Astropy, so instead we check if it has
+        # the 'ascard' attribute that both header classes define.
+
+        if hasattr(header, 'ascard'):
+
+            header = fix_header(header)
+
+            # Since we don't know if PyFITS or PyWCS are from Astropy, and the
+            # WCS object in PyWCS and Astropy both accept a string
+            # representation of the header, we use this instead (both
+            # internally use `repr(header.ascard)` which returns str,
+            # and is compatible with Python 3
+
+            header = repr(header.ascard).encode('latin1')
+
             self._pywcs = pywcs.WCS(header=header)
+
         else:
+
             self._pywcs = header
+
+        ProjectionBase.__init__(self)
 
     def _get_ctypes(self):
         return tuple(self._pywcs.wcs.ctype)
@@ -518,9 +557,22 @@ class ProjectionSimple(ProjectionBase):
     A wrapper for pywcs
     """
     def __init__(self, header):
+
         ProjectionBase.__init__(self)
-        self._pywcs = pywcs.WCS(header=header)
+
+        # This projection assumes that `header` is a Header object, and
+        # doesn't care whether it comes from PyFITS or Astropy
+
         self._simple_init(header)
+
+        # Since we don't know if PyFITS or PyWCS are from Astropy, and the
+        # WCS object in PyWCS and Astropy both accept a string
+        # representation of the header, we use this instead (both
+        # internally use `repr(header.ascard)` which returns str
+
+        header = repr(header.ascard).encode('latin1')
+
+        self._pywcs = pywcs.WCS(header=header)
 
     def _get_ctypes(self):
         return tuple(self._pywcs.wcs.ctype)
@@ -602,9 +654,15 @@ else:
     ProjectionDefault = ProjectionKapteyn
 
 def get_kapteyn_projection(header):
+
+    # For checking against PyWCS, we can't use isinstance(..., pywcs.WCS)
+    # because it could come from PyWCS or Astropy. But what really matters is
+    # that the WCS object has a wcs_sky2pix method, so we check for that
+    # instead.
+
     if _kapteyn_installed and isinstance(header, kapteyn.wcs.Projection):
         projection = ProjectionKapteynNd(header)
-    elif _pywcs_installed and isinstance(header, pywcs.WCS):
+    elif _pywcs_installed and hasattr(header, 'wcs_sky2pix'):
         projection = ProjectionPywcsNd(header)
     elif isinstance(header, ProjectionBase):
         projection = header
@@ -668,7 +726,3 @@ if __name__ == "__main__":
     #print fk5_to_fk4([47.37], [6.32])
     #print fk5_to_fk4([47.37, 47.37], [6.32, 6.32])
     #print sky2sky("fk5", "FK4")([47.37, 47.37], [6.32, 6.32])
-
-
-
-
