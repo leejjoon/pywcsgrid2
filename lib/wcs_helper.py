@@ -3,8 +3,6 @@ import numpy as np
 from kapteyn_celestial import skymatrix, longlat2xyz, dotrans, xyz2longlat
 import kapteyn_celestial
 
-import pyfits
-
 _wcs_module_import_log = []
 
 _pywcs_installed = True
@@ -16,6 +14,9 @@ except ImportError:
     except ImportError:
         _pywcs_installed = False
         _wcs_module_import_log.append("Failed to import the pywcs")
+    import pyfits
+else:
+    from astropy.io import fits as pyfits
 
 if _pywcs_installed:
     if not hasattr(pywcs.WCS, "sub"):
@@ -26,7 +27,7 @@ _kapteyn_installed = False
 try:
     import kapteyn.wcs
 except ImportError:
-    _wcs_module_import_log.append("Failed to import the kpateyn.wcs")
+    _wcs_module_import_log.append("Failed to import the kapteyn.wcs")
 else:
     _kapteyn_installed = True
 
