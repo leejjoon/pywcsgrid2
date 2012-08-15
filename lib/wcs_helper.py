@@ -9,10 +9,10 @@ _wcs_module_import_log = []
 
 _pywcs_installed = True
 try:
-    import pywcs
+    import astropy.wcs as pywcs
 except ImportError:
     try:
-        import astropy.pywcs as pywcs
+        import pywcs
     except ImportError:
         _pywcs_installed = False
         _wcs_module_import_log.append("Failed to import the pywcs")
