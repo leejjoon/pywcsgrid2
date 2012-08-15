@@ -1,5 +1,8 @@
+try:
+    from astropy.io import fits as pyfits
+except:
+    import pyfits
 
-import pyfits
 import matplotlib.pyplot as plt
 
 fig = plt.figure(1, [5,4.5])

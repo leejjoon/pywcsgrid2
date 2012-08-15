@@ -1,4 +1,8 @@
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except:
+    import pyfits
+
 import matplotlib.pyplot as plt
 import pywcsgrid2
 import matplotlib.patheffects as patheffects

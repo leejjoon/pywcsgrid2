@@ -1,4 +1,7 @@
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except:
+    import pyfits
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
