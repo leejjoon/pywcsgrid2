@@ -7,7 +7,7 @@ _wcs_module_import_log = []
 
 _pywcs_installed = True
 try:
-    import astropy.wcs as pywcs
+    from astropy import wcs as pywcs
 except ImportError:
     try:
         import pywcs
