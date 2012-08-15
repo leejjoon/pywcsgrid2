@@ -1,5 +1,5 @@
-import pyfits
 
+import pyfits
 import matplotlib.pyplot as plt
 
 

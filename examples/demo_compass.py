@@ -1,5 +1,4 @@
 import pyfits
-
 import matplotlib.pyplot as plt
 import pywcsgrid2
 import matplotlib.patheffects as patheffects
