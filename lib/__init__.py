@@ -96,7 +96,9 @@ def filterwcs(h):
         from astropy.io import fits as pyfits
     except ImportError:
         import pyfits
-    l = [card for card in h.ascardlist() if _wcs_key_pattern.match(card.key)]
+    # We have to re-instantiate the cards since we don't know if the original
+    # header was from PyFITS or Astropy.
+    l = [pyfits.Card(card.key, card.value, card.comment) for card in h.ascardlist() if _wcs_key_pattern.match(card.key)]
     return pyfits.Header(l)
 
 

@@ -184,9 +184,9 @@ def fix_header(header):
         if c.key.startswith("CUNIT") and c.value.lower().startswith("deg"):
             c = pyfits.Card(c.key, "deg")
 
-        # We append the card as a tuple so that it doesn't matter if the Card
-        # object is from PyFITS or Astropy
-        cards.append((c.key, c.value, c.comment))
+        # We re-instantiate the card so that it doesn't matter if the
+        # original Card object is from PyFITS or Astropy
+        cards.append(pyfits.Card(c.key, c.value, c.comment))
 
     h = pyfits.Header(cards)
     return h
