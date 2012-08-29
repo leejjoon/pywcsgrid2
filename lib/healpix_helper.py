@@ -1,10 +1,11 @@
-import pyfits
 import numpy as np
 
 try:
-    import pywcs
-except ImportError:
+    from astropy.io import fits as pyfits
     import astropy.pywcs as pywcs
+except ImportError:
+    import pyfits
+    import pywcs
 
 import healpy
 import warnings

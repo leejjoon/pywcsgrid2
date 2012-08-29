@@ -1,5 +1,9 @@
 import matplotlib.pyplot as plt
-import pyfits
+
+try:
+    from astropy.io import fits as pyfits
+except ImportError:
+    import pyfits
 
 from mpl_toolkits.axisartist.floating_axes import floatingaxes_class_factory
 
