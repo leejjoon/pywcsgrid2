@@ -1482,27 +1482,23 @@ class AxesWcs(HostAxes):
 
     def __getitem__(self, key):
 
-        # check if key is a valid coord_sys instance
-        if key == 0: # or isinstance(key, _coord_sys_dict) :
-            pass
-        elif is_string_like(key):
-            pass
-            #key = _coord_sys_dict[key.lower()]
-        #elif isinstance(key, pywcs.WCS):
-        #    pass
-        else:
-            try:
-                proj = get_kapteyn_projection(key)
-            except:
+        try:
+            proj = get_kapteyn_projection(key)
+        except:
+            if key == 0: # or isinstance(key, _coord_sys_dict) :
+                pass
+            elif is_string_like(key):
+                pass
+            else:
                 raise ValueError("invalide key : %s" % repr(key))
-
+        else:
             key = proj.sub([1,2])
 
         if key not in self._wcsgrid_wcsaxes:
             if self.get_grid_helper()._wcsgrid_orig_coord_system == key:
                 self._wcsgrid_wcsaxes[key] = self._wcsgrid_wcsaxes[0]
             else:
-                orig_coord = self.get_grid_helper()._wcsgrid_orig_coord_system
+                #orig_coord = self.get_grid_helper()._wcsgrid_orig_coord_system
 
                 if is_string_like(key):
                     ax = ParasiteAxesSky(self, key)
