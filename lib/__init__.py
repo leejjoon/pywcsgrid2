@@ -19,7 +19,31 @@ def _check_kwargs(kwargs):
 
 
 def axes(*args, **kwargs):
+    """
+    Creates an axes for displaying FITS images. The axes uses the
+    FITS header information for ticks and grids appropriate for
+    sky coordinate.
 
+    The arguments for this axes is same as mpl's Axes, except that
+    either *header* or *grid_helper* (but not both) keyword
+    arguments must be provided.
+
+    Necessary Keyword arguments:
+
+    *grid_helper*: pywcsgrid2.GridHelper instance
+
+    or:
+
+    *header*: pyfits.Header instance header of the fits file that will
+              be used for the axes. A new pywcsgrid2.GridHelper
+              instance is created using the header.
+
+    *axis_nums*: a tuple of two integers specifying which axis of fits file
+                 will be used for x- and y-axis of image. Default is (0, 1).
+                 If CTYPE1=="DEC" and CTYPE2=="RA", you may use (1, 0).
+                 This can also be used for n-d image.
+
+    """
     _check_kwargs(kwargs)
 
     nargs = len(args)

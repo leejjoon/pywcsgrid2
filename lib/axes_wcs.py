@@ -1443,15 +1443,21 @@ class AxesWcs(HostAxes):
             else:
                 raise ValueError("wcs")
 
-            self.projection = projection.sub([1,2])
-            ctype1, ctype2 = self.projection.ctypes[:2]
-            equinox = self.projection.equinox
+            axis_nums = kw.pop("axis_nums", None)
+            if axis_nums is None:
+                axis_nums = [0, 1]
+            ctype1, ctype2 = [projection.ctypes[d] for d in axis_nums]
+            equinox = projection.equinox
             default_system = coord_system_guess(ctype1, ctype2, equinox)
 
             if default_system:
-                grid_helper = GridHelperWcsSky(self.projection)
+                grid_helper = GridHelperWcsSky(projection,
+                                               axis_nums=axis_nums)
             else:
-                grid_helper = GridHelperWcsSimple(self.projection)
+                grid_helper = GridHelperWcsSimple(projection,
+                                                  axis_nums=axis_nums)
+
+            self.projection = grid_helper.projection #.sub([0, 1]) #d+1 for d in axis_nums])
             kw["grid_helper"] = grid_helper
         else:
             self.projection = kw["grid_helper"].projection
