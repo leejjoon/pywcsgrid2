@@ -11,9 +11,13 @@ Dependencies
 
 pywcsgrid2 is a python module that extends functionality of
 matplotlib, i.e., you need python with matplotlib installed. The
-current version of pywcsgrid2 requires matplotlib v1.0 (or later). The
 pyfits package is required to read fits files.  Furthermore, you need
-either Kapteyn package or pywcs (v1.9 or later) installed.
+pywcs installed.
+
+See `here
+<https://github.com/leejjoon/pywcsgrid2/wiki/Compatibility-of-pywcsgrid2>`_
+for tested versions of the required modules.
+
 
 
 matplotlib
@@ -24,9 +28,4 @@ pywcs
 -----
 * used for coordinate conversions
 * `Homepage <https://trac6.assembla.com/astrolib>`__
-
-Kapteyn Package
----------------
-* used for coordinate conversions
-* `Homepage <http://www.astro.rug.nl/software/kapteyn/>`__
 
