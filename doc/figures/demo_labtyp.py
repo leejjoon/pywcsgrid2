@@ -6,6 +6,14 @@ except ImportError:
 
 import pywcsgrid2 #.axes_wcs import GridHelperWcsFloating, AxesWcs
 
+if pyfits.Card.fromstring.__self__: # 
+    def pyfits_card_fromstring(l):
+        return pyfits.Card.fromstring(l)
+else:
+    def pyfits_card_fromstring(l):
+        c = pyfits.Card()
+        return c.fromstring(l)
+
 
 def demo_header():
     # header retrieved from "lambda_mollweide_halpha_fwhm06_0512.fits"
@@ -31,9 +39,7 @@ HISTORY PUTAST: Jun 17 14:36:35 2009 World Coordinate System parameters written
 """
     cards = pyfits.CardList()
     for l in header.split("\n"):
-        #card = pyfits.Card()
-        #card.fromstring(l.strip())
-        card = pyfits.Card.fromstring(l.strip())
+        card = pyfits_card_fromstring(l.strip())
         cards.append(card)
     h = pyfits.Header(cards)
     return h

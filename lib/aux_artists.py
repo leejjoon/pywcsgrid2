@@ -7,7 +7,7 @@ from matplotlib.text import Text
 
 from matplotlib.offsetbox import AnchoredOffsetbox, AuxTransformBox
 
-from pywcsgrid2.wcs_helper import estimate_angle
+from pywcsgrid2.wcs_helper import estimate_angle_trans
 
 
 class AnchoredCompass(AnchoredOffsetbox):
@@ -84,7 +84,7 @@ class AnchoredCompass(AnchoredOffsetbox):
         ax = self._ax
 
         x0, y0 = ax.viewLim.x0, ax.viewLim.y0
-        a1, a2 = estimate_angle(self._transSky2Pix, x0, y0)
+        a1, a2 = estimate_angle_trans(self._transSky2Pix, x0, y0)
         a1, a2 = a1+self.delta_a1, a2+self.delta_a2
 
         D = min(ax.viewLim.width, ax.viewLim.height)

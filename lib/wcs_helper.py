@@ -3,30 +3,7 @@ import numpy as np
 from kapteyn_celestial import skymatrix, longlat2xyz, dotrans, xyz2longlat
 import kapteyn_celestial
 
-_wcs_module_import_log = []
-
-_pywcs_installed = True
 from astropy_helper import pyfits, pywcs
-
-if _pywcs_installed:
-    if not hasattr(pywcs.WCS, "sub"):
-        _pywcs_installed = False
-        _wcs_module_import_log.append("pywcs imported but does not have 'sub' attribute. More recent version of pywcs is required.")
-
-_kapteyn_installed = False
-try:
-    import kapteyn.wcs
-except ImportError:
-    _wcs_module_import_log.append("Failed to import the kapteyn.wcs")
-else:
-    _kapteyn_installed = True
-
-if not _kapteyn_installed and not _pywcs_installed:
-    err = ["Either pywcs or Kapteyn python packages are required."]
-    err.extend(_wcs_module_import_log)
-
-    raise ImportError("\n".join(err))
-
 
 FK4 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk4)
 FK5 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk5)
@@ -36,7 +13,15 @@ ECL = kapteyn_celestial.ecliptic
 coord_system = dict(fk4=FK4,
                     fk5=FK5,
                     gal=GAL,
+                    galactic=GAL,
                     ecl=ECL)
+
+select_wcs = coord_system.get
+
+UnknownWcs = "unknown wcs"
+
+image_like_coordformats = ["image", "physical","detector","logical"]
+
 
 def is_equal_coord_sys(src, dest):
     return (src.lower() == dest.lower())
@@ -85,58 +70,6 @@ _pattern_glon = re.compile(r"^GLON")
 _pattern_glat = re.compile(r"^GLAT")
 _pattern_vel = re.compile(r"^VEL")
 
-def _coord_system_guess(ctype_name):
-    if ctype_name.upper().startswith("RA") or \
-       ctype_name.upper().startswith("DEC"):
-        ctype = "fk"
-    elif ctype_name.upper().startswith("GLON") or \
-       ctype_name.upper().startswith("GLAT"):
-        ctype =  "gal"
-    elif ctype_name.upper().startswith("ELON") or \
-       ctype_name.upper().startswith("ELAT"):
-        ctype =  "ecl"
-    elif ctype_name.upper().startswith("VEL"):
-        ctype =  "vel"
-    else:
-        ctype =  "unknown"
-    return ctype
-
-# def coord_system_guess2(ctype1_name, ctype2_name, equinox):
-
-#     ctype1 = _coord_system_guess(ctype1_name)
-#     ctype2 = _coord_system_guess(ctype2_name)
-
-#     if ctype1 == ctype2:
-#         ctype = ctype1
-#         if equinox == 2000.0:
-#             ctype = "fk5"
-#         elif equinox == 1950.0:
-#             ctype = "fk4"
-#         elif equinox is None:
-#             ctype = "fk5"
-#         else:
-#             ctype = "fk_unknown"
-
-#     if ctype1 == "fk" and ctype2 == "fk":
-#         ctype = "fk"
-#     elif ctype1 == "gal" and ctype2 == "gal":
-#         ctype = "gal"
-#     elif ctype1 == "vel" and ctype2 == "vel":
-#         ctype = "gal"
-#     elif "vel" in [ctype1, ctype2]
-
-
-#         if equinox == 2000.0:
-#             ctype = "fk5"
-#         elif equinox == 1950.0:
-#             ctype = "fk4"
-#         elif equinox is None:
-#             ctype = "fk5"
-#         else:
-#             ctype = "fk_unknown"
-
-#     return None
-
 def coord_system_guess(ctype1_name, ctype2_name, equinox):
     if ctype1_name.upper().startswith("RA") and \
        ctype2_name.upper().startswith("DEC"):
@@ -144,7 +77,7 @@ def coord_system_guess(ctype1_name, ctype2_name, equinox):
             return "fk5"
         elif equinox == 1950.0:
             return "fk4"
-        elif equinox is None:
+        elif equinox is None or np.isnan(equinox):
             return "fk5"
         else:
             return None
@@ -181,6 +114,13 @@ def fix_header(header):
     h = pyfits.Header(cards)
     return h
 
+def fix_lon(lon, lon_ref):
+    lon_ = lon - lon_ref
+    lon2 = lon_ - 360*np.floor_divide(lon_, 360.)
+    if lon_ == 360:
+        lon2 = 360
+    return lon2 + lon_ref
+
 
 class ProjectionBase(object):
     """
@@ -191,6 +131,7 @@ class ProjectionBase(object):
         self._lon_ref = None
 
         for i, ct in enumerate(self.ctypes):
+            ct = ct.upper()
             if _pattern_ra.match(ct) or _pattern_glon.match(ct):
                 self._lon_axis = i
                 break
@@ -211,11 +152,11 @@ class ProjectionBase(object):
         if lon_ref is None:
             lon_ref = self._lon_ref
 
-        if self._lon_ref is not None:
-            lon_ = lon - self._lon_ref
+        if lon_ref is not None:
+            lon_ = lon - lon_ref
             lon2 = lon_ - 360*np.floor_divide(lon_, 360.)
             lon2[lon_==360] = 360
-            return lon2 + self._lon_ref
+            return lon2 + lon_ref
         else:
             return lon
 
@@ -246,45 +187,15 @@ class ProjectionBase(object):
     def sub(self, axes):
         pass
 
+    def _get_radesys(self):
+        ctype1, ctype2 = self.ctypes
+        equinox = self.equinox
+        radecsys = coord_system_guess(ctype1, ctype2, equinox)
+        if radecsys is None:
+            raise RuntimeError("Cannot determine the coordinate system with (CTYPE1=%s, CTYPE2=%s, EQUINOX=%s)." % (ctype1, ctype2, equinox))
+        return radecsys
 
-class ProjectionKapteyn(ProjectionBase):
-    """
-    A wrapper for kapteyn.projection
-    """
-    def __init__(self, header):
-
-        # Kapteyn doesn't care whether the header is from PyFITS or Astropy,
-        # but we can't check using isinstance, so instead we check if it has
-        # the 'ascard' attribute that both header classes define.
-
-        if hasattr(header, 'ascard'):
-            self._proj = kapteyn.wcs.Projection(header)
-        else:
-            self._proj = header
-
-        ProjectionBase.__init__(self)
-
-    def _get_ctypes(self):
-        return self._proj.ctype
-
-    ctypes = property(_get_ctypes)
-
-    def _get_equinox(self):
-        return self._proj.equinox
-
-    equinox = property(_get_equinox)
-
-    def topixel(self, xy):
-        """ 1, 1 base """
-        return self._proj.topixel(xy)
-
-    def toworld(self, xy):
-        """ 1, 1 base """
-        return self._proj.toworld(xy)
-
-    def sub(self, axes):
-        proj = self._proj.sub(axes=axes)
-        return ProjectionKapteyn(proj)
+    radesys = property(_get_radesys)
 
 
 class _ProjectionSubInterface:
@@ -404,12 +315,6 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
         ProjectionBase.__init__(self)
 
 
-        # for n in range(proj.naxis):
-        #     if n in self._sub_axis:
-        #         self._sub_axis.remove(n)
-        #     else:
-        #         self._sub_dict[n] = ref_pixel[n]
-
     def _get_ctypes(self):
         return [self.proj.ctypes[i] for i in self._axis_nums_to_keep]
 
@@ -464,18 +369,7 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
                 s.fill(self._ref_pixel[i])
                 xyz[i] = s
 
-        # xyz = []
-        # for i in range(self.proj.naxis):
-        #     if i in self._axis_nums_to_keep:
-        #         s = iter_xy.next()
-        #     else:
-        #         s = np.empty_like(template)
-        #         s.fill(self._ref_pixel[i])
-        #     xyz.append(s)
         xyz2 = self.proj.toworld(np.asarray(xyz))
-        #xyz2 = self._pywcs.wcs_pix2sky(np.asarray(xyz).T, 1)
-
-        #xyz2r = [d for (i, d) in enumerate(xyz2) if i in self._axis_nums_to_keep]
         xyz2r = [xyz2[i] for i in self._axis_nums_to_keep]
 
         # fixme
@@ -528,14 +422,12 @@ class ProjectionPywcs(ProjectionBase):
     def topixel(self, xy):
         """ 1, 1 base """
         xy2 = self._pywcs.wcs_sky2pix(np.asarray(xy).T, 1)
-        #xy2.T
-        return xy2.T[:2] #xy2[:,0], xy2[:,1]
+        return xy2.T[:2]
 
     def toworld(self, xy):
         """ 1, 1 base """
         xy2 = self._pywcs.wcs_pix2sky(np.asarray(xy).T, 1)
-        return xy2.T[:2] #xy2[:,0], xy2[:,1]
-    #return xy2[:,0], xy2[:,1]
+        return xy2.T[:2]
 
     def sub(self, axes):
         wcs = self._pywcs.sub(axes=axes)
@@ -588,7 +480,7 @@ class ProjectionSimple(ProjectionBase):
         self.crval2 = header["CRVAL2"]
         self.cdelt2 = header["CDELT2"]
 
-        self.cos_phi = 1 #np.cos(self.crval2/180.*np.pi)
+        self.cos_phi = np.cos(self.crval2/180.*np.pi)
 
     def _simple_to_pixel(self, lon, lat):
         lon, lat = np.asarray(lon), np.asarray(lat)
@@ -633,26 +525,10 @@ class ProjectionSimple(ProjectionBase):
     #     return ProjectionPywcs(wcs)
 
 
-if _pywcs_installed:
-#     def ProjectionPywcsNdSimple(header):
-#         if header["ctype1"].lower().endswith("car") and \
-#            header["ctype2"].lower().endswith("car"):
-#             return ProjectionSimple
-#         return ProjectionPywcsNd
-    ProjectionDefault = ProjectionPywcsNd
-else:
-    ProjectionDefault = ProjectionKapteyn
+ProjectionDefault = ProjectionPywcsNd
 
 def get_kapteyn_projection(header):
-
-    # For checking against PyWCS, we can't use isinstance(..., pywcs.WCS)
-    # because it could come from PyWCS or Astropy. But what really matters is
-    # that the WCS object has a wcs_sky2pix method, so we check for that
-    # instead.
-
-    if _kapteyn_installed and isinstance(header, kapteyn.wcs.Projection):
-        projection = ProjectionKapteynNd(header)
-    elif _pywcs_installed and hasattr(header, 'wcs_sky2pix'):
+    if isinstance(header, pywcs.WCS):
         projection = ProjectionPywcsNd(header)
     elif isinstance(header, ProjectionBase):
         projection = header
@@ -664,7 +540,7 @@ def get_kapteyn_projection(header):
     return projection
 
 
-def estimate_cdelt(transSky2Pix, x0, y0):
+def estimate_cdelt_trans(transSky2Pix, x0, y0):
 
     transPix2Sky = transSky2Pix.inverted()
 
@@ -675,7 +551,7 @@ def estimate_cdelt(transSky2Pix, x0, y0):
     dlat = (lat1-lat0)
     cd1 = (dlon**2 + dlat**2)**.5
 
-    lon2, lat2 = transPix2Sky.transform_point((x0+1, y0))
+    lon2, lat2 = transPix2Sky.transform_point((x0, y0+1))
     dlon = (lon2-lon0)*np.cos(lat0/180.*np.pi)
     dlat = (lat2-lat0)
     cd2 = (dlon**2 + dlat**2)**.5
@@ -683,7 +559,11 @@ def estimate_cdelt(transSky2Pix, x0, y0):
     return (cd1*cd2)**.5
 
 
-def estimate_angle(transSky2Pix, x0, y0):
+
+
+
+
+def estimate_angle_trans(transSky2Pix, x0, y0):
     """
     return a tuple of two angles (in degree) of increasing direction
     of 1st and 2nd coordinates.
@@ -692,7 +572,7 @@ def estimate_angle(transSky2Pix, x0, y0):
 
     """
 
-    cdelt = estimate_cdelt(transSky2Pix, x0, y0)
+    cdelt = estimate_cdelt_trans(transSky2Pix, x0, y0)
 
     transPix2Sky = transSky2Pix.inverted()
 
@@ -708,6 +588,54 @@ def estimate_angle(transSky2Pix, x0, y0):
 
     return a1, a2
 
+
+def estimate_cdelt(wcs_proj, x0, y0): #, sky_to_sky):
+    lon0, lat0 = wcs_proj.toworld(([x0], [y0]))
+
+    if lat0 == 90 or lat0 == -90:
+        raise ValueError("estimate_cdelt does not work at poles.")
+
+    lon_ref = lon0 - 180.
+
+    lon1, lat1 = wcs_proj.toworld(([x0+1], [y0]))
+    lon1 = fix_lon(lon1, lon_ref)
+    dlon = (lon1[0]-lon0[0])*np.cos(lat0[0]/180.*np.pi)
+    dlat = (lat1[0]-lat0[0])
+    cd1 = (dlon**2 + dlat**2)**.5
+
+    lon2, lat2 = wcs_proj.toworld(([x0], [y0+1]))
+    lon2 = fix_lon(lon2, lon_ref)
+    dlon = (lon2[0]-lon0[0])*np.cos(lat0[0]/180.*np.pi)
+    dlat = (lat2[0]-lat0[0])
+    cd2 = (dlon**2 + dlat**2)**.5
+
+    return ((cd1*cd2)**.5)
+
+
+def estimate_angle(wcs_proj, x0, y0, sky_to_sky=None):
+    """
+    return a tuple of two angles (in degree) of increasing direction
+    of 1st and 2nd coordinates.
+
+    note that x, y = wcs_proj.topixel(sky_to_sky((l1, l2)))
+
+    """
+
+    cdelt = estimate_cdelt(wcs_proj, x0, y0)
+
+    #x0, y0 = wcs_proj.topixel((lon0, lat0))
+    ll = wcs_proj.toworld(([x0], [y0]))
+    lon0, lat0 = sky_to_sky.inverted()(ll[0], ll[1])
+
+    ll = sky_to_sky(lon0 + cdelt*np.cos(lat0/180.*np.pi), lat0)
+    x1, y1 = wcs_proj.topixel(ll)
+    a1 = np.arctan2(y1-y0, x1-x0)/np.pi*180.
+
+    ll = sky_to_sky(lon0, lat0+cdelt)
+    x2, y2 = wcs_proj.topixel(ll)
+    a2 = np.arctan2(y2-y0, x2-x0)/np.pi*180.
+
+    return a1[0], a2[0]
 
 
 
