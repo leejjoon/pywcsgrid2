@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except ImportError:
+    import pyfits
 
 import pywcsgrid2 #.axes_wcs import GridHelperWcsFloating, AxesWcs
 
@@ -62,6 +65,6 @@ for i, (labtyp1, labtyp1_kwargs) in enumerate(labtypes):
                 textcoords="offset points")
     ax.set_ticklabel1_type(labtyp1, **labtyp1_kwargs)
     ax.set_default_label(labtyp1, None)
-    
+
 
 plt.show()
