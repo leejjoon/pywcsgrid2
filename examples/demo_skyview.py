@@ -1,4 +1,7 @@
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except ImportError:
+    import pyfits
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -79,4 +82,3 @@ ax1.locator_params("both", nbins=2) # since ax1 and ax2 shares a
                                     # ax1 but also ax2.
 
 plt.show()
-

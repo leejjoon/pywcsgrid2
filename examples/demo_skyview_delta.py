@@ -1,4 +1,7 @@
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except ImportError:
+    import pyfits
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -65,4 +68,3 @@ ax2.set_title("Radio")
 
 plt.draw()
 plt.show()
-

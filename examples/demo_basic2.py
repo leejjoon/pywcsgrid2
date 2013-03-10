@@ -1,5 +1,8 @@
 
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except ImportError:
+    import pyfits
 import matplotlib.pyplot as plt
 
 
@@ -28,4 +31,3 @@ ax.set_default_label(None, "absdeg") # update the label using the default values
 ax.locator_params(axis="x", nbins=6)
 
 plt.show()
-

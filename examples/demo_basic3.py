@@ -1,5 +1,8 @@
 
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except ImportError:
+    import pyfits
 import matplotlib.pyplot as plt
 
 fig = plt.figure(1, [5,4.5])
@@ -29,4 +32,3 @@ ax.axis["top","right"].toggle(ticklabels=True)
 
 plt.draw()
 plt.show()
-

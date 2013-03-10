@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except ImportError:
+    import pyfits
 from mpl_toolkits.axes_grid1.axes_grid import ImageGrid
 import pywcsgrid2
 #from pywcsgrid2.axes_wcs import AxesWcs, GridHelperWcs
@@ -50,4 +53,3 @@ if 1:
     mark_inset(main_axes, axins, loc1=2, loc2=4, fc="none", ec="0.5")
 
     plt.show()
-

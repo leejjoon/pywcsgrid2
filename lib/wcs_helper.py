@@ -6,17 +6,7 @@ import kapteyn_celestial
 _wcs_module_import_log = []
 
 _pywcs_installed = True
-try:
-    from astropy import wcs as pywcs
-except ImportError:
-    try:
-        import pywcs
-    except ImportError:
-        _pywcs_installed = False
-        _wcs_module_import_log.append("Failed to import the pywcs")
-    import pyfits
-else:
-    from astropy.io import fits as pyfits
+from astropy_helper import pyfits, pywcs
 
 if _pywcs_installed:
     if not hasattr(pywcs.WCS, "sub"):

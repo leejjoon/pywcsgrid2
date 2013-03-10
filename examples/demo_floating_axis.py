@@ -1,4 +1,7 @@
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except ImportError:
+    import pyfits
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -37,5 +40,3 @@ ax1.axis["l=82.5"] = ax1["gal"].new_floating_axis(0, 82.5)
 
 plt.draw()
 plt.show()
-
-

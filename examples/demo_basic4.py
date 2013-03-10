@@ -1,5 +1,8 @@
 
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except ImportError:
+    import pyfits
 import matplotlib.pyplot as plt
 
 fig = plt.figure(1, [5,5])
@@ -30,4 +33,3 @@ ax["gal"].plot([(285), (276.)],
 
 plt.draw()
 plt.show()
-

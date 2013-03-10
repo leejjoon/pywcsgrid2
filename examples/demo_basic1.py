@@ -1,5 +1,9 @@
 
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except ImportError:
+    import pyfits
+
 import matplotlib.pyplot as plt
 
 
@@ -27,4 +31,3 @@ plt.title("pywcsgrid2")
 plt.subplots_adjust(left=0.1, right=0.95, top=0.95, wspace=0.5)
 
 plt.show()
-
