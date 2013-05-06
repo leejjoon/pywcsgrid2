@@ -167,6 +167,7 @@ class FormatterDMSDelta(object):
     def __init__(self, usetex=True):
         self._fmt = mticker.ScalarFormatter()
         self._fmt._usetex = usetex
+        self._fmt._useOffset = False
         self._fmt.create_dummy_axis()
         self._ignore_factor = True
 
@@ -175,7 +176,6 @@ class FormatterDMSDelta(object):
             if factor is None:
                 factor = 1.
             values = [v/factor for v in values]
-        #values = [v for v in values]
         self._fmt.set_locs(values)
         return [self._fmt(v) for v in values]
 
