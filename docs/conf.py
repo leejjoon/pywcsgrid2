@@ -8,7 +8,7 @@
 # Note that not all possible configuration values are present in this file.
 #
 # All configuration values have a default. Some values are defined in
-# the global Astropy configuration which is loaded here before anything else. 
+# the global Astropy configuration which is loaded here before anything else.
 # See astropy.sphinx.conf for which values are set there.
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -46,19 +46,19 @@ rst_epilog += """
 # -- Project information ------------------------------------------------------
 
 # This does not *have* to match the package name, but typically does
-project = u'Packagename'
-author = u'The Packagename Developers'
-copyright = u'2012, ' + author
+project = u'pywcsgrid2'
+author = u'Jae-Joon Lee'
+copyright = u'2013, ' + author
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-import packagename
+import pywcsgrid2
 # The short X.Y version.
-version = packagename.__version__.split('-', 1)[0]
+version = pywcsgrid2.__version__.split('-', 1)[0]
 # The full version, including alpha/beta/rc tags.
-release = packagename.__version__
+release = pywcsgrid2.__version__
 
 
 # -- Options for HTML output ---------------------------------------------------
@@ -117,16 +117,16 @@ man_pages = [('index', project.lower(), project + u' Documentation',
 
 ## -- Options for the edit_on_github extension ----------------------------------------
 #
-#extensions += ['astropy.sphinx.ext.edit_on_github']
-#
-## Don't import the module as "version" or it will override the
-## "version" configuration parameter
-#from packagename import version as versionmod
-#edit_on_github_project = "astropy/reponame"
-#if versionmod.release:
-#    edit_on_github_branch = "v" + versionmod.version
-#else:
-#    edit_on_github_branch = "master"
-#
-#edit_on_github_source_root = ""
-#edit_on_github_doc_root = "docs"
+extensions += ['astropy.sphinx.ext.edit_on_github']
+
+# Don't import the module as "version" or it will override the
+# "version" configuration parameter
+from pywcsgrid import version as versionmod
+edit_on_github_project = "leejjoon/pywcsgrid"
+if versionmod.release:
+    edit_on_github_branch = "v" + versionmod.version
+else:
+    edit_on_github_branch = "master"
+
+edit_on_github_source_root = ""
+edit_on_github_doc_root = "docs"
