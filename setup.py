@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
+# Licensed under a MIT license - see LICENSE.rst
 
 import sys
 import imp
@@ -34,16 +34,16 @@ from astropy.setup_helpers import (register_commands, adjust_compiler,
 from astropy.version_helpers import get_git_devstr, generate_version_py
 
 # Set affiliated package-specific settings
-PACKAGENAME = 'packagename'
-DESCRIPTION = 'Astropy affiliated package'
-LONG_DESCRIPTION = ''
-AUTHOR = ''
-AUTHOR_EMAIL = ''
-LICENSE = 'BSD'
-URL = 'http://astropy.org'
+PACKAGENAME = 'pywcsgrid2'
+DESCRIPTION = 'A python module to display astronomical fits images with matplotlib'
+LONG_DESCRIPTION = 'pywcsgrid2 is a python module to be used with matplotlib for displaying astronomical fits images. It provides a custom Axes class (derived from mpl’s original Axes class) suitable for displaying fits images. Its main functionality is to draw ticks, ticklabels, and grids in an appropriate sky coordinates.'
+AUTHOR = 'Jae-Joon Lee'
+AUTHOR_EMAIL = 'lee.j.joon@gmail.com'
+LICENSE = 'MIT'
+URL = 'http://leejjoon.github.io/pywcsgrid2'
 
 # VERSION should be PEP386 compatible (http://www.python.org/dev/peps/pep-0386)
-VERSION = '0.0.dev'
+VERSION = '1.0.dev'
 
 # Indicates if this version is a release version
 RELEASE = 'dev' not in VERSION
