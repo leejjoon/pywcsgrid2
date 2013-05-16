@@ -1,1 +1,1 @@
-../../examples/demo_skyview.py
+../../../examples/demo_skyview.py

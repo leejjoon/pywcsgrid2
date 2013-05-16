@@ -1,1 +1,1 @@
-../../examples/demo_inset.py
+../../../examples/demo_inset.py

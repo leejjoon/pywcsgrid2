@@ -121,8 +121,8 @@ extensions += ['astropy.sphinx.ext.edit_on_github']
 
 # Don't import the module as "version" or it will override the
 # "version" configuration parameter
-from pywcsgrid import version as versionmod
-edit_on_github_project = "leejjoon/pywcsgrid"
+from pywcsgrid2 import version as versionmod
+edit_on_github_project = "leejjoon/pywcsgrid2"
 if versionmod.release:
     edit_on_github_branch = "v" + versionmod.version
 else:

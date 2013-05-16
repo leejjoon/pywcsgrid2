@@ -1,1 +1,1 @@
-../../examples/demo_compass.py
+../../../examples/demo_compass.py

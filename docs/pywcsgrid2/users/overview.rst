@@ -42,7 +42,7 @@ using pywcsgrid2's subplot command  with its header (wcs) information. ::
     pywcsgrid2.subplot(122, header=h)
     plt.imshow(d, origin="lower")
 
-.. plot:: figures/demo_basic1.py
+.. plot:: pywcsgrid2/figures/demo_basic1.py
 
 *pywcsgrid2.subplot* creates an instance of the *pywcsgrid2.Axes* class, which
 is derived from mpl's Axes but draws ticks in proper sky coordinate.
@@ -89,7 +89,7 @@ type with given tick locations.
 
 Here are some examples of available ticklabel types.
 
-.. plot:: figures/demo_labtyp.py
+.. plot:: pywcsgrid2/figures/demo_labtyp.py
 
 See :meth:`~pywcsgrid2.axes_wcs.GridHelperWcsBase.set_ticklabel1_type` for more details.
 
@@ -99,7 +99,7 @@ to adjust the locator parameters. ::
 
     ax.locator_params(axis="x", nbins=6)
 
-.. plot:: figures/demo_basic2.py
+.. plot:: pywcsgrid2/figures/demo_basic2.py
 
 
 Changing Cooditnate System
@@ -124,7 +124,7 @@ and right tick labels,::
   ax.axis["top"].major_ticklabels.set_visible(True)
   ax.axis["right"].major_ticklabels.set_visible(True)
 
-.. plot:: figures/demo_basic3.py
+.. plot:: pywcsgrid2/figures/demo_basic3.py
 
 
 Plotting in Sky Coordinate
@@ -148,7 +148,7 @@ sky coordinates are degrees.::
   ax["gal"].plot([(285), (276.)],
                  [(-30), (-36)])
 
-.. plot:: figures/demo_basic4.py
+.. plot:: pywcsgrid2/figures/demo_basic4.py
 
 
 Displaying Fits File of Different WCS
@@ -178,11 +178,11 @@ want to share both x and y-axis among axes and want to have equal
 aspect ratio, you may use adjustable="box-forced" option. ::
 
   grid_helper = pywcsgrid2.GridHelper(wcs=h1)
-  
+
   ax1 = pywcsgrid2.subplot(121, grid_helper=grid_helper,
                            aspect=1, adjustable="box-forced")
   ax1.imshow(f1[0].data)
-  
+
   ax2 = pywcsgrid2.subplot(122, grid_helper=grid_helper,
                            aspect=1, adjustable="box-forced",
                            sharex=ax1, sharey=ax1)
@@ -216,7 +216,7 @@ above example. But pcolormesh is only optimized for agg backend and
 become extremely slow with increasing image size in other
 backends. Therefore, you may want to rasterize the
 pcolormesh (rasterization is fully supported in pdf and svg backend,
-and partially available in ps backend). 
+and partially available in ps backend).
 
 On the other hand, all the vector-oriented commands, such as contour,
 will work as expected.
@@ -231,7 +231,7 @@ second image, which has different wcs information is drawn using
 pcolormesh.
 
 
-.. plot:: figures/demo_skyview.py
+.. plot:: pywcsgrid2/figures/demo_skyview.py
 
 Floating Axis
 =============
@@ -252,7 +252,7 @@ See mpl_toolkits.axisartist for more about the floating axis.
 
 Here is a complete example,
 
-.. plot:: figures/demo_floating_axis.py
+.. plot:: pywcsgrid2/figures/demo_floating_axis.py
 
 
 Inset Axes
@@ -265,7 +265,7 @@ toolkit, which can be seemingless utilized with pywcsgrid2.  See
 <http://matplotlib.sourceforge.net/mpl_toolkits/axes_grid/users/overview.html#insetlocator>`__
 for more details.
 
-.. plot:: figures/demo_inset.py
+.. plot:: pywcsgrid2/figures/demo_inset.py
 
 
 Axes Annotation
@@ -293,5 +293,4 @@ the legend command.::
 
 
 
-.. plot:: figures/demo_compass.py
-
+.. plot:: pywcsgrid2/figures/demo_compass.py

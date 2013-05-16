@@ -743,7 +743,7 @@ class GridHelperWcsBase(object):
         *latitude* nay be giveb (in degree). When specified, the
         scale value will be multiplied by cos(longitude).
 
-        .. plot:: figures/demo_labtyp.py
+        .. plot:: pywcsgrid2/figures/demo_labtyp.py
 
         """
         if adjust_scale:
@@ -1988,9 +1988,3 @@ SubplotWcs = maxes.subplot_class_factory(AxesWcs)
 
 #         self.axis["bottom","top"].label.set_text(label1)
 #         self.axis["left","right"].label.set_text(label2)
-
-
-
-
-
-

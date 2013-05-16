@@ -1,1 +1,1 @@
-../../examples/demo_basic2.py
+../../../examples/demo_basic2.py
