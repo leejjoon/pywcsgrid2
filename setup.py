@@ -36,7 +36,7 @@ from astropy.version_helpers import get_git_devstr, generate_version_py
 # Set affiliated package-specific settings
 PACKAGENAME = 'pywcsgrid2'
 DESCRIPTION = 'A python module to display astronomical fits images with matplotlib'
-LONG_DESCRIPTION = 'pywcsgrid2 is a python module to be used with matplotlib for displaying astronomical fits images. It provides a custom Axes class (derived from mpl’s original Axes class) suitable for displaying fits images. Its main functionality is to draw ticks, ticklabels, and grids in an appropriate sky coordinates.'
+LONG_DESCRIPTION = "pywcsgrid2 is a python module to be used with matplotlib for displaying astronomical fits images. It provides a custom Axes class (derived from mpl's original Axes class) suitable for displaying fits images. Its main functionality is to draw ticks, ticklabels, and grids in an appropriate sky coordinates."
 AUTHOR = 'Jae-Joon Lee'
 AUTHOR_EMAIL = 'lee.j.joon@gmail.com'
 LICENSE = 'MIT'

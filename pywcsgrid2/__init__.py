@@ -121,3 +121,12 @@ if not _ASTROPY_SETUP_:
             del e
 
     del os, warn, config_dir  # clean up namespace
+
+
+# import pywcsgrid2 namespace
+from .pyplot_helper import (Subplot, Axes,
+                            GridHelperWcsSky, GridHelperWcsSimple,
+                            GridHelperSky, GridHelperSimple,
+                            GridHelper,
+                            axes, subplot,
+                            floating_axes, floating_subplot)
