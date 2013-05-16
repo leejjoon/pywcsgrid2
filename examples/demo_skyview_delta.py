@@ -10,12 +10,12 @@ from mpl_toolkits.axes_grid1.axes_grid import AxesGrid
 import pywcsgrid2
 
 # read in the first image
-xray_name="pspc_skyview.fits"
+xray_name="data/pspc_skyview.fits"
 f_xray = pyfits.open(xray_name)
 header_xray = f_xray[0].header
 
 # the second image
-radio_name="radio_21cm.fits"
+radio_name="data/radio_21cm.fits"
 f_radio = pyfits.open(radio_name)
 header_radio = f_radio[0].header
 

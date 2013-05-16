@@ -16,7 +16,7 @@ pywcsgrid2.Axes.default_path_effects = my_path_effects
 
 if 1:
 
-    f = pyfits.open("radio_21cm.fits")
+    f = pyfits.open("data/radio_21cm.fits")
     d, h = f[0].data, f[0].header
 
     plt.figure(1, [4.5,4.])

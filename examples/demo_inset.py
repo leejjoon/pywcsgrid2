@@ -12,7 +12,7 @@ import matplotlib.patheffects as patheffects
 
 if 1:
 
-    f = pyfits.open("pspc_skyview.fits")
+    f = pyfits.open("data/pspc_skyview.fits")
     d = f[0].data
     h = f[0].header
 
@@ -46,7 +46,7 @@ if 1:
     axins.set_xlim(120, 160)
     axins.set_ylim(120, 160)
 
-    axins.set_ticklabel_type("delta")
+    axins.set_ticklabel_type("delta", center_pixel="center")
 
     axins.axis[:].invert_ticklabel_direction()
 

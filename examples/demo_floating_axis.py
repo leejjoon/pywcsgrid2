@@ -10,7 +10,7 @@ import matplotlib.patheffects as patheffects
 
 
 # read in the image
-xray_name="pspc_skyview.fits"
+xray_name="data/pspc_skyview.fits"
 f_xray = pyfits.open(xray_name)
 
 fig = plt.figure(1, (4,3.5))
