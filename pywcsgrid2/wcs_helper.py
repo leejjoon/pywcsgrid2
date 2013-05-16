@@ -3,7 +3,7 @@ import numpy as np
 from kapteyn_celestial import skymatrix, longlat2xyz, dotrans, xyz2longlat
 import kapteyn_celestial
 
-from astropy_helper import pyfits, pywcs
+import astropy.wcs as pywcs
 
 FK4 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk4)
 FK5 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk5)
@@ -96,23 +96,23 @@ def coord_system_guess(ctype1_name, ctype2_name, equinox):
 def fix_header(header):
     "return a new fixed header"
 
-    cards = pyfits.CardList()
+    Header = type(header)
+    cardlist = header.ascardlist()
+    CardList = type(cardlist)
+    cardlist_fixed = CardList()
 
-    for c in header.ascardlist():
+    for c in cardlist:
         # ignore comments and history
         if c.key in ["COMMENT", "HISTORY"]:
             continue
 
         # use "deg"
         if c.key.startswith("CUNIT") and c.value.lower().startswith("deg"):
-            c = pyfits.Card(c.key, "deg")
+            c = type(c)(c.key, "deg")
 
-        # We re-instantiate the card so that it doesn't matter if the
-        # original Card object is from PyFITS or Astropy
-        cards.append(pyfits.Card(c.key, c.value, c.comment))
+        cardlist_fixed.append(c)
 
-    h = pyfits.Header(cards)
-    return h
+    return Header(cardlist_fixed)
 
 def fix_lon(lon, lon_ref):
     lon_ = lon - lon_ref
@@ -220,6 +220,9 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     A wrapper for pywcs
     """
     def __init__(self, header):
+        """
+        header could be pyfits.Header instance of pywcs.WCS instance.
+        """
 
         # We can't check the header type using isinstance since we don't know
         # if it comes from PyFITS or Astropy, so instead we check if it has
@@ -239,9 +242,11 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
 
             self._pywcs = pywcs.WCS(header=header)
 
+        elif hasattr(header, "wcs"):
+            self._pywcs = header
         else:
 
-            self._pywcs = header
+            raise ValueError("header must be an instance of pyfits.Header or astropy.io.fits.Header")
 
         ProjectionBase.__init__(self)
 
@@ -378,62 +383,6 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
         return xyz2r
 
 
-
-class ProjectionPywcs(ProjectionBase):
-    """
-    A wrapper for pywcs
-    """
-    def __init__(self, header):
-
-        # We can't check the header type using isinstance since we don't know
-        # if it comes from PyFITS or Astropy, so instead we check if it has
-        # the 'ascard' attribute that both header classes define.
-
-        if hasattr(header, 'ascard'):
-
-            header = fix_header(header)
-
-            # Since we don't know if PyFITS or PyWCS are from Astropy, and the
-            # WCS object in PyWCS and Astropy both accept a string
-            # representation of the header, we use this instead (both
-            # internally use `repr(header.ascard)` which returns str,
-            # and is compatible with Python 3
-
-            header = repr(header.ascard).encode('latin1')
-
-            self._pywcs = pywcs.WCS(header=header)
-
-        else:
-
-            self._pywcs = header
-
-        ProjectionBase.__init__(self)
-
-    def _get_ctypes(self):
-        return tuple(self._pywcs.wcs.ctype)
-
-    ctypes = property(_get_ctypes)
-
-    def _get_equinox(self):
-        return self._pywcs.wcs.equinox
-
-    equinox = property(_get_equinox)
-
-    def topixel(self, xy):
-        """ 1, 1 base """
-        xy2 = self._pywcs.wcs_sky2pix(np.asarray(xy).T, 1)
-        return xy2.T[:2]
-
-    def toworld(self, xy):
-        """ 1, 1 base """
-        xy2 = self._pywcs.wcs_pix2sky(np.asarray(xy).T, 1)
-        return xy2.T[:2]
-
-    def sub(self, axes):
-        wcs = self._pywcs.sub(axes=axes)
-        return ProjectionPywcs(wcs)
-
-
 class ProjectionSimple(ProjectionBase):
     """
     A wrapper for pywcs
@@ -442,19 +391,22 @@ class ProjectionSimple(ProjectionBase):
 
         ProjectionBase.__init__(self)
 
-        # This projection assumes that `header` is a Header object, and
-        # doesn't care whether it comes from PyFITS or Astropy
+        if hasattr(header, 'ascard'):
 
-        self._simple_init(header)
+            self._simple_init(header)
 
-        # Since we don't know if PyFITS or PyWCS are from Astropy, and the
-        # WCS object in PyWCS and Astropy both accept a string
-        # representation of the header, we use this instead (both
-        # internally use `repr(header.ascard)` which returns str
+            # Since we don't know if PyFITS or PyWCS are from Astropy,
+            # and the WCS object in PyWCS and Astropy both accept a
+            # string representation of the header, we use this instead
+            # (both internally use `repr(header.ascard)` which returns
+            # str
 
-        header = repr(header.ascard).encode('latin1')
+            #header = fix_header(header)
+            header = repr(header.ascard).encode('latin1')
+            self._pywcs = pywcs.WCS(header=header)
+        else:
 
-        self._pywcs = pywcs.WCS(header=header)
+            raise ValueError("header must be an instance of pyfits.Header or astropy.io.fits.Header")
 
     def _get_ctypes(self):
         return tuple(self._pywcs.wcs.ctype)
@@ -528,13 +480,10 @@ class ProjectionSimple(ProjectionBase):
 ProjectionDefault = ProjectionPywcsNd
 
 def get_kapteyn_projection(header):
-    if isinstance(header, pywcs.WCS):
-        projection = ProjectionPywcsNd(header)
-    elif isinstance(header, ProjectionBase):
+    if isinstance(header, ProjectionBase):
         projection = header
     else:
-        projection = ProjectionDefault(header)
-
+        projection = ProjectionPywcsNd(header)
 
     #projection = projection.sub(axes=[1,2])
     return projection
@@ -557,11 +506,6 @@ def estimate_cdelt_trans(transSky2Pix, x0, y0):
     cd2 = (dlon**2 + dlat**2)**.5
 
     return (cd1*cd2)**.5
-
-
-
-
-
 
 def estimate_angle_trans(transSky2Pix, x0, y0):
     """

@@ -116,10 +116,6 @@ def filterwcs(h):
     """
     select wcs related cards
     """
-    from astropy_helper import pyfits
-    # We have to re-instantiate the cards since we don't know if the original
-    # header was from PyFITS or Astropy.
-    l = [pyfits.Card(card.key, card.value, card.comment) for card in h.ascardlist() if _wcs_key_pattern.match(card.key)]
-    return pyfits.Header(l)
-
-
+    Header = type(h)
+    l = [c for c in h.ascardlist() if _wcs_key_pattern.match(c.key)]
+    return Header(l)

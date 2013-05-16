@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from astropy_helper import pyfits
+import astropy.io.fits as pyfits
 
 from mpl_toolkits.axisartist.floating_axes import floatingaxes_class_factory
 
@@ -50,7 +50,7 @@ LATPOLE =       90.00000000000 / Galactic latitude of native pole
 
     header_list = header.split("\n")
     headeradd = header_list.append
-    
+
     if coord.startswith("fk"):
         headeradd("CTYPE1  = 'RA---%s'           / Coordinate Type" % proj)
         headeradd("CTYPE2  = 'DEC--%s'           / Coordinate Type" % proj)
@@ -70,7 +70,7 @@ LATPOLE =       90.00000000000 / Galactic latitude of native pole
 
     headeradd("CRVAL1  =  %10.5f / Galactic longitude of reference pixel" \
               % (lon_center,))
-    
+
     cards = pyfits.CardList()
     for l in header_list:
         # check if fromstring is a classmethod
@@ -94,13 +94,13 @@ _proj_lat_limits = dict(MER= 75)
 
 def make_allsky_axes_from_header(fig, rect, header, lon_center,
                                  lat_minmax=None, pseudo_cyl=None):
-    
+
 
     proj = header["CTYPE1"].split("-")[-1]
     if pseudo_cyl is None:
         if proj in _proj_pseudo_cyl_list:
             pseudo_cyl = True
-        
+
     if lat_minmax is None:
         lat_max = _proj_lat_limits.get(proj, 90)
         lat_min = -lat_max
@@ -108,7 +108,7 @@ def make_allsky_axes_from_header(fig, rect, header, lon_center,
         lat_min, lat_max = lat_minmax
 
     extremes = (lon_center+180., lon_center-180., lat_min, lat_max)
-    
+
     grid_helper = GridHelperWcsFloating(wcs=header, extremes=extremes)
 
     ax = FloatingSubplot(fig, rect, grid_helper=grid_helper)
@@ -163,7 +163,7 @@ def make_allsky_axes(fig, rect, coord, proj, lon_center=0,
 
 
 if __name__ == '__main__':
-    
+
     proj_list = ["CYP", "CEA", "CAR", "MER", "SFL", "PAR", "MOL", "AIT" ]
 
 
@@ -172,5 +172,5 @@ if __name__ == '__main__':
         rect = 111
         ax = make_allsky_axes(fig, rect, "gal", proj, lon_center=0)
         ax.set_title("proj = %s" % proj, position=(0.5, 1.1))
-    
+
         plt.show()

@@ -1,6 +1,6 @@
 import numpy as np
 
-from astropy_helper import pyfits, pywcs
+import astropy.wcs as pywcs
 
 import healpy
 import warnings
@@ -18,6 +18,13 @@ class HealpixData(object):
 
         map_shape = (header["naxis2"], header["naxis1"])
         iy, ix = np.indices(map_shape)
+
+        # WCS object in PyWCS and Astropy both accept a string
+        # representation of the header, we use this instead (both
+        # internally use `repr(header.ascard)` which returns str, and
+        # is compatible with Python 3
+
+        header = repr(header.ascard).encode('latin1')
         wcs = pywcs.WCS(header)
         phi, theta = wcs.wcs_pix2sky(ix, iy, 0)
 
@@ -62,6 +69,7 @@ class HealpixData(object):
 
 if __name__ == '__main__':
 
+    import astropy.io.fits as pyfits
     fname = "LAB_fullvel.fits"
     f = pyfits.open(fname)
     header = f[1].header
@@ -79,6 +87,3 @@ if __name__ == '__main__':
 
     #data2 = f2[1].data
     #header2 = f2[1].header
-
-
-
