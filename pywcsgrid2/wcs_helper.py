@@ -1,7 +1,7 @@
 import numpy as np
 
-from kapteyn_celestial import skymatrix, longlat2xyz, dotrans, xyz2longlat
-import kapteyn_celestial
+from .kapteyn_celestial import skymatrix, longlat2xyz, dotrans, xyz2longlat
+from . import kapteyn_celestial
 
 import astropy.wcs as pywcs
 
@@ -26,12 +26,7 @@ image_like_coordformats = ["image", "physical","detector","logical"]
 def is_equal_coord_sys(src, dest):
     return (src.lower() == dest.lower())
 
-def is_string_like(obj):
-    'Return True if *obj* looks like a string'
-    if isinstance(obj, (str, unicode)): return True
-    try: obj + ''
-    except: return False
-    return True
+from matplotlib.cbook import is_string_like
 
 class sky2sky(object):
     def __init__(self, src, dest):
@@ -343,7 +338,7 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
 
         xyz = [None]*self.proj.naxis
         for i in self._axis_nums_to_keep:
-            xyz[i] = iter_xy.next()
+            xyz[i] = next(iter_xy)
         for i in range(self.proj.naxis):
             if i not in self._axis_nums_to_keep:
                 s = np.empty_like(template)
@@ -367,7 +362,7 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
 
         xyz = [None]*self.proj.naxis
         for i in self._axis_nums_to_keep:
-            xyz[i] = iter_xy.next()
+            xyz[i] = next(iter_xy)
         for i in range(self.proj.naxis):
             if i not in self._axis_nums_to_keep:
                 s = np.empty_like(template)

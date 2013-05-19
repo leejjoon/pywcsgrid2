@@ -4,7 +4,7 @@ import matplotlib.axes as maxes
 from matplotlib.cbook import is_string_like
 
 import numpy as np
-from pywcsgrid2.wcs_transforms import WcsSky2PixelTransform, WcsPixel2SkyTransform,\
+from .wcs_transforms import WcsSky2PixelTransform, WcsPixel2SkyTransform,\
      WcsSky2SkyTransform
 
 from matplotlib.transforms import Affine2D
@@ -21,7 +21,7 @@ mcoll.QuadMesh.draw = rasterized_draw
 
 
 #import pywcs
-from wcs_helper import get_kapteyn_projection, coord_system_guess
+from .wcs_helper import get_kapteyn_projection, coord_system_guess
 #from pywcsgrid2.wcs_helper import coord_system_guess
 
 from  mpl_toolkits.axisartist import GridlinesCollection
@@ -31,11 +31,11 @@ GridFinderBase = grid_finder.GridFinderBase
 
 from mpl_toolkits.axisartist.angle_helper import ExtremeFinderCycle
 
-from locator_formatter import LocatorH, LocatorHM, LocatorHMS, \
-     LocatorD, LocatorDM, LocatorDMS
+from .locator_formatter import (LocatorH, LocatorHM, LocatorHMS,
+                                LocatorD, LocatorDM, LocatorDMS)
 
-from locator_formatter import FixedLocator, \
-     FixedFormatter, MaxNLocator, FormatterPrettyPrint
+from .locator_formatter import (FixedLocator, FixedFormatter,
+                                MaxNLocator, FormatterPrettyPrint)
 
 
 
@@ -70,7 +70,7 @@ class GridHelperCurveLinear(grid_helper_curvelinear.GridHelperCurveLinear):
 
         """
 
-        if kwargs.has_key("tight"):
+        if "tight" in kwargs: #.has_key("tight"):
             warnings.warn("axislines ignores *tight* parameter")
 
         _x = axis in ['x', 'both']
@@ -123,7 +123,7 @@ class GridHelperCurveLinearFloating(floating_axes.GridHelperCurveLinear):
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredEllipse, \
      AnchoredText, AnchoredSizeBar
 
-from aux_artists import AnchoredCompass
+from .aux_artists import AnchoredCompass
 
 import mpl_toolkits.axisartist as axisartist
 from mpl_toolkits.axisartist import ParasiteAxesAuxTrans

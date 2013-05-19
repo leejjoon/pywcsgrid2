@@ -4,7 +4,7 @@ import numpy as np
 
 # pixel origin need to be corrected!
 
-from wcs_helper import coord_system_guess, sky2sky, get_kapteyn_projection
+from .wcs_helper import coord_system_guess, sky2sky, get_kapteyn_projection
 
 def coord_conv(src, dest):
     return sky2sky(src, dest)
@@ -206,5 +206,3 @@ class WcsSky2SkyTransform(CurvedTransform):
     def inverted(self):
         return WcsSky2SkyTransform(self.dest_coord, self.src_coord)
     inverted.__doc__ = Transform.inverted.__doc__
-
-

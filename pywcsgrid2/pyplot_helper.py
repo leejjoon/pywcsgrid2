@@ -1,13 +1,12 @@
 
-from axes_wcs import SubplotWcs as Subplot
-from axes_wcs import AxesWcs as Axes
-#from axes_wcs import GridHelperWcs as GridHelper
-from axes_wcs import GridHelperWcsSky, GridHelperWcsSimple
+from .axes_wcs import SubplotWcs as Subplot
+from .axes_wcs import AxesWcs as Axes
+from .axes_wcs import GridHelperWcsSky, GridHelperWcsSimple
 
 GridHelperSky, GridHelperSimple = GridHelperWcsSky, GridHelperWcsSimple
 GridHelper = GridHelperSky
 
-from floating_axes import FloatingAxes, FloatingSubplot
+from .floating_axes import FloatingAxes, FloatingSubplot
 
 import matplotlib.pyplot as plt
 
