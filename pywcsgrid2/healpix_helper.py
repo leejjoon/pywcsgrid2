@@ -2,7 +2,6 @@ import numpy as np
 
 import astropy.wcs as pywcs
 
-import healpy
 import warnings
 
 
@@ -47,6 +46,7 @@ class HealpixData(object):
 
         phi *= np.pi/180
 
+        import healpy
         if self._nested:
             ang2pix = healpy._healpy_pixel_lib._ang2pix_nest
         else:
@@ -70,6 +70,7 @@ class HealpixData(object):
 if __name__ == '__main__':
 
     import astropy.io.fits as pyfits
+
     fname = "LAB_fullvel.fits"
     f = pyfits.open(fname)
     header = f[1].header

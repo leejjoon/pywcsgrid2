@@ -32,10 +32,11 @@ script:
   # This is really part of the install phase.
   # We put it here to avoid the 15 min travis-ci timeout for the install phase
   - time pip install --use-mirrors astropy
-  - time pip install pytest pywcs pyfits 
+  - time pip install --use-mirrors pytest pyfits
+  - if [[ ${TRAVIS_PYTHON_VERSION:0:1} == '2' ]]; then time pip install --use-mirrors pywcs; fi
   # Install 
   - python setup.py install
+  - python setup.py test
   - (cd docs; make html)
-  - py.test
   # TODO Run examples and check output (they first need to be made into unit tests)
 

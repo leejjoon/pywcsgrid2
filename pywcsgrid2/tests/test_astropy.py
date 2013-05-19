@@ -1,24 +1,34 @@
+from __future__ import absolute_import
 import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import pywcsgrid2
-from cStringIO import StringIO
+#from cStringIO import StringIO
+import io
+
+def get_header():
+    from pywcsgrid2.allsky_axes import allsky_header
+    hdr = allsky_header("gal", "CAR", cdelt=1)
+    return repr(hdr.ascard)
+
+header_str = get_header()
 
 def _demo_astropy(pyfits, pywcs=None):
-    f = pyfits.open("data/lmc.fits")
+
+    header = pyfits.Header.fromstring(header_str)
+
     plt.figure()
     if pywcs is None:
-        ax = pywcsgrid2.subplot(111, header=f[0].header)
+        ax = pywcsgrid2.subplot(111, header=header)
     else:
-        wcs = pywcs.WCS(f[0].header)
+        wcs = pywcs.WCS(header)
         ax = pywcsgrid2.subplot(111, wcs=wcs)
 
-    ax.imshow(f[0].data, origin="low",
-              vmin=0, vmax=2000, interpolation="none")
+    ax.imshow([[0, 0], [0,0]], origin="low", interpolation="none")
     ax.grid(color="w")
 
-    s = StringIO()
+    s = io.BytesIO()
     plt.savefig(s, format="png")
 
 
@@ -28,7 +38,16 @@ def test_astropy():
     _demo_astropy(astropy.io.fits)
     _demo_astropy(astropy.io.fits, astropy.wcs)
 
+def test_pyfits_pywcs():
     import pyfits
-    import pywcs
     _demo_astropy(pyfits)
-    _demo_astropy(pyfits, pywcs)
+    try:
+        import pywcs
+    except ImportError:
+        pass
+    else:
+        _demo_astropy(pyfits, pywcs)
+
+if __name__ == "__main__":
+    test_astropy()
+    test_pyfits_pywcs()
