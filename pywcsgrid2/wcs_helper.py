@@ -5,16 +5,29 @@ from . import kapteyn_celestial
 
 import astropy.wcs as pywcs
 
+import sys
+if sys.version < '3':
+    def as_str(x):
+        return x
+else:
+    def as_str(x):
+        if hasattr(x, "decode"):
+            return x.decode()
+        else:
+            return x
+
 FK4 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk4)
 FK5 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk5)
 GAL = kapteyn_celestial.galactic
 ECL = kapteyn_celestial.ecliptic
+ICRS = (kapteyn_celestial.equatorial, kapteyn_celestial.fk5) # FIXME
 
 coord_system = dict(fk4=FK4,
                     fk5=FK5,
                     gal=GAL,
                     galactic=GAL,
-                    ecl=ECL)
+                    ecl=ECL,
+                    icrs=ICRS)
 
 select_wcs = coord_system.get
 
@@ -91,12 +104,14 @@ def coord_system_guess(ctype1_name, ctype2_name, equinox):
 def fix_header(header):
     "return a new fixed header"
 
-    Header = type(header)
-    cardlist = header.ascardlist()
-    CardList = type(cardlist)
-    cardlist_fixed = CardList()
+    if hasattr(header, "ascardlist"):
+        old_cards = header.ascardlist()
+    else:
+        old_cards = header.cards
 
-    for c in cardlist:
+    new_cards = []
+
+    for c in old_cards:
         # ignore comments and history
         if c.key in ["COMMENT", "HISTORY"]:
             continue
@@ -105,9 +120,11 @@ def fix_header(header):
         if c.key.startswith("CUNIT") and c.value.lower().startswith("deg"):
             c = type(c)(c.key, "deg")
 
-        cardlist_fixed.append(c)
+        new_cards.append(c)
 
-    return Header(cardlist_fixed)
+    h = type(header)(new_cards)
+    return h
+
 
 def fix_lon(lon, lon_ref):
     lon_ = lon - lon_ref
@@ -246,7 +263,7 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
         ProjectionBase.__init__(self)
 
     def _get_ctypes(self):
-        return tuple(s.decode() for s in self._pywcs.wcs.ctype)
+        return tuple(as_str(s) for s in self._pywcs.wcs.ctype)
 
     ctypes = property(_get_ctypes)
 
@@ -404,7 +421,7 @@ class ProjectionSimple(ProjectionBase):
             raise ValueError("header must be an instance of pyfits.Header or astropy.io.fits.Header")
 
     def _get_ctypes(self):
-        return tuple(self._pywcs.wcs.ctype)
+        return tuple(as_str(s) for s in self._pywcs.wcs.ctype)
 
     ctypes = property(_get_ctypes)
 
