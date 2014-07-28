@@ -248,6 +248,13 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
 
             self._pywcs = header
 
+        if hasattr(self._pywcs, 'wcs_pix2world'):
+            self.wcs_pix2world = self._pywcs.wcs_pix2world
+            self.wcs_world2pix = self._pywcs.wcs_world2pix
+        else:
+            self.wcs_pix2world = self._pywcs.wcs_pix2sky
+            self.wcs_world2pix = self._pywcs.wcs_sky2pix
+
         ProjectionBase.__init__(self)
 
     def _get_ctypes(self):
@@ -276,8 +283,8 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
         xy1 = lon_lat.transpose()
 
         # somehow, wcs_sky2pix does not work for some cases
-        xy21 = [self._pywcs.wcs_world2pix([xy11], 1)[0] for xy11 in xy1]
-        #xy21 = self._pywcs.wcs_world2pix(xy1, 1)
+        xy21 = [self.wcs_world2pix([xy11], 1)[0] for xy11 in xy1]
+        #xy21 = self.wcs_world2pix(xy1, 1)
 
         xy2 = np.array(xy21).transpose()
         return xy2
@@ -285,7 +292,7 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     def toworld(self, xy):
         """ 1, 1 base """
 
-        xy2 = self._pywcs.wcs_pix2world(np.asarray(xy).T, 1)
+        xy2 = self.wcs_pix2world(np.asarray(xy).T, 1)
 
         lon_lat = xy2.T
         # fixme
@@ -351,7 +358,7 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
                 s.fill(self._ref_world[i])
                 xyz[i] = s
 
-        #xyz2 = self._pywcs.wcs_world2pix(np.asarray(xyz).T, 1)
+        #xyz2 = self.wcs_world2pix(np.asarray(xyz).T, 1)
         xyz2 = self.proj.topixel(np.array(xyz))
 
         #xyz2r = [d for (i, d) in enumerate(xyz2) if i in self._axis_nums_to_keep]
@@ -413,6 +420,13 @@ class ProjectionPywcs(ProjectionBase):
 
             self._pywcs = header
 
+        if hasattr(self._pywcs, 'wcs_pix2world'):
+            self.wcs_pix2world = self._pywcs.wcs_pix2world
+            self.wcs_world2pix = self._pywcs.wcs_world2pix
+        else:
+            self.wcs_pix2world = self._pywcs.wcs_pix2sky
+            self.wcs_world2pix = self._pywcs.wcs_sky2pix
+
         ProjectionBase.__init__(self)
 
     def _get_ctypes(self):
@@ -427,12 +441,12 @@ class ProjectionPywcs(ProjectionBase):
 
     def topixel(self, xy):
         """ 1, 1 base """
-        xy2 = self._pywcs.wcs_world2pix(np.asarray(xy).T, 1)
+        xy2 = self.wcs_world2pix(np.asarray(xy).T, 1)
         return xy2.T[:2]
 
     def toworld(self, xy):
         """ 1, 1 base """
-        xy2 = self._pywcs.wcs_pix2world(np.asarray(xy).T, 1)
+        xy2 = self.wcs_pix2world(np.asarray(xy).T, 1)
         return xy2.T[:2]
 
     def sub(self, axes):
