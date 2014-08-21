@@ -11,4 +11,3 @@ if has_astropy:
 else:
     import pyfits
     import pywcs
-
