@@ -18,19 +18,19 @@ env:
 install:
   # For Python 2 it is required to install pyparsing 1.5.7 (see http://pyparsing.wikispaces.com)
   # - if [[ ${TRAVIS_PYTHON_VERSION%%.*} == '2' ]]; then export PYPARSING_PIP="==1.5.7"; fi
-  # - time pip install --use-mirrors pyparsing$PYPARSING_PIP
-  - time pip install --use-mirrors sphinx
+  # - time pip install pyparsing$PYPARSING_PIP
+  - time pip install sphinx
   # Install matplotlib
-  - if [[ ${TRAVIS_PYTHON_VERSION:0:1} == '2' ]]; then time pip install --use-mirrors matplotlib==$MPL_VERSION; fi
+  - if [[ ${TRAVIS_PYTHON_VERSION:0:1} == '2' ]]; then time pip install matplotlib==$MPL_VERSION; fi
   # For Python 3 travis-ci apparently doesn't have numpy pre-installed at the moment
-  - if [[ ${TRAVIS_PYTHON_VERSION:0:1} == '3' ]]; then time pip install --use-mirrors numpy; fi
+  - if [[ ${TRAVIS_PYTHON_VERSION:0:1} == '3' ]]; then time pip install numpy; fi
 
 script:
   # see https://github.com/leejjoon/pyregion/pull/17#issuecomment-14292168
   - if [[ ${TRAVIS_PYTHON_VERSION:0:1} == '3' ]]; then time pip install git+git://github.com/matplotlib/matplotlib.git@v1.2.x; fi
   # This is really part of the install phase.
   # We put it here to avoid the 15 min travis-ci timeout for the install phase
-  - time pip install --use-mirrors astropy
+  - time pip install astropy
 
   # Install 
   - python setup.py install
