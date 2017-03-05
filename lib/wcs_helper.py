@@ -92,32 +92,53 @@ def coord_system_guess(ctype1_name, ctype2_name, equinox):
 
     return None
 
+def get_cards(header):
+    # We can't check the header type using isinstance since we don't know
+    # if it comes from PyFITS or Astropy, so instead we check if it has
+    # the 'cards' attribute that both header classes define.
 
-def fix_header(header):
-    "return a new fixed header"
+    # if header is an instance of pyfits.Header
 
-    cards = pyfits.CardList()
-
-    if hasattr(header, "ascardlist"):
-        old_cards = header.ascardlist()
+    if hasattr(header, "cards"):
+        cards = header.cards
+    elif hasattr(header, "ascard"):
+        cards = header.ascard
+    elif hasattr(header, "ascardlist"):
+        cards = header.ascardlist()
     else:
-        old_cards = header.cards
+        raise ValueError("header object does not has 'cards' or 'ascardlist' attribute")
+
+    return cards
+
+def fix_cards(cards):
+    "return a new fixed cards"
+
+    old_cards = cards
+
+    new_cards = []
 
     for c in old_cards:
+        if hasattr(c, "keyword"):
+            keyword = c.keyword
+        elif hasattr(c, "key"):
+            keyword = c.key
+        else:
+            raise ValueError("Neither 'keyword' nor 'key' were found in the card: %s" % c)
+
         # ignore comments and history
-        if c.key in ["COMMENT", "HISTORY"]:
+        if keyword in ["COMMENT", "HISTORY"]:
             continue
 
         # use "deg"
-        if c.key.startswith("CUNIT") and c.value.lower().startswith("deg"):
+        if keyword.startswith("CUNIT") and c.value.lower().startswith("deg"):
             c = pyfits.Card(c.key, "deg")
 
         # We re-instantiate the card so that it doesn't matter if the
         # original Card object is from PyFITS or Astropy
-        cards.append(pyfits.Card(c.key, c.value, c.comment))
+        new_cards.append(pyfits.Card(keyword, c.value, c.comment))
 
-    h = pyfits.Header(cards)
-    return h
+    return new_cards
+
 
 def fix_lon(lon, lon_ref):
     lon_ = lon - lon_ref
@@ -220,32 +241,22 @@ class _ProjectionSubInterface:
         return self.substitute(axis_nums_to_keep, [0] * self.naxis)
 
 
+def get_wcs(header):
+    cards = get_cards(header)
+    cards = fix_cards(cards)
+
+    return pywcs.WCS(header=pyfits.Header(cards))
+
+
 class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     """
     A wrapper for pywcs
     """
     def __init__(self, header):
 
-        # We can't check the header type using isinstance since we don't know
-        # if it comes from PyFITS or Astropy, so instead we check if it has
-        # the 'ascard' attribute that both header classes define.
-
-        if hasattr(header, 'ascard'):
-
-            header = fix_header(header)
-
-            # Since we don't know if PyFITS or PyWCS are from Astropy, and the
-            # WCS object in PyWCS and Astropy both accept a string
-            # representation of the header, we use this instead (both
-            # internally use `repr(header.ascard)` which returns str,
-            # and is compatible with Python 3
-
-            header = repr(header.ascard).encode('latin1')
-
-            self._pywcs = pywcs.WCS(header=header)
-
-        else:
-
+        try:
+            self._pywcs = get_wcs(header)
+        except ValueError:
             self._pywcs = header
 
         if hasattr(self._pywcs, 'wcs_pix2world'):
@@ -398,26 +409,9 @@ class ProjectionPywcs(ProjectionBase):
     """
     def __init__(self, header):
 
-        # We can't check the header type using isinstance since we don't know
-        # if it comes from PyFITS or Astropy, so instead we check if it has
-        # the 'ascard' attribute that both header classes define.
-
-        if hasattr(header, 'ascard'):
-
-            header = fix_header(header)
-
-            # Since we don't know if PyFITS or PyWCS are from Astropy, and the
-            # WCS object in PyWCS and Astropy both accept a string
-            # representation of the header, we use this instead (both
-            # internally use `repr(header.ascard)` which returns str,
-            # and is compatible with Python 3
-
-            header = repr(header.ascard).encode('latin1')
-
-            self._pywcs = pywcs.WCS(header=header)
-
-        else:
-
+        try:
+            self._pywcs = get_wcs(header)
+        except ValueError:
             self._pywcs = header
 
         if hasattr(self._pywcs, 'wcs_pix2world'):
@@ -467,14 +461,7 @@ class ProjectionSimple(ProjectionBase):
 
         self._simple_init(header)
 
-        # Since we don't know if PyFITS or PyWCS are from Astropy, and the
-        # WCS object in PyWCS and Astropy both accept a string
-        # representation of the header, we use this instead (both
-        # internally use `repr(header.ascard)` which returns str
-
-        header = repr(header.ascard).encode('latin1')
-
-        self._pywcs = pywcs.WCS(header=header)
+        self._pywcs = get_wcs(header)
 
     def _get_ctypes(self):
         return tuple(self._pywcs.wcs.ctype)
