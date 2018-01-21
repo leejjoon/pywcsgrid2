@@ -1,8 +1,5 @@
 import matplotlib.pyplot as plt
-try:
-    from astropy.io import fits as pyfits
-except ImportError:
-    import pyfits
+from astropy.io import fits as pyfits
 
 import pywcsgrid2 #.axes_wcs import GridHelperWcsFloating, AxesWcs
 
@@ -37,10 +34,8 @@ CRVAL1  =        67.0000000000 / Galactic longitude of reference pixel
 CRVAL2  =         3.0000000000 / Galactic latitude of reference pixel
 HISTORY PUTAST: Jun 17 14:36:35 2009 World Coordinate System parameters written
 """
-    cards = pyfits.CardList()
-    for l in header.split("\n"):
-        card = pyfits_card_fromstring(l.strip())
-        cards.append(card)
+    cards = [pyfits_card_fromstring(l.strip())
+             for l in header.split("\n")]
     h = pyfits.Header(cards)
     return h
 
