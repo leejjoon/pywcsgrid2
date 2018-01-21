@@ -43,7 +43,7 @@ if 1:
     axins.set_xlim(120, 160)
     axins.set_ylim(120, 160)
 
-    axins.set_ticklabel_type("delta")
+    axins.set_ticklabel_type("delta", center_pixel="center")
 
     axins.axis[:].invert_ticklabel_direction()
 
