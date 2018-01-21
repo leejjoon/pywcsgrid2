@@ -1,9 +1,12 @@
+from __future__ import absolute_import
+
+import six
 import numpy as np
 
-from kapteyn_celestial import skymatrix, longlat2xyz, dotrans, xyz2longlat
-import kapteyn_celestial
+from .kapteyn_celestial import skymatrix, longlat2xyz, dotrans, xyz2longlat
+from . import kapteyn_celestial
 
-from astropy_helper import pyfits, pywcs
+from .astropy_helper import pyfits, pywcs
 
 FK4 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk4)
 FK5 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk5)
@@ -269,7 +272,7 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
         ProjectionBase.__init__(self)
 
     def _get_ctypes(self):
-        return tuple(s.decode() for s in self._pywcs.wcs.ctype)
+        return tuple(s for s in self._pywcs.wcs.ctype)
 
     ctypes = property(_get_ctypes)
 

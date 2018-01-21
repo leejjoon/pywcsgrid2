@@ -1841,11 +1841,11 @@ Examples: See skymatrix()
    refin   = None
    epobs   = None 
    first   = True
-   if type(skyin) == types.TupleType:
+   if isinstance(skyin, tuple):
       try:                                # Try to parse this tuple
          sysin = skyin[0]
          for element in skyin[1:]:
-            if type(element)==types.StringType:     # If it is a string it must be an epoch
+            if isinstance(element, str):     # If it is a string it must be an epoch
                if first:
                   epochinset = epochs(element)
                   first = False

@@ -1,10 +1,12 @@
+from __future__ import absolute_import
+
 import matplotlib.pyplot as plt
 
-from astropy_helper import pyfits
+from .astropy_helper import pyfits
 
 from mpl_toolkits.axisartist.floating_axes import floatingaxes_class_factory
 
-from pywcsgrid2.axes_wcs import GridHelperWcsFloating, AxesWcs
+from .axes_wcs import GridHelperWcsFloating, AxesWcs
 
 import matplotlib.axes as maxes
 

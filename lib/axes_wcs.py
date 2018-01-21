@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import warnings, sys
 import six
 
@@ -5,14 +7,16 @@ import matplotlib.axes as maxes
 from matplotlib.cbook import is_string_like
 
 import numpy as np
-from pywcsgrid2.wcs_transforms import WcsSky2PixelTransform, WcsPixel2SkyTransform,\
-     WcsSky2SkyTransform
+from .wcs_transforms import (WcsSky2PixelTransform,
+                             WcsPixel2SkyTransform,
+                             WcsSky2SkyTransform)
 
 from matplotlib.transforms import Affine2D
 
 from matplotlib import rcParams
 
 import matplotlib.collections as mcoll
+
 def rasterized_draw(self, renderer, *kl, **kwargs):
     renderer.start_rasterizing()
     self.draw_orig(renderer, *kl, **kwargs)
@@ -22,7 +26,7 @@ mcoll.QuadMesh.draw = rasterized_draw
 
 
 #import pywcs
-from wcs_helper import get_kapteyn_projection, coord_system_guess
+from .wcs_helper import get_kapteyn_projection, coord_system_guess
 #from pywcsgrid2.wcs_helper import coord_system_guess
 
 from  mpl_toolkits.axisartist import GridlinesCollection
@@ -32,11 +36,12 @@ GridFinderBase = grid_finder.GridFinderBase
 
 from mpl_toolkits.axisartist.angle_helper import ExtremeFinderCycle
 
-from locator_formatter import LocatorH, LocatorHM, LocatorHMS, \
-     LocatorD, LocatorDM, LocatorDMS
+from .locator_formatter import (LocatorH, LocatorHM, LocatorHMS,
+                                LocatorD, LocatorDM, LocatorDMS)
 
-from locator_formatter import FixedLocator, \
-     FixedFormatter, MaxNLocator, FormatterPrettyPrint
+from .locator_formatter import (FixedLocator,
+                                FixedFormatter, MaxNLocator,
+                                FormatterPrettyPrint)
 
 
 
