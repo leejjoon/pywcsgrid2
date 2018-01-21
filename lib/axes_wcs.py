@@ -120,9 +120,9 @@ class GridHelperCurveLinearFloating(floating_axes.GridHelperCurveLinear):
 
 
 
-from mpl_toolkits.axes_grid1.anchored_artists import AnchoredEllipse, \
-     AnchoredText, AnchoredSizeBar
-
+from matplotlib.offsetbox import AnchoredText
+from mpl_toolkits.axes_grid1.anchored_artists import (AnchoredEllipse,
+                                                      AnchoredSizeBar)
 from aux_artists import AnchoredCompass
 
 import mpl_toolkits.axisartist as axisartist
