@@ -1,4 +1,5 @@
 import warnings, sys
+import six
 
 import matplotlib.axes as maxes
 from matplotlib.cbook import is_string_like
@@ -1487,7 +1488,7 @@ class AxesWcs(HostAxes):
         except:
             if key == 0: # or isinstance(key, _coord_sys_dict) :
                 pass
-            elif is_string_like(key):
+            elif isinstance(key, six.string_types):
                 pass
             else:
                 raise ValueError("invalide key : %s" % repr(key))
@@ -1500,7 +1501,7 @@ class AxesWcs(HostAxes):
             else:
                 #orig_coord = self.get_grid_helper()._wcsgrid_orig_coord_system
 
-                if is_string_like(key):
+                if isinstance(key, six.string_types):
                     ax = ParasiteAxesSky(self, key)
                 #if isinstance(key, pywcs.WCS):
                 #    ax = ParasiteAxesWcs(self, key)
