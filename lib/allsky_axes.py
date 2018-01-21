@@ -70,16 +70,17 @@ LATPOLE =       90.00000000000 / Galactic latitude of native pole
 
     headeradd("CRVAL1  =  %10.5f / Galactic longitude of reference pixel" \
               % (lon_center,))
-    
-    cards = pyfits.CardList()
-    for l in header_list:
-        # check if fromstring is a classmethod
-        if type(pyfits.Card.__dict__["fromstring"]) is classmethod:
-            card = pyfits.Card.fromstring(l.strip())
-        else:
+
+    # check if fromstring is a classmethod
+    if type(pyfits.Card.__dict__["fromstring"]) is classmethod:
+        def _card_from_string(l):
+            return pyfits.Card.fromstring(l.strip())
+    else:
+        def _card_from_string(l):
             card = pyfits.Card()
-            card.fromstring(l.strip())
-        cards.append(card)
+            return card.fromstring(l.strip())
+
+    cards = [_card_from_string(l) for l in header_list]
 
     h = pyfits.Header(cards)
     return h
