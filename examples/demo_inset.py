@@ -1,8 +1,5 @@
 import matplotlib.pyplot as plt
-try:
-    from astropy.io import fits as pyfits
-except ImportError:
-    import pyfits
+from astropy.io import fits as pyfits
 from mpl_toolkits.axes_grid1.axes_grid import ImageGrid
 import pywcsgrid2
 #from pywcsgrid2.axes_wcs import AxesWcs, GridHelperWcs
