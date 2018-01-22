@@ -11,7 +11,6 @@ env:
 
 
 install:
-  - time pip install --upgrade pip
   - time pip install sphinx
   - time pip install numpy
   - time pip install matplotlib==$MPL_VERSION
