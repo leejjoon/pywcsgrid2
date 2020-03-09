@@ -29,12 +29,9 @@ image_like_coordformats = ["image", "physical","detector","logical"]
 def is_equal_coord_sys(src, dest):
     return (src.lower() == dest.lower())
 
-def is_string_like(obj):
-    'Return True if *obj* looks like a string'
-    if isinstance(obj, (str, unicode)): return True
-    try: obj + ''
-    except: return False
-    return True
+
+def is_string_like(x):
+    return isinstance(x, six.text_type)
 
 class sky2sky(object):
     def __init__(self, src, dest):

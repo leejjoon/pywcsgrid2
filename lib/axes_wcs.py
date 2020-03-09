@@ -4,7 +4,6 @@ import warnings, sys
 import six
 
 import matplotlib.axes as maxes
-from matplotlib.cbook import is_string_like
 
 import numpy as np
 from .wcs_transforms import (WcsSky2PixelTransform,
