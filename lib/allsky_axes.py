@@ -170,7 +170,7 @@ def make_allsky_axes_from_header(fig, rect, header, lon_center,
                                                        axis_direction='bottom')
 
         axis = ax.axis["lat=0"]
-        axis.get_helper().set_extremes(lon_center+180., lon_center-180)
+        axis.get_helper().set_extremes(lon_center-180., lon_center+180)
         axis.set_ticklabel_direction("-")
         axis.set_axislabel_direction("-")
         axis.label.set_text(ax.axis["bottom"].label.get_text())
