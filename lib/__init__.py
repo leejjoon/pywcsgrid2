@@ -71,7 +71,7 @@ def subplot(*args, **kwargs):
 
     fig = plt.gcf()
     ax = Subplot(fig, *args, **kwargs)
-    ax = plt.subplot(ax)
+    fig.add_subplot(ax)
     return ax
 
 

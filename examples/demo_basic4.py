@@ -11,7 +11,7 @@ import pywcsgrid2
 ax = pywcsgrid2.Axes(fig, [0.2, 0.15, 0.75, 0.8], header=h)
 fig.add_axes(ax)
 
-im1 = ax.imshow(d, origin="low", vmin=0, vmax=2000,
+im1 = ax.imshow(d, origin="lower", vmin=0, vmax=2000,
                 cmap=plt.cm.gray_r)
 
 ax.set_display_coord_system("fk5")

@@ -20,7 +20,7 @@ if 1:
 
     ax = pywcsgrid2.axes([0.15, 0.15, 0.8, 0.8], header=h)
 
-    ax.imshow(d, origin="low",
+    ax.imshow(d, origin="lower",
               cmap=plt.cm.gist_heat_r, interpolation="nearest")
 
     ax.set_xlim(20, 52)

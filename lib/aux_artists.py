@@ -38,16 +38,12 @@ class AnchoredCompass(AnchoredOffsetbox):
 
         self.arrow1 = FancyArrowPatch(posA=(0, 0), posB=(1, 1),
                                       arrowstyle="->",
-                                      arrow_transmuter=None,
                                       connectionstyle="arc3",
-                                      connector=None,
                                       color=color,
                                       **kwargs)
         self.arrow2 = FancyArrowPatch(posA=(0, 0), posB=(1, 1),
                                       arrowstyle="->",
-                                      arrow_transmuter=None,
                                       connectionstyle="arc3",
-                                      connector=None,
                                       color=color,
                                       **kwargs)
 

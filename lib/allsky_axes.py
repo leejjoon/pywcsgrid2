@@ -88,7 +88,43 @@ LATPOLE =       90.00000000000 / Galactic latitude of native pole
     return h
 
 
-FloatingAxes = floatingaxes_class_factory(AxesWcs)
+_FloatingAxes = floatingaxes_class_factory(AxesWcs)
+
+
+import numpy as np
+
+class FloatingAxes(_FloatingAxes):
+    def _get_boundary(self):
+        """
+        Return (N, 2) array of (x, y) coordinate of the boundary.
+        """
+        # This was originally a method of floating_axes.GridHelperCurveLinear
+        # which is deprecated by mpl.
+
+        grid_helper = self.get_grid_helper()
+
+        x0, x1, y0, y1 = grid_helper._extremes
+        tr = grid_helper._aux_trans
+
+        xx = np.linspace(x0, x1, 100)
+        yy0 = np.full_like(xx, y0)
+        yy1 = np.full_like(xx, y1)
+        yy = np.linspace(y0, y1, 100)
+        xx0 = np.full_like(yy, x0)
+        xx1 = np.full_like(yy, x1)
+
+        xxx = np.concatenate([xx[:-1], xx1[:-1], xx[-1:0:-1], xx0])
+        yyy = np.concatenate([yy0[:-1], yy[:-1], yy1[:-1], yy[::-1]])
+        t = np.array([xxx, yyy]).transpose()
+
+        return t
+
+    def _gen_axes_patch(self):
+        # docstring inherited
+        import matplotlib.patches as mpatches
+        return mpatches.Polygon(self._get_boundary())
+
+
 FloatingSubplot = maxes.subplot_class_factory(FloatingAxes)
 
 
@@ -97,13 +133,12 @@ _proj_lat_limits = dict(MER= 75)
 
 def make_allsky_axes_from_header(fig, rect, header, lon_center,
                                  lat_minmax=None, pseudo_cyl=None):
-    
 
     proj = header["CTYPE1"].split("-")[-1]
     if pseudo_cyl is None:
         if proj in _proj_pseudo_cyl_list:
             pseudo_cyl = True
-        
+
     if lat_minmax is None:
         lat_max = _proj_lat_limits.get(proj, 90)
         lat_min = -lat_max
@@ -111,7 +146,7 @@ def make_allsky_axes_from_header(fig, rect, header, lon_center,
         lat_min, lat_max = lat_minmax
 
     extremes = (lon_center+180., lon_center-180., lat_min, lat_max)
-    
+
     grid_helper = GridHelperWcsFloating(wcs=header, extremes=extremes)
 
     ax = FloatingSubplot(fig, rect, grid_helper=grid_helper)

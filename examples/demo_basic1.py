@@ -11,7 +11,7 @@ plt.figure(1, [6,3.5])
 
 plt.subplot(121)
 
-plt.imshow(d, origin="low", vmin=0, vmax=2000,
+plt.imshow(d, origin="lower", vmin=0, vmax=2000,
            cmap=plt.cm.gray_r)
 
 plt.title("Original MPL")
@@ -20,7 +20,7 @@ import pywcsgrid2
 
 pywcsgrid2.subplot(122, header=h)
 
-plt.imshow(d, origin="low", vmin=0, vmax=2000,
+plt.imshow(d, origin="lower", vmin=0, vmax=2000,
            cmap=plt.cm.gray_r)
 
 plt.title("pywcsgrid2")

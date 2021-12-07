@@ -17,7 +17,6 @@ def main():
           packages = ['pywcsgrid2'],
           package_dir={'pywcsgrid2':'lib',
                        },
-          use_2to3 = True,
           )
 
 

@@ -10,7 +10,7 @@ plt.figure(1, figsize=[5,5])
 import pywcsgrid2
 ax = pywcsgrid2.axes([0.2, 0.15, 0.7, 0.8], header=h)
 
-im1 = ax.imshow(d, origin="low", vmin=0, vmax=2000,
+im1 = ax.imshow(d, origin="lower", vmin=0, vmax=2000,
                 cmap=plt.cm.gray_r)
 
 # viewlimits in image coordinate

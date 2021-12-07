@@ -2,7 +2,7 @@ from astropy.io import fits as pyfits
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from mpl_toolkits.axes_grid1.axes_grid import AxesGrid
+from mpl_toolkits.axes_grid1.axes_grid import ImageGrid
 #from pywcsgrid2.axes_wcs import GridHelperWcs, AxesWcs
 import pywcsgrid2
 
@@ -22,10 +22,10 @@ grid_helper = pywcsgrid2.GridHelper(wcs=header_xray)
 
 # AxesGrid to display tow images side-by-side
 fig = plt.figure(1, (6,3.5))
-grid = AxesGrid(fig, (0.15, 0.15, 0.8, 0.75), nrows_ncols=(1, 2),
-                axes_pad=0.1, share_all=True,
-                cbar_mode="each", cbar_location="top", cbar_pad=0,
-                axes_class=(pywcsgrid2.Axes, dict(grid_helper=grid_helper)))
+grid = ImageGrid(fig, (0.15, 0.15, 0.8, 0.75), nrows_ncols=(1, 2),
+                 axes_pad=0.1, share_all=True,
+                 cbar_mode="each", cbar_location="top", cbar_pad=0,
+                 axes_class=(pywcsgrid2.Axes, dict(grid_helper=grid_helper)))
 
 
 ax1 = grid[0]
@@ -39,6 +39,9 @@ ticklocs = [6, 9, 12, 15]
 cax1 = grid.cbar_axes[0]
 cbar1 = cax1.colorbar(im)
 cax1.toggle_label(True)
+cax1.axis["bottom"].toggle(all=False)
+cax1.axis["top"].toggle(ticks=True)
+
 cax1.set_xticks([t*1.e-5 for t in ticklocs])
 cax1.set_xticklabels(["$%d$" % t for t in ticklocs])
 #cax1.xaxis.get_major_formatter().set_offset_string(r"$\times 10^{-5}$")
@@ -60,8 +63,11 @@ d = f_radio[0].data
 im2 = ax2[header_radio].imshow_affine(d,
                                       cmap=cm.gray_r, origin="lower")
 
-grid.cbar_axes[1].colorbar(im2)
-grid.cbar_axes[1].toggle_label(True)
+cax2 = grid.cbar_axes[1]
+cax2.colorbar(im2)
+cax2.toggle_label(True)
+cax2.axis["bottom"].toggle(all=False)
+cax2.axis["top"].toggle(ticks=True)
 
 # draw contour. The data points of the contour lines are created in
 # the image coordinate of the second image and then are transformed to

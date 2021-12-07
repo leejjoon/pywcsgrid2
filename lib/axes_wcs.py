@@ -31,8 +31,6 @@ from .wcs_helper import get_kapteyn_projection, coord_system_guess
 from  mpl_toolkits.axisartist import GridlinesCollection
 import mpl_toolkits.axisartist.grid_finder as grid_finder
 
-GridFinderBase = grid_finder.GridFinderBase
-
 from mpl_toolkits.axisartist.angle_helper import ExtremeFinderCycle
 
 from .locator_formatter import (LocatorH, LocatorHM, LocatorHMS,
@@ -75,7 +73,7 @@ class GridHelperCurveLinear(grid_helper_curvelinear.GridHelperCurveLinear):
 
         """
 
-        if kwargs.has_key("tight"):
+        if "tight" in kwargs:
             warnings.warn("axislines ignores *tight* parameter")
 
         _x = axis in ['x', 'both']
@@ -110,7 +108,7 @@ class GridHelperCurveLinearFloating(floating_axes.GridHelperCurveLinear):
 
         """
 
-        if kwargs.has_key("tight"):
+        if "tight" in kwargs:
             warnings.warn("axislines ignores *tight* parameter")
 
         _x = axis in ['x', 'both']
@@ -1146,8 +1144,6 @@ class GridHelperWcsFloating(GridHelperWcsSkyBase, GridHelperCurveLinearFloating)
         else:
             raise ValueError("unknown coord type")
 
-
-
         _loc1, _form1 = self._get_default_locator_formatter(ctype1)
         _loc2, _form2 = self._get_default_locator_formatter(ctype2)
 
@@ -1172,8 +1168,8 @@ class GridHelperWcsFloating(GridHelperWcsSkyBase, GridHelperCurveLinearFloating)
                        tick_formatter1=tick_formatter1,
                        tick_formatter2=tick_formatter2)
 
-
-
+    def get_data_boundary(self, side):
+        return super().get_data_boundary(side)
 
 
 class ParasiteAxesSky(ParasiteAxesAuxTrans):
@@ -1275,7 +1271,6 @@ def get_transformed_image(Z, tr, extent=None, oversample=1.5):
     o_extent = X1, X2, Y1, Y2
     return O, o_extent
 
-
 class ParasiteAxesWcs(ParasiteAxesAuxTrans):
     def __init__(self, parent, wcs, *kl, **kwargs):
 
@@ -1327,13 +1322,19 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
         if sys.version_info < (3,0):
               check_unsampled_image = check_unsampled_image.im_func
 
-        if_nearest = check_unsampled_image(TestNearest(),
-                                           MyRenderer())
+        try:
+            if_nearest = check_unsampled_image(TestNearest(),
+                                               MyRenderer())
+        except TypeError:
+            # In recent versionof matplotlib, _check_unsample_image takes
+            # no argumenr (other than self). Then, simply return "none"
+            if_nearest = False
 
         if if_nearest:
             return "nearest"
         else:
             return "none"
+
 
     _imshow_affine_default_interpolation = get_imshow_affine_default_interpolation()
     del get_imshow_affine_default_interpolation
@@ -1748,7 +1749,7 @@ class AxesWcs(HostAxes):
         if labtyp2 is None:
             labtyp2 = labtyp1
 
-        if center_pixel is "center":
+        if center_pixel == "center":
             # use the center of the current viewlim
             x, y, w, h = self.viewLim.bounds
             center_pixel = x + w/2., y + h/2.

@@ -1,6 +1,6 @@
 import numpy as np
 
-from astropy_helper import pyfits, pywcs
+from .astropy_helper import pyfits, pywcs
 
 import healpy
 import warnings
@@ -19,7 +19,7 @@ class HealpixData(object):
         map_shape = (header["naxis2"], header["naxis1"])
         iy, ix = np.indices(map_shape)
         wcs = pywcs.WCS(header)
-        phi, theta = wcs.wcs_pix2sky(ix, iy, 0)
+        phi, theta = wcs.wcs_pix2world(ix, iy, 0)
 
         if self._coord is not None:
             from pywcsgrid2.wcs_helper import coord_system_guess, sky2sky
@@ -55,7 +55,7 @@ class HealpixData(object):
         map_data_ = self._data[ipix]
         map_data = np.empty(map_shape, dtype=map_data_.dtype)
         map_data.fill(np.nan)
-        map_data.flat[mask] = map_data_
+        map_data[mask] = map_data_
 
         return map_data
 

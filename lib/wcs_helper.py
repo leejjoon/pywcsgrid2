@@ -362,7 +362,7 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
 
         xyz = [None]*self.proj.naxis
         for i in self._axis_nums_to_keep:
-            xyz[i] = iter_xy.next()
+            xyz[i] = next(iter_xy)
         for i in range(self.proj.naxis):
             if i not in self._axis_nums_to_keep:
                 s = np.empty_like(template)
@@ -386,7 +386,7 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
 
         xyz = [None]*self.proj.naxis
         for i in self._axis_nums_to_keep:
-            xyz[i] = iter_xy.next()
+            xyz[i] = next(iter_xy)
         for i in range(self.proj.naxis):
             if i not in self._axis_nums_to_keep:
                 s = np.empty_like(template)

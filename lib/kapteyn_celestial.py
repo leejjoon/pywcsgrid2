@@ -114,8 +114,8 @@ Notes:     The three coordinate axes x, y and z, the set of
            x-axis points toward the origin of right ascension. 
 -----------------------------------------------------------------------
    """
-   lon = d2r( n.asarray(longlat[:,0],'d').flatten(1) )
-   lat = d2r( n.asarray(longlat[:,1],'d').flatten(1) )
+   lon = d2r( n.asarray(longlat[:,0],'d').flatten("c") )
+   lat = d2r( n.asarray(longlat[:,1],'d').flatten("c") )
    x = n.cos(lon)*n.cos(lat)
    y = n.sin(lon)*n.cos(lat)
    z = n.sin(lat)
@@ -137,9 +137,9 @@ Notes:     Note that one can expect strange behavior for the values
            poles itself, the longitudes are meaningless.
 -----------------------------------------------------------------------
    """
-   x = n.asarray(xyz[0],'d').flatten(1)
-   y = n.asarray(xyz[1],'d').flatten(1)
-   z = n.asarray(xyz[2],'d').flatten(1)
+   x = n.asarray(xyz[0],'d').flatten("C")
+   y = n.asarray(xyz[1],'d').flatten("C")
+   z = n.asarray(xyz[2],'d').flatten("C")
 
    lat = r2d( n.arctan2(z, n.sqrt(x*x+y*y)) )
    lon = r2d( n.arctan2(y, x) )
