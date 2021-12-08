@@ -1,4 +1,6 @@
-from __future__ import absolute_import
+"a module to be used with matplotlib for displaying astronomical FITS images"
+
+__version__ = "0.1"
 
 from .axes_wcs import SubplotWcs as Subplot
 from .axes_wcs import AxesWcs as Axes

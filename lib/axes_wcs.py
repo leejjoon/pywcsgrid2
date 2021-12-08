@@ -14,14 +14,18 @@ from matplotlib.transforms import Affine2D
 
 from matplotlib import rcParams
 
-import matplotlib.collections as mcoll
+# TODO : The monkey-patching to enable rasterized draw of QuadMesh does not
+# work on mpl3.5. Not sure why. Disable it for now. Check what is the proper
+# way of doing this.
 
-def rasterized_draw(self, renderer, *kl, **kwargs):
-    renderer.start_rasterizing()
-    self.draw_orig(renderer, *kl, **kwargs)
-    renderer.stop_rasterizing()
-mcoll.QuadMesh.draw_orig = mcoll.QuadMesh.draw
-mcoll.QuadMesh.draw = rasterized_draw
+# import matplotlib.collections as mcoll
+
+# def rasterized_draw(self, renderer, *kl, **kwargs):
+#     renderer.start_rasterizing()
+#     self.draw_orig(renderer, *kl, **kwargs)
+#     renderer.stop_rasterizing()
+# mcoll.QuadMesh.draw_orig = mcoll.QuadMesh.draw
+# mcoll.QuadMesh.draw = rasterized_draw
 
 
 #import pywcs

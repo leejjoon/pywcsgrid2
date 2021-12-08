@@ -1,3 +1,4 @@
+from matplotlib import ticker as mticker
 import mpl_toolkits.axisartist.grid_finder as grid_finder
 import mpl_toolkits.axisartist.angle_helper as angle_helper
 import numpy as np
@@ -27,8 +28,27 @@ class FixedLocator(object):
             self._locs = kwargs.pop('locs')
 
 
+# This was originally part of the AxisArtist. But set_factor method was removed
+# in mpl3.5. We simply copy the orinal MaxNLocator here.
+class MaxNLocator(mticker.MaxNLocator):
+    def __init__(self, nbins=10, steps=None,
+                 trim=True,
+                 integer=False,
+                 symmetric=False,
+                 prune=None):
+        # trim argument has no effect. It has been left for API compatibility
+        super().__init__(nbins, steps=steps, integer=integer,
+                         symmetric=symmetric, prune=prune)
+        self.create_dummy_axis()
+        self._factor = 1
 
-class MaxNLocator(grid_finder.MaxNLocator):
+    def __call__(self, v1, v2):
+        locs = super().tick_values(v1 * self._factor, v2 * self._factor)
+        return np.array(locs), len(locs), self._factor
+
+    def set_factor(self, f):
+        self._factor = f
+
     def set_params(self, **kwargs):
         if "factor" in kwargs:
             self.set_factor(kwargs.pop("factor"))
