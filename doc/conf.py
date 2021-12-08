@@ -28,16 +28,35 @@ sys.path.append(os.path.abspath('./sphinxext'))
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 #extensions = ['mathmpl', 'math_symbol_table', 'sphinx.ext.autodoc']
-extensions = ['matplotlib.sphinxext.mathmpl',# 'math_symbol_table',
-              'sphinx.ext.autodoc', 'matplotlib.sphinxext.only_directives',
-              'github_sphinx',
-              #'gen_rst',
-              ]
+# extensions = ['matplotlib.sphinxext.mathmpl',# 'math_symbol_table',
+#               'sphinx.ext.autodoc',
+#               #'matplotlib.sphinxext.only_directives',
+#               #'github_sphinx',
+#               #'gen_rst',
+#               ]
 
-if sys.version_info >= (3,0):
-    extensions.append('plot_directive_v3')
-else:
-    extensions.append('matplotlib.sphinxext.plot_directive')
+extensions = [
+    # 'sphinx.ext.autosummary',
+    # 'sphinx.ext.doctest',
+    # 'sphinx.ext.intersphinx',
+    # 'sphinx.ext.todo',
+    # 'sphinx.ext.coverage',
+    # 'sphinx.ext.mathjax',
+    # 'sphinx.ext.ifconfig',
+    # 'sphinx.ext.napoleon',
+    ## "sphinx_rtd_theme",
+    'sphinx.ext.autodoc',
+    # 'sphinx.ext.imgmath',
+    # 'sphinx.ext.ifconfig',
+    # 'sphinx.ext.viewcode',
+    'sphinx.ext.githubpages',
+    # 'recommonmark'
+]
+
+#if sys.version_info >= (3,0):
+#    extensions.append('plot_directive_v3')
+#else:
+extensions.append('matplotlib.sphinxext.plot_directive')
 
 
 # Add any paths that contain templates here, relative to this directory.
@@ -121,8 +140,8 @@ html_last_updated_fmt = '%b %d, %Y'
 
 # Custom sidebar templates, maps document names to template names.
 # Custom sidebar templates, maps page names to templates.
-html_sidebars = {'index': 'indexsidebar.html',
-                 }
+# html_sidebars = {'index': 'indexsidebar.html',
+#                  }
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
