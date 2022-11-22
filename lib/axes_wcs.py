@@ -55,6 +55,7 @@ import mpl_toolkits.axisartist.grid_helper_curvelinear as grid_helper_curvelinea
 
 import mpl_toolkits.axisartist.floating_axes as floating_axes
 
+
 # implment locator_params that is not ioncluded in matplotlib 1.0
 class GridHelperCurveLinear(grid_helper_curvelinear.GridHelperCurveLinear):
     def locator_params(self, axis='both', **kwargs):
@@ -89,6 +90,10 @@ class GridHelperCurveLinear(grid_helper_curvelinear.GridHelperCurveLinear):
             self.grid_finder.grid_locator2.set_params(**kwargs)
 
         self.invalidate()
+
+    # invalidate methos is deprecated upstream.
+    def invalidate(self):
+        self._force_update = True
 
 
 class GridHelperCurveLinearFloating(floating_axes.GridHelperCurveLinear):
@@ -125,6 +130,9 @@ class GridHelperCurveLinearFloating(floating_axes.GridHelperCurveLinear):
 
         self.invalidate()
 
+    # invalidate methos is deprecated upstream.
+    def invalidate(self):
+        self._force_update = True
 
 
 from matplotlib.offsetbox import AnchoredText
@@ -133,7 +141,7 @@ from mpl_toolkits.axes_grid1.anchored_artists import (AnchoredEllipse,
 from .aux_artists import AnchoredCompass
 
 import mpl_toolkits.axisartist as axisartist
-from mpl_toolkits.axisartist import ParasiteAxesAuxTrans
+from mpl_toolkits.axisartist import ParasiteAxes as ParasiteAxesAuxTrans
 
 import weakref
 
@@ -1418,6 +1426,15 @@ class HostAxes(axisartist.HostAxes):
     def get_ylabel(self, label):
         return self.axis["left"].label.get_text()
 
+# change_tick_coord method of FixedArtistHelper is deprecated. So we redefine
+# it here.
+def change_tick_coord(fixed_artist_helper, coord_number=None):
+    if coord_number is None:
+        fixed_artist_helper.nth_coord_ticks = 1 - fixed_artist_helper.nth_coord_ticks
+    elif coord_number in [0, 1]:
+        fixed_artist_helper.nth_coord_ticks = coord_number
+    else:
+        raise Exception("wrong coord number")
 
 class AxesWcs(HostAxes):
 
@@ -1562,10 +1579,10 @@ class AxesWcs(HostAxes):
         """
         self.get_grid_helper().set_display_coord_system(c)
 
-        self.axis["bottom"].get_helper().change_tick_coord(0)
-        self.axis["top"].get_helper().change_tick_coord(0)
-        self.axis["left"].get_helper().change_tick_coord(1)
-        self.axis["right"].get_helper().change_tick_coord(1)
+        change_tick_coord(self.axis["bottom"].get_helper(), 0)
+        change_tick_coord(self.axis["top"].get_helper(), 0)
+        change_tick_coord(self.axis["left"].get_helper(), 1)
+        change_tick_coord(self.axis["right"].get_helper(), 1)
 
         self.set_default_label("default", "default")
 
@@ -1795,7 +1812,7 @@ class AxesWcs(HostAxes):
         for axis in self.axis.values():
             gh = axis.get_helper()
             if isinstance(gh, FixedAxisArtistHelper):
-                gh.change_tick_coord()
+                change_tick_coord(gh)
 
         label=self.axis["left"].label.get_text()
         self.axis["left"].label.set_text(self.axis["bottom"].label.get_text())
