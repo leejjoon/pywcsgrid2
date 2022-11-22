@@ -7,6 +7,5 @@ MANIFEST
 .#*
 .mypy_cache
 examples
-pywcsgrid2
 pywcsgrid2.egg-info
 _setup.py
