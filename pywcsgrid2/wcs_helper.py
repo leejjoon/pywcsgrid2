@@ -366,13 +366,11 @@ class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
         for i in range(self.proj.naxis):
             if i not in self._axis_nums_to_keep:
                 s = np.empty_like(template)
-                s.fill(self._ref_world[i])
                 xyz[i] = s
 
-        #xyz2 = self.wcs_world2pix(np.asarray(xyz).T, 1)
         xyz2 = self.proj.topixel(np.array(xyz))
-
-        #xyz2r = [d for (i, d) in enumerate(xyz2) if i in self._axis_nums_to_keep]
+        if len(xyz2) == 0:
+            xyz2 = [np.array([])] * len(xyz)
         xyz2r = [xyz2[i] for i in self._axis_nums_to_keep]
 
         return xyz2r

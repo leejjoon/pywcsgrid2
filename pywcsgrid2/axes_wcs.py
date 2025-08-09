@@ -136,9 +136,10 @@ class GridHelperCurveLinearFloating(floating_axes.GridHelperCurveLinear):
 
 
 from matplotlib.offsetbox import AnchoredText
-from mpl_toolkits.axes_grid1.anchored_artists import (AnchoredEllipse,
-                                                      AnchoredSizeBar)
-from .aux_artists import AnchoredCompass
+# from mpl_toolkits.axes_grid1.anchored_artists import (AnchoredEllipse,
+#                                                       AnchoredSizeBar)
+from mpl_toolkits.axes_grid1.anchored_artists import (AnchoredSizeBar)
+from .aux_artists import AnchoredCompass, AnchoredEllipse
 
 import mpl_toolkits.axisartist as axisartist
 from mpl_toolkits.axisartist import ParasiteAxes as ParasiteAxesAuxTrans
@@ -1352,14 +1353,48 @@ class ParasiteAxesWcs(ParasiteAxesAuxTrans):
     del get_imshow_affine_default_interpolation
 
 
-    def imshow_affine(self, *kl, **kwargs):
+    def imshow_affine(self, d, *kl, **kwargs):
 
-
+        """
+        This assumes that the aux transform is approximated by affine transform
+        so that image is handled direcly by the backend with out resampleing.
+        """
         mode = self._imshow_affine_default_interpolation
         if kwargs.setdefault("interpolation", mode) != mode:
             raise ValueError("interpolation parameter must not be set or should be '%s'" % mode)
 
-        im = ParasiteAxesAuxTrans.imshow(self, *kl, **kwargs)
+        ax_parent = self._parent_axes
+        transAux = self.transAux
+        ny, nx = d.shape
+        [s1, s2, s3] = [-0.5, -0.5], [-0.5, ny-0.5], [nx-0.5, ny-0.5]
+        [t1, t2, t3] = transAux.transform([s1, s2, s3])
+
+
+        from .get_affine_transform import (get_affine_transform_numpy,
+                                           numpy_to_matplotlib_transform)
+        aff = get_affine_transform_numpy(s1, s2, s3, t1, t2, t3)
+        tr = numpy_to_matplotlib_transform(aff)
+
+        xy = np.meshgrid(np.linspace(0, ny, 32), np.linspace(0, nx, 32))
+        xy = np.array(xy).reshape(2, -1).T
+
+        trans_xy_orig = transAux.transform(xy)
+        trans_xy_affine = tr.transform(xy)
+        dxy = trans_xy_orig - trans_xy_affine
+        dist = np.hypot(dxy[:, 0], dxy[:, 1])
+        # print(dist.max(), dist.min())
+        if dist.max() > 0.5:
+            print("WARNING: affine approximation has error larger than {dist.max()} pixel.")
+
+        autoscale_mode = self.get_autoscale_on()
+        self.set_autoscale_on(False)
+        im = type(ax_parent).imshow(self, d, transform=tr + ax_parent.transData,
+                                    *kl, **kwargs)
+        # im = type(ax_parent).imshow(self, d, transform=tr + (ax_parent.transLimits + ax_parent.transAxes),
+        #                             *kl, **kwargs)
+        self.set_autoscale_on(autoscale_mode)
+
+        # im = ParasiteAxesAuxTrans.imshow(self, *kl, **kwargs)
         x1, x2, y1, y2 = im.get_extent()
         im._image_skew_coordinate = (x2, y1)
 

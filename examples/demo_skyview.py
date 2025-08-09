@@ -31,14 +31,15 @@ grid = ImageGrid(fig, (0.15, 0.15, 0.8, 0.75), nrows_ncols=(1, 2),
 ax1 = grid[0]
 # use imshow for a simply image display.
 im = ax1.imshow(f_xray[0].data, origin="lower", vmin=0., cmap=cm.gray_r,
-                interpolation="nearest")
+                interpolation="none")
 im.set_clim(4.e-05, 0.00018)
 
 ticklocs = [6, 9, 12, 15]
 
 cax1 = grid.cbar_axes[0]
 cbar1 = cax1.colorbar(im)
-cax1.toggle_label(True)
+# cax1.toggle_label(True)
+cax1.tick_params(labeltop=True)
 cax1.axis["bottom"].toggle(all=False)
 cax1.axis["top"].toggle(ticks=True)
 
@@ -60,12 +61,29 @@ d = f_radio[0].data
 # inshow_affine.
 
 #im2 = ax2[header_radio].pcolormesh(d, cmap=cm.gray_r)
+# if False:
+#     transAux = ax2[header_radio].transAux
+#     ny, nx = d.shape
+#     [s1, s2, s3] = [-0.5, -0.5], [-0.5, ny-0.5], [nx-0.5, ny-0.5]
+#     [t1, t2, t3] = transAux.transform([s1, s2, s3])
+#     aff = get_affine_transform_numpy(s1, s2, s3, t1, t2, t3)
+#     tr = numpy_to_matplotlib_transform(aff)
+
+#     ax2.set_autoscale_on(False)
+#     im2 = ax2.imshow(d, transform=tr + ax2.transData,
+#                      cmap=cm.gray_r, origin="lower")
+
+#     ax2.set_autoscale_on(True)
+
+# else:
 im2 = ax2[header_radio].imshow_affine(d,
                                       cmap=cm.gray_r, origin="lower")
 
 cax2 = grid.cbar_axes[1]
 cax2.colorbar(im2)
-cax2.toggle_label(True)
+# cax2.toggle_label(True)
+# cax2.toggle_label(True)
+cax2.tick_params(labeltop=True)
 cax2.axis["bottom"].toggle(all=False)
 cax2.axis["top"].toggle(ticks=True)
 
