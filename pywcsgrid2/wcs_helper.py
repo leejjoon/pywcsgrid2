@@ -260,11 +260,11 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
             self._pywcs = header
 
         if hasattr(self._pywcs, 'wcs_pix2world'):
-            self.wcs_pix2world = self._pywcs.wcs_pix2world
-            self.wcs_world2pix = self._pywcs.wcs_world2pix
+            self.wcs_pix2world = self._pywcs.all_pix2world
+            self.wcs_world2pix = self._pywcs.all_world2pix
         else:
-            self.wcs_pix2world = self._pywcs.wcs_pix2sky
-            self.wcs_world2pix = self._pywcs.wcs_sky2pix
+            self.wcs_pix2world = self._pywcs.all_pix2sky
+            self.wcs_world2pix = self._pywcs.all_sky2pix
 
         ProjectionBase.__init__(self)
 
