@@ -131,7 +131,7 @@ def fix_cards(cards):
 
         # use "deg"
         if keyword.startswith("CUNIT") and c.value.lower().startswith("deg"):
-            c = pyfits.Card(c.key, "deg")
+            c = pyfits.Card(c.keyword, "deg")
 
         # We re-instantiate the card so that it doesn't matter if the
         # original Card object is from PyFITS or Astropy
